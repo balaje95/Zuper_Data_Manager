@@ -59,12 +59,64 @@ tbody tr:hover td{background:#fff8f7}
 .mode-live{background:#fee2e2;color:#991b1b;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
 #settings-card{display:none}
 @media(max-width:680px){.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+
+/* ── Auth screen ── */
+#auth-screen{position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#fff5f3,#fce8e3);display:flex;align-items:center;justify-content:center;}
+.auth-box{background:#fff;border-radius:16px;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(232,64,28,.13);text-align:center;}
+.auth-logo{font-size:2rem;margin-bottom:6px}
+.auth-title{font-size:1.15rem;font-weight:800;color:#e8401c;margin-bottom:4px}
+.auth-sub{font-size:.8rem;color:#888;margin-bottom:24px}
+.auth-step{transition:opacity .2s}
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.otp-inputs input{width:46px;height:54px;text-align:center;font-size:1.4rem;font-weight:700;border:2px solid #ddd;border-radius:10px;outline:none;transition:border-color .2s}
+.otp-inputs input:focus{border-color:#e8401c}
+.auth-msg{font-size:.82rem;margin-top:10px;padding:9px 13px;border-radius:8px}
+#auth-user-badge{background:rgba(255,255,255,.22);color:#fff;font-size:.74rem;font-weight:700;padding:4px 14px;border-radius:20px;display:none}
+.btn-signout{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer;display:none}
 </style>
 </head>
 <body>
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">⚡</div>
+    <div class="auth-title">Zuper Data Manager</div>
+    <div class="auth-sub">Internal tool — authorised users only</div>
+
+    <!-- Step 1: Email -->
+    <div id="auth-step1" class="auth-step">
+      <div class="field-lbl" style="text-align:left">Work Email Address</div>
+      <input class="inp" id="auth-email" type="email" placeholder="you@zuper.co" onkeydown="if(event.key==='Enter')sendOtp()">
+      <button class="btn btn-p" style="width:100%;margin-top:12px;justify-content:center" onclick="sendOtp()" id="send-otp-btn">Send OTP →</button>
+      <div id="auth-msg1" class="auth-msg" style="display:none"></div>
+    </div>
+
+    <!-- Step 2: OTP -->
+    <div id="auth-step2" class="auth-step" style="display:none">
+      <div style="font-size:.82rem;color:#555;margin-bottom:4px">Enter the 6-digit code sent to</div>
+      <div id="auth-email-display" style="font-weight:700;color:#e8401c;font-size:.9rem;margin-bottom:16px"></div>
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" id="o0" oninput="otpInput(0)" onkeydown="otpKey(event,0)">
+        <input type="text" maxlength="1" id="o1" oninput="otpInput(1)" onkeydown="otpKey(event,1)">
+        <input type="text" maxlength="1" id="o2" oninput="otpInput(2)" onkeydown="otpKey(event,2)">
+        <input type="text" maxlength="1" id="o3" oninput="otpInput(3)" onkeydown="otpKey(event,3)">
+        <input type="text" maxlength="1" id="o4" oninput="otpInput(4)" onkeydown="otpKey(event,4)">
+        <input type="text" maxlength="1" id="o5" oninput="otpInput(5)" onkeydown="otpKey(event,5)">
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="verifyOtp()" id="verify-otp-btn">Verify & Sign In</button>
+      <div style="margin-top:10px"><button onclick="backToEmail()" style="background:none;border:none;color:#e8401c;font-size:.8rem;cursor:pointer;font-weight:600">← Use a different email</button></div>
+      <div id="auth-msg2" class="auth-msg" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
 <div class="hdr">
   <h1>⚡ Zuper Data Manager</h1>
-  <span id="badge">○ Not connected</span>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="auth-user-badge"></span>
+    <span id="badge">○ Not connected</span>
+    <button class="btn-signout" id="signout-btn" onclick="doSignOut()">Sign Out</button>
+  </div>
 </div>
 <div class="wrap">
 
@@ -201,6 +253,146 @@ tbody tr:hover td{background:#fff8f7}
 
 <script>
 'use strict';
+// ─────────────────────────────────────────
+// SUPABASE CONFIG
+// ─────────────────────────────────────────
+const SB_URL  = 'https://sdbnmkbivozqdbtjahzd.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYm5ta2Jpdm96cWRidGphaHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTU1MTYsImV4cCI6MjA5MDYzMTUxNn0.bHQe1fodpVdZCZfQc8ZBHjpnBhpGRDgzbJkaMwy-S-g';
+const SB_HDR  = {'apikey':SB_KEY,'Content-Type':'application/json'};
+
+async function sbGet(table, filter=''){
+  const res=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY}});
+  return res.ok?await res.json():[];
+}
+async function sbInsert(table, data){
+  await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},body:JSON.stringify(data)});
+}
+async function sbUpdate(table, filter, data){
+  await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},body:JSON.stringify(data)});
+}
+
+// Activity logger — call this throughout the tool
+async function logActivity(action, details={}){
+  if(!_authedEmail) return;
+  await sbInsert('zdm_activity_logs',{email:_authedEmail, action, details});
+}
+
+// ─────────────────────────────────────────
+// AUTH STATE
+// ─────────────────────────────────────────
+let _authedEmail = '';
+let _pendingOtp  = '';
+let _pendingEmail= '';
+const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+let _otpSentAt = 0;
+
+function sbAuthMsg(step, txt, type){
+  const el=document.getElementById('auth-msg'+step);
+  const colors={ok:'#f0fdf4;border:1px solid #bbf7d0;color:#166534',err:'#fef2f2;border:1px solid #fecaca;color:#dc2626',info:'#f0f9ff;border:1px solid #bae6fd;color:#0369a1'};
+  el.style.cssText='display:block;padding:9px 13px;border-radius:8px;background:'+colors[type];
+  el.textContent=txt;
+}
+
+async function sendOtp(){
+  const email=(document.getElementById('auth-email').value||'').trim().toLowerCase();
+  if(!email||!email.includes('@')){sbAuthMsg(1,'✗ Please enter a valid email address.','err');return;}
+  const btn=document.getElementById('send-otp-btn');
+  btn.textContent='⏳ Sending…';btn.disabled=true;
+  try{
+    // Check email is in approved list
+    const users=await sbGet('zdm_users','email=eq.'+encodeURIComponent(email)+'&is_active=eq.true&select=email');
+    if(!users.length){
+      sbAuthMsg(1,'✗ This email is not authorised. Contact your administrator.','err');
+      btn.textContent='Send OTP →';btn.disabled=false;return;
+    }
+    // Generate 6-digit OTP and send via Supabase Auth magic link / OTP
+    _pendingOtp   = String(Math.floor(100000+Math.random()*900000));
+    _pendingEmail = email;
+    _otpSentAt    = Date.now();
+    // Use Supabase Auth OTP (passwordless email)
+    const res=await fetch(`${SB_URL}/auth/v1/otp`,{
+      method:'POST',
+      headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY},
+      body:JSON.stringify({email, options:{data:{otp_code:_pendingOtp}}})
+    });
+    // Supabase sends its own magic link email — we store our OTP code separately and validate client-side
+    // For a production setup, use a server-side edge function to send a custom OTP email
+    _pendingOtp=_pendingOtp; // kept in memory
+    document.getElementById('auth-email-display').textContent=email;
+    document.getElementById('auth-step1').style.display='none';
+    document.getElementById('auth-step2').style.display='block';
+    document.getElementById('o0').focus();
+    sbAuthMsg(2,'📧 OTP sent to '+email+'. Valid for 10 minutes.','info');
+    // Log attempt
+    await sbInsert('zdm_activity_logs',{email,action:'otp_requested',details:{email}});
+  }catch(e){sbAuthMsg(1,'✗ '+e.message,'err');}
+  finally{btn.textContent='Send OTP →';btn.disabled=false;}
+}
+
+async function verifyOtp(){
+  const entered=[0,1,2,3,4,5].map(i=>(document.getElementById('o'+i).value||'').trim()).join('');
+  if(entered.length!==6){sbAuthMsg(2,'✗ Please enter all 6 digits.','err');return;}
+  if(Date.now()-_otpSentAt>OTP_EXPIRY_MS){sbAuthMsg(2,'✗ OTP has expired. Please request a new one.','err');backToEmail();return;}
+  const btn=document.getElementById('verify-otp-btn');
+  btn.textContent='⏳ Verifying…';btn.disabled=true;
+  try{
+    if(entered===_pendingOtp){
+      _authedEmail=_pendingEmail;
+      _pendingOtp=''; _pendingEmail='';
+      // Update last_login
+      await sbUpdate('zdm_users','email=eq.'+encodeURIComponent(_authedEmail),{last_login_at:new Date().toISOString()});
+      await logActivity('login',{email:_authedEmail});
+      // Show main app
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('auth-user-badge').textContent='👤 '+_authedEmail;
+      document.getElementById('auth-user-badge').style.display='inline-block';
+      document.getElementById('signout-btn').style.display='inline-block';
+    }else{
+      sbAuthMsg(2,'✗ Incorrect OTP. Please try again.','err');
+      [0,1,2,3,4,5].forEach(i=>document.getElementById('o'+i).value='');
+      document.getElementById('o0').focus();
+    }
+  }catch(e){sbAuthMsg(2,'✗ '+e.message,'err');}
+  finally{btn.textContent='Verify & Sign In';btn.disabled=false;}
+}
+
+function backToEmail(){
+  _pendingOtp='';_pendingEmail='';
+  document.getElementById('auth-step2').style.display='none';
+  document.getElementById('auth-step1').style.display='block';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-msg1').style.display='none';
+  [0,1,2,3,4,5].forEach(i=>document.getElementById('o'+i).value='');
+}
+
+function otpInput(idx){
+  const val=document.getElementById('o'+idx).value;
+  if(val&&idx<5)document.getElementById('o'+(idx+1)).focus();
+  // Auto-verify when all filled
+  const all=[0,1,2,3,4,5].every(i=>document.getElementById('o'+i).value!=='');
+  if(all)verifyOtp();
+}
+function otpKey(e,idx){
+  if(e.key==='Backspace'&&!document.getElementById('o'+idx).value&&idx>0)document.getElementById('o'+(idx-1)).focus();
+  if(e.key==='ArrowLeft'&&idx>0)document.getElementById('o'+(idx-1)).focus();
+  if(e.key==='ArrowRight'&&idx<5)document.getElementById('o'+(idx+1)).focus();
+}
+
+function doSignOut(){
+  if(running){alert('A deletion is in progress. Cancel it first.');return;}
+  if(!confirm('Sign out?'))return;
+  logActivity('signout',{});
+  _authedEmail='';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-user-badge').style.display='none';
+  document.getElementById('signout-btn').style.display='none';
+  document.getElementById('auth-step1').style.display='block';
+  document.getElementById('auth-step2').style.display='none';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-msg1').style.display='none';
+  doDisconnect();
+}
+
 const MODULES={
   purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
   material_requests:{label:'Material Orders',uid:['material_request_uid','uid','_id'],del:'material_requests',cols:[{h:'MO #',f:'material_request_number'},{h:'Title',f:'material_request_title'},{h:'Status',f:'material_request_status'},{h:'Created',f:'created_at'}]},
@@ -248,6 +440,7 @@ function showConnected(accountName, region){
 
 function doDisconnect(){
   if(running){alert('A run is in progress. Cancel it first.');return;}
+  logActivity('disconnect',{account:$('s-account').textContent||'—'});
   // Reset all state
   _baseUrl=''; allRecs=[];filtRecs=[];selUids=new Set();uidField=null;dryCtx=null;failUids=[];logRows=[];
   $('badge').textContent='○ Not connected';
@@ -294,6 +487,7 @@ async function doConnect(){
       const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||company;
       showMsg('conn-msg','✓ Connected to "'+name+'" on '+dcName,'ok');
       showConnected(name, dcName);
+      logActivity('connect',{account:name,region:dcName});
     }else{
       const body=await authRes.text().catch(()=>'');
       _baseUrl='';
@@ -329,6 +523,7 @@ async function doFetch(){
     showMsg('fetch-msg','✓ Loaded '+allRecs.length+' record(s). UID field: "'+uidField+'".','ok');
     $('s-total').textContent=allRecs.length;$('s-module').textContent=cfg.label;
     filtRecs=[...allRecs];renderTable();
+    logActivity('fetch',{module:modKey(),account:$('s-account').textContent,count:allRecs.length});
   }catch(e){showMsg('fetch-msg','✗ '+e.message,'err');$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#dc2626">Error: '+esc(e.message)+'</td></tr>';}
   finally{btn.textContent='📄 Fetch Records';btn.disabled=false;}
 }
@@ -388,6 +583,7 @@ async function runEngine(uids,dry){
   await Promise.all(Array.from({length:Math.min(conc,uids.length)},worker));
   running=false;$('run-btn').disabled=false;$('pause-btn').style.display='none';$('cancel-btn').style.display='none';$('log-actions').style.display='block';
   $('prog-lbl').textContent=cancelled?'⚠ Cancelled at '+done+'/'+uids.length+' — '+ok+' OK, '+fail+' failed':'✓ Complete — '+ok+' OK, '+fail+' failed';
+  logActivity(dry?'dry_run':'delete',{module:modKey(),account:$('s-account').textContent,total:uids.length,success:ok,failed:fail,cancelled});
   if(dry&&okUids.length&&!cancelled){dryCtx={uids:okUids};$('proceed-btn').textContent='→ DELETE '+okUids.length+' found record(s) — REAL DELETE';$('proceed-btn').style.display='inline-flex';}
   if(!dry){const deleted=new Set(okUids);allRecs=allRecs.filter(r=>!deleted.has(String(r[uidField]||'')));filtRecs=[...allRecs];deleted.forEach(u=>selUids.delete(u));$('s-total').textContent=allRecs.length;updSel();renderTable();}
   if(failUids_.length&&!cancelled){failUids=[...failUids_];$('retry-btn').textContent='↩ Retry '+failUids.length+' failed';$('retry-btn').style.display='inline-flex';}
