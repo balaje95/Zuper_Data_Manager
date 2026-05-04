@@ -299,63 +299,51 @@ async function sendOtp(){
   const btn=document.getElementById('send-otp-btn');
   btn.textContent='⏳ Sending…';btn.disabled=true;
   try{
-    _pendingEmail = email;
-    _otpSentAt    = Date.now();
-
-    // Allow any @zuper.co user — create_user:true auto-registers new employees
-    const res = await fetch(`${SB_URL}/auth/v1/otp`, {
-      method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, create_user: true })
+    _pendingEmail=email;
+    _otpSentAt=Date.now();
+    const res=await fetch(`${SB_URL}/functions/v1/zdm-otp`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body:JSON.stringify({action:'send',email})
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.msg || err.error_description || 'Failed to send OTP');
-    }
-
-    document.getElementById('auth-email-display').textContent = email;
-    document.getElementById('auth-step1').style.display = 'none';
-    document.getElementById('auth-step2').style.display = 'block';
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.error||'Failed to send OTP');
+    document.getElementById('auth-email-display').textContent=email;
+    document.getElementById('auth-step1').style.display='none';
+    document.getElementById('auth-step2').style.display='block';
     document.getElementById('o0').focus();
-    sbAuthMsg(2, '📧 OTP sent to ' + email + '. Check your inbox — valid for 10 minutes.', 'info');
-    await sbInsert('zdm_activity_logs', { email, action: 'otp_requested', details: { email } });
-  } catch(e) { sbAuthMsg(1, '✗ ' + e.message, 'err'); }
-  finally { btn.textContent = 'Send OTP →'; btn.disabled = false; }
+    sbAuthMsg(2,'📧 OTP sent to '+email+'. Check your inbox — valid for 10 minutes.','info');
+  }catch(e){sbAuthMsg(1,'✗ '+e.message,'err');}
+  finally{btn.textContent='Send OTP →';btn.disabled=false;}
 }
 
 async function verifyOtp(){
-  const entered = [0,1,2,3,4,5].map(i => (document.getElementById('o'+i).value||'').trim()).join('');
-  if (entered.length !== 6) { sbAuthMsg(2, '✗ Please enter all 6 digits.', 'err'); return; }
-  if (Date.now() - _otpSentAt > OTP_EXPIRY_MS) { sbAuthMsg(2, '✗ OTP has expired. Please request a new one.', 'err'); backToEmail(); return; }
-  const btn = document.getElementById('verify-otp-btn');
-  btn.textContent = '⏳ Verifying…'; btn.disabled = true;
-  try {
-    // Verify OTP via Supabase Auth
-    const res = await fetch(`${SB_URL}/auth/v1/verify`, {
-      method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'email', email: _pendingEmail, token: entered })
+  const entered=[0,1,2,3,4,5].map(i=>(document.getElementById('o'+i).value||'').trim()).join('');
+  if(entered.length!==6){sbAuthMsg(2,'✗ Please enter all 6 digits.','err');return;}
+  if(Date.now()-_otpSentAt>OTP_EXPIRY_MS){sbAuthMsg(2,'✗ OTP has expired. Please request a new one.','err');backToEmail();return;}
+  const btn=document.getElementById('verify-otp-btn');
+  btn.textContent='⏳ Verifying…';btn.disabled=true;
+  try{
+    const res=await fetch(`${SB_URL}/functions/v1/zdm-otp`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body:JSON.stringify({action:'verify',email:_pendingEmail,code:entered})
     });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.access_token) {
-      _authedEmail = _pendingEmail;
-      _pendingEmail = '';
-      // Upsert into zdm_users so activity logs have a record for this person
-      await sbInsert('zdm_users', { email: _authedEmail, is_active: true, last_login_at: new Date().toISOString() });
-      await sbUpdate('zdm_users', 'email=eq.' + encodeURIComponent(_authedEmail), { last_login_at: new Date().toISOString() });
-      await logActivity('login', { email: _authedEmail });
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('auth-user-badge').textContent = '👤 ' + _authedEmail;
-      document.getElementById('auth-user-badge').style.display = 'inline-block';
-      document.getElementById('signout-btn').style.display = 'inline-block';
-    } else {
-      sbAuthMsg(2, '✗ ' + (data.msg || data.error_description || 'Incorrect OTP. Please try again.'), 'err');
-      [0,1,2,3,4,5].forEach(i => document.getElementById('o'+i).value = '');
+    const data=await res.json().catch(()=>({}));
+    if(res.ok&&data.success){
+      _authedEmail=_pendingEmail;_pendingEmail='';
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('auth-user-badge').textContent='👤 '+_authedEmail;
+      document.getElementById('auth-user-badge').style.display='inline-block';
+      document.getElementById('signout-btn').style.display='inline-block';
+      await logActivity('login',{email:_authedEmail});
+    }else{
+      sbAuthMsg(2,'✗ '+(data.error||'Incorrect OTP. Please try again.'),'err');
+      [0,1,2,3,4,5].forEach(i=>document.getElementById('o'+i).value='');
       document.getElementById('o0').focus();
     }
-  } catch(e) { sbAuthMsg(2, '✗ ' + e.message, 'err'); }
-  finally { btn.textContent = 'Verify & Sign In'; btn.disabled = false; }
+  }catch(e){sbAuthMsg(2,'✗ '+e.message,'err');}
+  finally{btn.textContent='Verify & Sign In';btn.disabled=false;}
 }
 
 function backToEmail(){
