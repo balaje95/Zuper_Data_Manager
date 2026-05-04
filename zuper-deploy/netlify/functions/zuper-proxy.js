@@ -1,65 +1,70 @@
 // Netlify Function — Zuper API Proxy
-// Sits between the browser and Zuper API to bypass CORS.
-// Only forwards requests to *.zuperpro.com for security.
-// Uses Node 18+ native fetch (no node-fetch needed).
+// Uses Node built-in `https` — works on Node 14, 16, 18, 20. No npm install needed.
 
-exports.handler = async (event) => {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
-  };
+const https = require('https');
+const url   = require('url');
 
-  // Handle CORS preflight
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
+};
+
+exports.handler = function (event, context, callback) {
+  // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: corsHeaders, body: '' };
+    return callback(null, { statusCode: 204, headers: CORS, body: '' });
   }
 
-  const target = event.queryStringParameters && event.queryStringParameters.target;
+  const params = event.queryStringParameters || {};
+  const target = params.target;
 
   if (!target) {
-    return {
-      statusCode: 400,
-      headers: corsHeaders,
+    return callback(null, {
+      statusCode: 400, headers: CORS,
       body: JSON.stringify({ error: 'Missing ?target= parameter' }),
-    };
+    });
   }
 
-  // Security: only allow Zuper API domains
   if (!target.startsWith('https://') || !target.includes('zuperpro.com')) {
-    return {
-      statusCode: 403,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'Forbidden: only zuperpro.com targets are allowed' }),
-    };
+    return callback(null, {
+      statusCode: 403, headers: CORS,
+      body: JSON.stringify({ error: 'Forbidden: only zuperpro.com targets allowed' }),
+    });
   }
 
-  // Forward only safe headers
-  const forwardHeaders = { 'Content-Type': 'application/json' };
-  if (event.headers['x-api-key']) forwardHeaders['x-api-key'] = event.headers['x-api-key'];
+  const parsed   = url.parse(target);
+  const fwdHdrs  = { 'Content-Type': 'application/json' };
+  if (event.headers['x-api-key']) fwdHdrs['x-api-key'] = event.headers['x-api-key'];
 
-  try {
-    const fetchOpts = {
-      method: event.httpMethod,
-      headers: forwardHeaders,
-    };
-    if (event.httpMethod !== 'GET' && event.httpMethod !== 'HEAD' && event.body) {
-      fetchOpts.body = event.body;
-    }
+  const options = {
+    hostname: parsed.hostname,
+    path:     parsed.path,
+    method:   event.httpMethod,
+    headers:  fwdHdrs,
+  };
 
-    const upstream = await fetch(target, fetchOpts);
-    const text = await upstream.text();
+  const req = https.request(options, (res) => {
+    let body = '';
+    res.on('data', (chunk) => { body += chunk; });
+    res.on('end', () => {
+      callback(null, {
+        statusCode: res.statusCode,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+        body,
+      });
+    });
+  });
 
-    return {
-      statusCode: upstream.status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      body: text,
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
+  req.on('error', (err) => {
+    callback(null, {
+      statusCode: 500, headers: CORS,
       body: JSON.stringify({ error: err.message }),
-    };
+    });
+  });
+
+  if (event.httpMethod !== 'GET' && event.httpMethod !== 'HEAD' && event.body) {
+    req.write(event.body);
   }
+  req.end();
 };

@@ -1,14 +1,11 @@
 [build]
-  publish = "."
   functions = "netlify/functions"
 
 [functions]
-  node_bundler = "esbuild"
+  node_bundler = "zisi"
 
-# Map /api/zuper-proxy → /.netlify/functions/zuper-proxy
-# This keeps the same URL pattern as Vercel so index.html works on both
 [[redirects]]
-  from = "/api/zuper-proxy"
-  to   = "/.netlify/functions/zuper-proxy"
+  from   = "/api/zuper-proxy"
+  to     = "/.netlify/functions/zuper-proxy"
   status = 200
   force  = true

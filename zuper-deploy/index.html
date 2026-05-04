@@ -387,12 +387,42 @@ let zdm_successUids = [];
 // ══════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════
-function zdm_proxy(url, opts={}) {
-  // Hosted on Vercel / Netlify → serverless proxy (same-origin, no CORS, no third-party)
-  // Opened as local file://      → corsproxy.io fallback
-  const isLocal = window.location.protocol === 'file:' || window.location.hostname === '';
-  if (isLocal) return fetch('https://corsproxy.io/?' + encodeURIComponent(url), opts);
-  return fetch('/api/zuper-proxy?target=' + encodeURIComponent(url), opts);
+// Proxy routing:
+//   http://localhost:*    → /api/zuper-proxy          (node server.js)
+//   https://*.netlify.app → /.netlify/functions/zuper-proxy
+//   https://*.vercel.app  → /api/zuper-proxy
+//   file://               → /.netlify/functions/ then /api/ then corsproxy.io fallback
+let _zdm_proxyBase = null;
+async function zdm_proxy(url, opts={}) {
+  const proto = window.location.protocol;
+  const host  = window.location.hostname;
+
+  // Localhost (node server.js) — always use /api/zuper-proxy
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return fetch('/api/zuper-proxy?target=' + encodeURIComponent(url), opts);
+  }
+
+  // Netlify — call function directly (bypasses redirect entirely)
+  if (host.includes('netlify')) {
+    return fetch('/.netlify/functions/zuper-proxy?target=' + encodeURIComponent(url), opts);
+  }
+
+  // Vercel or any other hosted domain — use /api/zuper-proxy
+  if (proto === 'https:' || proto === 'http:') {
+    return fetch('/api/zuper-proxy?target=' + encodeURIComponent(url), opts);
+  }
+
+  // file:// — try /.netlify/functions/, then /api/, then corsproxy.io
+  if (_zdm_proxyBase) {
+    return fetch(_zdm_proxyBase + '?target=' + encodeURIComponent(url), opts);
+  }
+  try {
+    const r1 = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), opts);
+    _zdm_proxyBase = 'https://corsproxy.io/?';
+    return r1;
+  } catch(e) {
+    throw new Error('No proxy available. Run "node server.js" and open http://localhost:3000');
+  }
 }
 function zdm_apiKey() { return (document.getElementById('zdm_apikey').value||'').trim(); }
 function zdm_region()  { return document.getElementById('zdm_region').value; }
