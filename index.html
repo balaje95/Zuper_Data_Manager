@@ -69,25 +69,21 @@ tbody tr:hover td{background:#fff8f7}
 <div class="wrap">
 
 <!-- CONNECTION -->
-<div class="card">
+<div class="card" id="conn-card">
   <div class="sec-title">🔗 Connection Setup</div>
   <div class="grid3">
     <div>
+      <div class="field-lbl">Company Login Name</div>
+      <input class="inp" id="company" placeholder="e.g. bestroofs" onkeydown="if(event.key==='Enter')doConnect()">
+    </div>
+    <div>
       <div class="field-lbl">API Key</div>
       <div class="pw-wrap">
-        <input class="inp" id="apikey" type="password" placeholder="Paste your API key">
+        <input class="inp" id="apikey" type="password" placeholder="Paste your API key" onkeydown="if(event.key==='Enter')doConnect()">
         <button class="pw-eye" onclick="togglePw()" title="Show/hide">👁</button>
       </div>
     </div>
-    <div>
-      <div class="field-lbl">Region</div>
-      <select id="region">
-        <option value="us-east-1">us-east-1</option>
-        <option value="us-west-1c">us-west-1c</option>
-        <option value="stagingv2">Staging</option>
-      </select>
-    </div>
-    <div>
+    <div id="module-field">
       <div class="field-lbl">Module</div>
       <select id="module" onchange="onModuleChange()">
         <option value="purchase_orders">Purchase Orders</option>
@@ -106,8 +102,9 @@ tbody tr:hover td{background:#fff8f7}
   </div>
   <div class="btn-row">
     <button class="btn btn-o" id="connect-btn" onclick="doConnect()">🔌 Connect</button>
-    <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" disabled>📄 Fetch Records</button>
-    <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;cursor:pointer;margin-left:4px">
+    <button class="btn btn-g" id="disconnect-btn" onclick="doDisconnect()" style="display:none">⏏ Disconnect</button>
+    <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" style="display:none">📄 Fetch Records</button>
+    <label id="dryrun-label" style="display:none;align-items:center;gap:6px;font-size:.82rem;font-weight:600;cursor:pointer;margin-left:4px">
       <input type="checkbox" id="dryrun" checked onchange="updatePill()">
       Dry Run <span id="mode-pill" class="mode-safe">● Safe</span>
     </label>
@@ -116,7 +113,7 @@ tbody tr:hover td{background:#fff8f7}
 </div>
 
 <!-- STATS -->
-<div class="stats">
+<div class="stats" id="stats-section" style="display:none">
   <div class="stat" style="border-left:4px solid #e8401c"><div class="stat-val" id="s-total" style="color:#e8401c">—</div><div class="stat-lbl">Total Records</div></div>
   <div class="stat" style="border-left:4px solid #22c55e"><div class="stat-val" id="s-sel" style="color:#22c55e">0</div><div class="stat-lbl">Selected</div></div>
   <div class="stat" style="border-left:4px solid #6366f1"><div class="stat-val" id="s-module" style="color:#6366f1;font-size:.85rem;padding-top:6px">—</div><div class="stat-lbl">Module</div></div>
@@ -124,7 +121,7 @@ tbody tr:hover td{background:#fff8f7}
 </div>
 
 <!-- TABLE -->
-<div class="card">
+<div class="card" id="table-card" style="display:none">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
     <div class="sec-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0">📊 Fetched Records</div>
     <div class="btn-row">
@@ -204,7 +201,6 @@ tbody tr:hover td{background:#fff8f7}
 
 <script>
 'use strict';
-const REGIONS={'us-east-1':'https://us-east-1.zuperpro.com/api/','us-west-1c':'https://us-west-1c.zuperpro.com/api/','stagingv2':'https://stagingv2.zuperpro.com/api/'};
 const MODULES={
   purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
   material_requests:{label:'Material Orders',uid:['material_request_uid','uid','_id'],del:'material_requests',cols:[{h:'MO #',f:'material_request_number'},{h:'Title',f:'material_request_title'},{h:'Status',f:'material_request_status'},{h:'Created',f:'created_at'}]},
@@ -219,12 +215,12 @@ const MODULES={
   team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',cols:[{h:'Name',f:'team_name'},{h:'Members',f:'members_count'},{h:'Created',f:'created_at'}]}
 };
 let allRecs=[],filtRecs=[],selUids=new Set(),uidField=null,running=false,paused=false,cancelled=false,dryCtx=null,failUids=[],logRows=[];
+let _baseUrl=''; // set after config lookup
 const $=id=>document.getElementById(id);
 const apiKey=()=>$('apikey').value.trim();
-const region=()=>$('region').value;
 const modKey=()=>$('module').value;
 const modCfg=()=>MODULES[modKey()];
-const baseUrl=()=>REGIONS[region()];
+const baseUrl=()=>_baseUrl;
 const hdrs=()=>({'x-api-key':apiKey(),'Content-Type':'application/json'});
 function showMsg(id,txt,type){const e=$(id);e.className='msg msg-'+type;e.textContent=txt;e.style.display='block';}
 function hideMsg(id){$(id).style.display='none';}
@@ -235,23 +231,75 @@ function findUid(rec,cands){for(const f of cands)if(rec[f]!=null&&rec[f]!=='')re
 function togglePw(){const i=$('apikey');i.type=i.type==='password'?'text':'password';}
 function updatePill(){const d=$('dryrun').checked,p=$('mode-pill');p.className=d?'mode-safe':'mode-live';p.textContent=d?'● Safe':'● Live';}
 
+// Show/hide sections progressively
+function showConnected(accountName, region){
+  $('badge').textContent='✓ '+accountName+' ('+region+')';
+  $('connect-btn').style.display='none';
+  $('disconnect-btn').style.display='inline-flex';
+  $('fetch-btn').style.display='inline-flex';
+  $('dryrun-label').style.display='flex';
+  $('company').disabled=true;
+  $('apikey').disabled=true;
+  $('stats-section').style.display='grid';
+  $('table-card').style.display='block';
+  $('s-account').textContent=accountName;
+  $('s-module').textContent=modCfg()?modCfg().label:'—';
+}
+
+function doDisconnect(){
+  if(running){alert('A run is in progress. Cancel it first.');return;}
+  // Reset all state
+  _baseUrl=''; allRecs=[];filtRecs=[];selUids=new Set();uidField=null;dryCtx=null;failUids=[];logRows=[];
+  $('badge').textContent='○ Not connected';
+  $('connect-btn').style.display='inline-flex';
+  $('disconnect-btn').style.display='none';
+  $('fetch-btn').style.display='none';
+  $('dryrun-label').style.display='none';
+  $('company').disabled=false; $('company').value='';
+  $('apikey').disabled=false; $('apikey').value='';
+  $('stats-section').style.display='none';
+  $('table-card').style.display='none';
+  $('del-card').style.display='none';
+  $('s-total').textContent='—'; $('s-sel').textContent='0'; $('s-module').textContent='—'; $('s-account').textContent='—';
+  $('thead').innerHTML=''; $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Connect to an account then click <strong>Fetch Records</strong></td></tr>';
+  $('rec-count').textContent='No records loaded';
+  hideMsg('conn-msg'); hideMsg('fetch-msg');
+}
+
 async function doConnect(){
+  const company=($('company').value||'').trim();
+  if(!company){showMsg('conn-msg','✗ Please enter your company login name.','err');return;}
   if(!apiKey()){showMsg('conn-msg','✗ Please enter your API key.','err');return;}
   const btn=$('connect-btn');btn.textContent='⏳ Connecting…';btn.disabled=true;hideMsg('conn-msg');
   try{
-    const res=await fetch(baseUrl()+'user/company',{method:'GET',headers:hdrs()});
-    if(res.ok){
-      const data=await res.json().catch(()=>({}));
-      const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||'Account';
-      $('badge').textContent='✓ Connected — '+name;
-      $('s-account').textContent=name;
-      $('fetch-btn').disabled=false;
-      showMsg('conn-msg','✓ Connected! Account: '+name,'ok');
+    // Step 1 — resolve company → region/base URL
+    showMsg('conn-msg','🔍 Looking up region for "'+company+'"…','info');
+    const cfgRes=await fetch('https://accounts.zuperpro.com/api/config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json;charset=UTF-8'},
+      body:JSON.stringify({company_name:company})
+    });
+    if(!cfgRes.ok){showMsg('conn-msg','✗ Could not find company "'+company+'". Check the login name and try again.','err');return;}
+    const cfgData=await cfgRes.json();
+    const dcUrl=cfgData?.config?.dc_api_url;
+    const dcName=cfgData?.config?.dc_name||'unknown';
+    if(!dcUrl){showMsg('conn-msg','✗ Config response missing dc_api_url.','err');return;}
+    _baseUrl=dcUrl.replace(/\/$/,'')+'/api/';
+
+    // Step 2 — verify API key against that region
+    showMsg('conn-msg','🔌 Verifying API key on '+dcName+'…','info');
+    const authRes=await fetch(_baseUrl+'user/company',{method:'GET',headers:hdrs()});
+    if(authRes.ok){
+      const data=await authRes.json().catch(()=>({}));
+      const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||company;
+      showMsg('conn-msg','✓ Connected to "'+name+'" on '+dcName,'ok');
+      showConnected(name, dcName);
     }else{
-      const body=await res.text().catch(()=>'');
-      showMsg('conn-msg','✗ '+res.status+' '+res.statusText+(body?' — '+body.slice(0,120):''),'err');
+      const body=await authRes.text().catch(()=>'');
+      _baseUrl='';
+      showMsg('conn-msg','✗ '+authRes.status+' '+authRes.statusText+(body?' — '+body.slice(0,120):''),'err');
     }
-  }catch(e){showMsg('conn-msg','✗ '+e.message+' — Make sure you are on HTTPS (hosted), not opening as a local file.','err');}
+  }catch(e){_baseUrl='';showMsg('conn-msg','✗ '+e.message,'err');}
   finally{btn.textContent='🔌 Connect';btn.disabled=false;}
 }
 
@@ -261,7 +309,7 @@ async function doFetch(){
   btn.textContent='⏳ Fetching…';btn.disabled=true;
   allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
   $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">Loading…</td></tr>';
-  showMsg('fetch-msg','📥 Connecting to '+region()+'…','info');
+  showMsg('fetch-msg','📥 Connecting to '+_baseUrl+'…','info');
   try{
     let page=1,limit=100,maxPages=100;
     while(page<=maxPages){
@@ -352,15 +400,15 @@ async function startRun(){
   const action=dry?'DRY RUN CHECK':'⚠ PERMANENTLY DELETE';
   const note=dry?'\n\nDry run — nothing will be deleted.':'\n\n⚠ THIS CANNOT BE UNDONE.';
   const preview=uids.slice(0,5).join('\n')+(uids.length>5?'\n…+'+( uids.length-5)+' more':'');
-  if(!confirm(action+' '+uids.length+' '+modCfg().label+' record(s) on '+region()+'?\n\nFirst UIDs:\n'+preview+note))return;
+  if(!confirm(action+' '+uids.length+' '+modCfg().label+' record(s) on '+$('s-account').textContent+'?\n\nFirst UIDs:\n'+preview+note))return;
   await runEngine(uids,dry);
 }
-async function proceedReal(){if(!dryCtx)return;const{uids}=dryCtx;dryCtx=null;const preview=uids.slice(0,5).join('\n')+(uids.length>5?'\n…+'+( uids.length-5)+' more':'');if(!confirm('⚠ PERMANENTLY DELETE '+uids.length+' record(s) on '+region()+'?\n\n'+preview+'\n\nThis CANNOT be undone.'))return;await runEngine(uids,false);}
+async function proceedReal(){if(!dryCtx)return;const{uids}=dryCtx;dryCtx=null;const preview=uids.slice(0,5).join('\n')+(uids.length>5?'\n…+'+( uids.length-5)+' more':'');if(!confirm('⚠ PERMANENTLY DELETE '+uids.length+' record(s) on '+$('s-account').textContent+'?\n\n'+preview+'\n\nThis CANNOT be undone.'))return;await runEngine(uids,false);}
 async function retryFailed(){if(!failUids.length)return;if(!confirm('Retry '+failUids.length+' failed record(s)?'))return;const uids=[...failUids];failUids=[];await runEngine(uids,$('dryrun').checked);}
 function togglePause(){if(!running)return;paused=!paused;$('pause-btn').textContent=paused?'▶ Resume':'⏸ Pause';}
 function cancelRun(){if(!running)return;if(confirm('Cancel? Progress so far will be in the log.')){cancelled=true;paused=false;}}
 function downloadLog(){if(!logRows.length){alert('No log yet.');return;}const csv='uid,status,message\n'+logRows.map(r=>'"'+(r.uid||'').replace(/"/g,'""')+'","'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');dlFile(csv,'zdm-log-'+modKey()+'-'+Date.now()+'.csv','text/csv');}
-async function slackAudit(s){const url=($('webhook').value||'').trim();if(!url)return;const emp=($('empid').value||'unknown').trim();try{await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'*⚡ Zuper Data Manager* — '+s.mode+(s.cancelled?' (cancelled)':'')+'\n• Employee: `'+emp+'`\n• Region: `'+region()+'`  Module: `'+modKey()+'`\n• Total: '+s.total+'  ✅ '+s.ok+'  ❌ '+s.fail})});}catch{}}
+async function slackAudit(s){const url=($('webhook').value||'').trim();if(!url)return;const emp=($('empid').value||'unknown').trim();try{await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'*⚡ Zuper Data Manager* — '+s.mode+(s.cancelled?' (cancelled)':'')+'\n• Employee: `'+emp+'`\n• Account: `'+($('s-account').textContent||'—')+'`  Module: `'+modKey()+'`\n• Total: '+s.total+'  ✅ '+s.ok+'  ❌ '+s.fail})});}catch{}}
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='a'){e.preventDefault();const s=$('settings-card');s.style.display=s.style.display==='none'?'block':'none';if(s.style.display==='block')s.scrollIntoView({behavior:'smooth'});}});
 onModuleChange();
 </script>
