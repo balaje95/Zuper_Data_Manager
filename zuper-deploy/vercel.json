@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/zuper-proxy.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/zuper-proxy", "dest": "/api/zuper-proxy.js" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
