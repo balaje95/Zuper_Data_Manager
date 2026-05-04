@@ -99,7 +99,7 @@ tbody tr:hover td{background:#fff8f7}
         <option value="jobs">Jobs</option>
         <option value="invoice">Invoices</option>
         <option value="estimate">Quotes / Estimates</option>
-        <option value="users">Users</option>
+        <option value="user">Users</option>
         <option value="team">Teams</option>
       </select>
     </div>
@@ -206,7 +206,7 @@ tbody tr:hover td{background:#fff8f7}
 'use strict';
 const REGIONS={'us-east-1':'https://us-east-1.zuperpro.com/api/','us-west-1c':'https://us-west-1c.zuperpro.com/api/','stagingv2':'https://stagingv2.zuperpro.com/api/'};
 const MODULES={
-  purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_order',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
+  purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
   material_requests:{label:'Material Orders',uid:['material_request_uid','uid','_id'],del:'material_requests',cols:[{h:'MO #',f:'material_request_number'},{h:'Title',f:'material_request_title'},{h:'Status',f:'material_request_status'},{h:'Created',f:'created_at'}]},
   customers:{label:'Customers',uid:['customer_uid','uid','_id'],del:'customers',cols:[{h:'Name',f:['customer_first_name','customer_last_name']},{h:'Email',f:'customer_email'},{h:'Phone',f:'customer_phone'},{h:'Type',f:'customer_type'},{h:'Created',f:'created_at'}]},
   property:{label:'Properties',uid:['property_uid','uid','_id'],del:'property',cols:[{h:'Name',f:'property_name'},{h:'Address',f:'property_address'},{h:'City',f:'city'},{h:'Status',f:'property_status'},{h:'Created',f:'created_at'}]},
@@ -215,7 +215,7 @@ const MODULES={
   jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'jobs',cols:[{h:'Job #',f:'job_number'},{h:'Title',f:'job_title'},{h:'Status',f:'job_status'},{h:'Customer',f:'customer_name'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}]},
   invoice:{label:'Invoices',uid:['invoice_uid','uid','_id'],del:'invoice',cols:[{h:'Invoice #',f:'invoice_number'},{h:'Title',f:'invoice_title'},{h:'Status',f:'invoice_status'},{h:'Total',f:'invoice_total'},{h:'Due',f:'due_date'},{h:'Created',f:'created_at'}]},
   estimate:{label:'Quotes / Estimates',uid:['estimate_uid','quote_uid','uid'],del:'estimate',cols:[{h:'Quote #',f:'estimate_number'},{h:'Title',f:'estimate_title'},{h:'Status',f:'estimate_status'},{h:'Total',f:'estimate_total'},{h:'Created',f:'created_at'}]},
-  users:{label:'Users',uid:['user_uid','uid','_id'],del:'user',cols:[{h:'Name',f:['user_first_name','user_last_name']},{h:'Email',f:'user_email'},{h:'Role',f:'user_role'},{h:'Status',f:'user_status'},{h:'Created',f:'created_at'}]},
+  user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',cols:[{h:'Name',f:['user_first_name','user_last_name']},{h:'Email',f:'user_email'},{h:'Role',f:'user_role'},{h:'Status',f:'user_status'},{h:'Created',f:'created_at'}]},
   team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',cols:[{h:'Name',f:'team_name'},{h:'Members',f:'members_count'},{h:'Created',f:'created_at'}]}
 };
 let allRecs=[],filtRecs=[],selUids=new Set(),uidField=null,running=false,paused=false,cancelled=false,dryCtx=null,failUids=[],logRows=[];
