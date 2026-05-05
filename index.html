@@ -299,7 +299,8 @@ async function sbGet(table, filter=''){
   return res.ok?await res.json():[];
 }
 async function sbInsert(table, data){
-  await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal,resolution=ignore-duplicates'},body:JSON.stringify(data)});
+  const res = await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},body:JSON.stringify(data)});
+  return res;
 }
 async function sbUpdate(table, filter, data){
   await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},body:JSON.stringify(data)});
