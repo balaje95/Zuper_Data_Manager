@@ -5,83 +5,116 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zuper Data Manager</title>
 <style>
+:root{
+  --bg:#f0f2f5;--card:#fff;--card-shadow:0 2px 8px rgba(0,0,0,.07);
+  --text:#1f2937;--text-sub:#6b7280;--border:#e5e7eb;--border-inp:#ddd;
+  --inp-bg:#fff;--th-bg:#f9fafb;--tr-hover:#fff8f7;--row-sel:#fff5f5;
+  --sec-border:#fce8e3;--lbl:#555;--prog-bg:#f3f4f6;
+  --rs-g-bg:#f0fdf4;--rs-r-bg:#fef2f2;
+  --auth-bg:linear-gradient(135deg,#fff5f3,#fce8e3);--auth-card:#fff;--auth-sub:#888;--otp-border:#ddd;
+  --msg-ok-bg:#f0fdf4;--msg-ok-b:#bbf7d0;--msg-ok-c:#166534;
+  --msg-err-bg:#fef2f2;--msg-err-b:#fecaca;--msg-err-c:#dc2626;
+  --msg-info-bg:#f0f9ff;--msg-info-b:#bae6fd;--msg-info-c:#0369a1;
+  --msg-warn-bg:#fffbeb;--msg-warn-b:#fde68a;--msg-warn-c:#92400e;
+}
+[data-theme=dark]{
+  --bg:#0f172a;--card:#1e293b;--card-shadow:0 2px 8px rgba(0,0,0,.3);
+  --text:#f1f5f9;--text-sub:#94a3b8;--border:#334155;--border-inp:#475569;
+  --inp-bg:#1e293b;--th-bg:#162032;--tr-hover:#1e3a5f;--row-sel:#3b1f1f;
+  --sec-border:#4b2d27;--lbl:#94a3b8;--prog-bg:#334155;
+  --rs-g-bg:#052e16;--rs-r-bg:#2d0a0a;
+  --auth-bg:linear-gradient(135deg,#0f172a,#1e293b);--auth-card:#1e293b;--auth-sub:#64748b;--otp-border:#475569;
+  --msg-ok-bg:#052e16;--msg-ok-b:#166534;--msg-ok-c:#86efac;
+  --msg-err-bg:#2d0a0a;--msg-err-b:#991b1b;--msg-err-c:#fca5a5;
+  --msg-info-bg:#0c1a2e;--msg-info-b:#1e40af;--msg-info-c:#93c5fd;
+  --msg-warn-bg:#1c1408;--msg-warn-b:#92400e;--msg-warn-c:#fcd34d;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:14px;background:#f0f2f5;min-height:100vh}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:14px;background:var(--bg);min-height:100vh;color:var(--text);transition:background .2s,color .2s}
 .hdr{background:linear-gradient(135deg,#e8401c,#c0320f);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.22)}
 .hdr h1{color:#fff;font-size:1.2rem;font-weight:800}
 #badge{background:rgba(255,255,255,.18);color:#fff;font-size:.74rem;font-weight:700;padding:4px 14px;border-radius:20px}
 .wrap{max-width:1140px;margin:22px auto;padding:0 16px}
-.card{background:#fff;border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.sec-title{font-size:.72rem;font-weight:800;color:#e8401c;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid #fce8e3;padding-bottom:8px;margin-bottom:16px}
+.card{background:var(--card);border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:var(--card-shadow)}
+.sec-title{font-size:.72rem;font-weight:800;color:#e8401c;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid var(--sec-border);padding-bottom:8px;margin-bottom:16px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.field-lbl{font-size:.73rem;font-weight:700;color:#555;margin-bottom:5px}
-.inp,select{width:100%;padding:9px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:.84rem;outline:none;background:#fff;box-sizing:border-box;font-family:inherit}
+.field-lbl{font-size:.73rem;font-weight:700;color:var(--lbl);margin-bottom:5px}
+.inp,select{width:100%;padding:9px 13px;border:1.5px solid var(--border-inp);border-radius:8px;font-size:.84rem;outline:none;background:var(--inp-bg);color:var(--text);box-sizing:border-box;font-family:inherit}
 .inp:focus,select:focus{border-color:#e8401c}
 .pw-wrap{position:relative}.pw-wrap .inp{padding-right:36px}
-.pw-eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:.85rem;line-height:1;padding:2px}
+.pw-eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:.85rem;line-height:1;padding:2px;color:var(--text-sub)}
 .btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
 .btn-p{background:#e8401c;color:#fff}.btn-p:hover{background:#c9330f}
-.btn-o{background:#fff;color:#e8401c;border:1.5px solid #e8401c}.btn-o:hover{background:#fff5f5}
+.btn-o{background:transparent;color:#e8401c;border:1.5px solid #e8401c}.btn-o:hover{background:rgba(232,64,28,.08)}
 .btn-d{background:#ef4444;color:#fff}.btn-d:hover{background:#dc2626}
 .btn-w{background:#f59e0b;color:#fff}
 .btn-g{background:#6b7280;color:#fff}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .msg{padding:10px 14px;border-radius:8px;font-size:.82rem;margin-top:10px}
-.msg-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
-.msg-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
-.msg-info{background:#f0f9ff;border:1px solid #bae6fd;color:#0369a1}
-.msg-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.msg-ok{background:var(--msg-ok-bg);border:1px solid var(--msg-ok-b);color:var(--msg-ok-c)}
+.msg-err{background:var(--msg-err-bg);border:1px solid var(--msg-err-b);color:var(--msg-err-c)}
+.msg-info{background:var(--msg-info-bg);border:1px solid var(--msg-info-b);color:var(--msg-info-c)}
+.msg-warn{background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b);color:var(--msg-warn-c)}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.stat{background:var(--card);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--card-shadow)}
 .stat-val{font-size:1.65rem;font-weight:900}
-.stat-lbl{font-size:.68rem;color:#777;margin-top:3px}
+.stat-lbl{font-size:.68rem;color:var(--text-sub);margin-top:3px}
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-thead th{padding:9px 11px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e5e7eb;font-weight:800;color:#374151;background:#f9fafb;white-space:nowrap}
-tbody td{padding:9px 11px;font-size:.82rem;border-bottom:1px solid #f3f4f6}
-tbody tr:hover td{background:#fff8f7}
-.uid-cell{font-family:monospace;font-size:.71rem;color:#6b7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-sel td{background:#fff5f5!important}
-.prog-bar-wrap{background:#f3f4f6;border-radius:99px;height:9px;overflow:hidden}
+thead th{padding:9px 11px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:800;color:var(--text);background:var(--th-bg);white-space:nowrap}
+tbody td{padding:9px 11px;font-size:.82rem;border-bottom:1px solid var(--border);color:var(--text)}
+tbody tr:hover td{background:var(--tr-hover)}
+.uid-cell{font-family:monospace;font-size:.71rem;color:var(--text-sub);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-sel td{background:var(--row-sel)!important}
+.prog-bar-wrap{background:var(--prog-bg);border-radius:99px;height:9px;overflow:hidden}
 .prog-bar{height:9px;border-radius:99px;background:linear-gradient(90deg,#ef4444,#f97316);width:0%;transition:width .25s}
-.prog-lbl{font-size:.75rem;color:#666;margin-top:5px}
+.prog-lbl{font-size:.75rem;color:var(--text-sub);margin-top:5px}
 .log{max-height:230px;overflow-y:auto;background:#0f172a;border-radius:8px;padding:12px;font-family:monospace;font-size:.74rem}
 .log-ok{color:#a3e635}.log-err{color:#f87171}.log-warn{color:#fbbf24}
 .run-stats{display:flex;gap:10px;flex-wrap:wrap}
 .rs{border-radius:8px;padding:10px 18px;text-align:center;min-width:80px}
 .rs-val{font-size:1.4rem;font-weight:900}
-.rs-lbl{font-size:.67rem;color:#555;margin-top:2px}
-.rs-g{background:#f0fdf4;border:1px solid #bbf7d0}.rs-g .rs-val{color:#15803d}
-.rs-r{background:#fef2f2;border:1px solid #fecaca}.rs-r .rs-val{color:#dc2626}
+.rs-lbl{font-size:.67rem;color:var(--text-sub);margin-top:2px}
+.rs-g{background:var(--rs-g-bg);border:1px solid #166534}.rs-g .rs-val{color:#22c55e}
+.rs-r{background:var(--rs-r-bg);border:1px solid #991b1b}.rs-r .rs-val{color:#ef4444}
 .mode-safe{background:#dcfce7;color:#166534;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
 .mode-live{background:#fee2e2;color:#991b1b;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
 #settings-card{display:none}
-@media(max-width:680px){.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
-
-/* ── Auth screen ── */
-#auth-screen{position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#fff5f3,#fce8e3);display:flex;align-items:center;justify-content:center;}
-.auth-box{background:#fff;border-radius:16px;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(232,64,28,.13);text-align:center;}
-.auth-logo{font-size:2rem;margin-bottom:6px}
-.auth-title{font-size:1.15rem;font-weight:800;color:#e8401c;margin-bottom:4px}
-.auth-sub{font-size:.8rem;color:#888;margin-bottom:24px}
-.auth-step{transition:opacity .2s}
-.otp-inputs{display:flex;gap:10px;justify-content:center;margin:16px 0}
-.otp-inputs input{width:46px;height:54px;text-align:center;font-size:1.4rem;font-weight:700;border:2px solid #ddd;border-radius:10px;outline:none;transition:border-color .2s}
-.otp-inputs input:focus{border-color:#e8401c}
-.auth-msg{font-size:.82rem;margin-top:10px;padding:9px 13px;border-radius:8px}
+.theme-btn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 12px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer}
+.theme-btn:hover{background:rgba(255,255,255,.28)}
 #auth-user-badge{background:rgba(255,255,255,.22);color:#fff;font-size:.74rem;font-weight:700;padding:4px 14px;border-radius:20px;display:none}
 .btn-signout{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer;display:none}
+#auth-screen{position:fixed;inset:0;z-index:999;background:var(--auth-bg);display:flex;align-items:center;justify-content:center;}
+.auth-box{background:var(--auth-card);border-radius:16px;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(232,64,28,.13);text-align:center;}
+.auth-logo{font-size:2rem;margin-bottom:6px;cursor:pointer;user-select:none}
+.auth-title{font-size:1.15rem;font-weight:800;color:#e8401c;margin-bottom:4px}
+.auth-sub{font-size:.8rem;color:var(--auth-sub);margin-bottom:24px}
+.auth-step{transition:opacity .2s}
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.otp-inputs input{width:46px;height:54px;text-align:center;font-size:1.4rem;font-weight:700;border:2px solid var(--otp-border);border-radius:10px;outline:none;background:var(--inp-bg);color:var(--text);transition:border-color .2s}
+.otp-inputs input:focus{border-color:#e8401c}
+.auth-msg{font-size:.82rem;margin-top:10px;padding:9px 13px;border-radius:8px}
+#secret-pin-wrap{display:none;margin-top:18px;padding:14px;background:rgba(232,64,28,.06);border:1.5px dashed #e8401c;border-radius:10px}
+#secret-pin{width:100%;padding:10px;border:1.5px solid var(--otp-border);border-radius:8px;font-size:1rem;text-align:center;letter-spacing:6px;background:var(--inp-bg);color:var(--text);outline:none;font-weight:700}
+@media(max-width:680px){.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <!-- ══════════ AUTH SCREEN ══════════ -->
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">⚡</div>
+    <div class="auth-logo" id="auth-logo" onclick="logoClick()">⚡</div>
     <div class="auth-title">Zuper Data Manager</div>
     <div class="auth-sub">Internal tool — authorised users only</div>
+
+    <!-- Secret PIN (hidden — click logo 5x to reveal) -->
+    <div id="secret-pin-wrap">
+      <div style="font-size:.75rem;color:#e8401c;font-weight:700;margin-bottom:8px">🔑 Admin Access</div>
+      <input id="secret-pin" type="password" placeholder="••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPin()">
+      <button class="btn btn-p" style="width:100%;margin-top:10px;justify-content:center" onclick="checkPin()">Enter →</button>
+    </div>
 
     <!-- Step 1: Email -->
     <div id="auth-step1" class="auth-step">
@@ -115,6 +148,7 @@ tbody tr:hover td{background:#fff8f7}
   <div style="display:flex;align-items:center;gap:10px">
     <span id="auth-user-badge"></span>
     <span id="badge">○ Not connected</span>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
     <button class="btn-signout" id="signout-btn" onclick="doSignOut()">Sign Out</button>
   </div>
 </div>
@@ -376,8 +410,11 @@ function doSignOut(){
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('auth-user-badge').style.display='none';
   document.getElementById('signout-btn').style.display='none';
+  // Reset auth screen to clean state
   document.getElementById('auth-step1').style.display='block';
   document.getElementById('auth-step2').style.display='none';
+  document.getElementById('secret-pin-wrap').style.display='none';
+  document.getElementById('secret-pin').value='';
   document.getElementById('auth-email').value='';
   document.getElementById('auth-msg1').style.display='none';
   doDisconnect();
@@ -596,6 +633,63 @@ function cancelRun(){if(!running)return;if(confirm('Cancel? Progress so far will
 function downloadLog(){if(!logRows.length){alert('No log yet.');return;}const csv='uid,status,message\n'+logRows.map(r=>'"'+(r.uid||'').replace(/"/g,'""')+'","'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');dlFile(csv,'zdm-log-'+modKey()+'-'+Date.now()+'.csv','text/csv');}
 async function slackAudit(s){const url=($('webhook').value||'').trim();if(!url)return;const emp=($('empid').value||'unknown').trim();try{await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'*⚡ Zuper Data Manager* — '+s.mode+(s.cancelled?' (cancelled)':'')+'\n• Employee: `'+emp+'`\n• Account: `'+($('s-account').textContent||'—')+'`  Module: `'+modKey()+'`\n• Total: '+s.total+'  ✅ '+s.ok+'  ❌ '+s.fail})});}catch{}}
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='a'){e.preventDefault();const s=$('settings-card');s.style.display=s.style.display==='none'?'block':'none';if(s.style.display==='block')s.scrollIntoView({behavior:'smooth'});}});
+
+// ── DARK / LIGHT MODE ──────────────────────────────────────
+function toggleTheme(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  $('theme-btn').textContent=dark?'🌙 Dark':'☀️ Light';
+  localStorage.setItem('zdm-theme',dark?'light':'dark');
+}
+(function(){
+  const saved=localStorage.getItem('zdm-theme');
+  if(saved==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('theme-btn').textContent='☀️ Light';}
+})();
+
+// ── SECRET ADMIN LOGIN ─────────────────────────────────────
+// Click the ⚡ logo 5× fast to reveal the PIN input (only you know this)
+const SECRET_PIN='zuper@admin2025';
+let _logoClicks=0,_logoTimer=null;
+function logoClick(){
+  _logoClicks++;
+  clearTimeout(_logoTimer);
+  _logoTimer=setTimeout(()=>{_logoClicks=0;},3000);
+  if(_logoClicks>=5){
+    _logoClicks=0;
+    $('auth-step1').style.display='none';
+    $('auth-step2').style.display='none';
+    $('secret-pin-wrap').style.display='block';
+    $('secret-pin').focus();
+  }
+}
+function checkPin(){
+  const entered=($('secret-pin').value||'').trim();
+  if(entered===SECRET_PIN){
+    _authedEmail='admin@zuper.co';
+    // Hide auth screen completely
+    $('auth-screen').style.display='none';
+    // Show header badges
+    $('auth-user-badge').textContent='🔑 Admin';
+    $('auth-user-badge').style.display='inline-block';
+    $('signout-btn').style.display='inline-block';
+    // Unlock the connection card — show all buttons
+    $('connect-btn').style.display='inline-flex';
+    $('fetch-btn').style.display='none'; // shown after connect
+    $('dryrun-label').style.display='none'; // shown after connect
+    $('disconnect-btn').style.display='none';
+    $('company').disabled=false;
+    $('apikey').disabled=false;
+  } else {
+    $('secret-pin').value='';
+    $('secret-pin').style.borderColor='#ef4444';
+    setTimeout(()=>{
+      $('secret-pin').style.borderColor='';
+      $('secret-pin-wrap').style.display='none';
+      $('auth-step1').style.display='block';
+    },800);
+  }
+}
+
 onModuleChange();
 </script>
 </body>
