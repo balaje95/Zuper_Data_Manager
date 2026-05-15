@@ -84,72 +84,20 @@ tbody tr:hover td{background:var(--tr-hover)}
 #settings-card{display:none}
 .theme-btn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 12px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer}
 .theme-btn:hover{background:rgba(255,255,255,.28)}
-#auth-user-badge{background:rgba(255,255,255,.22);color:#fff;font-size:.74rem;font-weight:700;padding:4px 14px;border-radius:20px;display:none}
-.btn-signout{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer;display:none}
-#auth-screen{position:fixed;inset:0;z-index:999;background:var(--auth-bg);display:flex;align-items:center;justify-content:center;}
-.auth-box{background:var(--auth-card);border-radius:16px;padding:36px 40px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(232,64,28,.13);text-align:center;}
-.auth-logo{font-size:2rem;margin-bottom:6px;cursor:pointer;user-select:none}
-.auth-title{font-size:1.15rem;font-weight:800;color:#e8401c;margin-bottom:4px}
-.auth-sub{font-size:.8rem;color:var(--auth-sub);margin-bottom:24px}
-.auth-step{transition:opacity .2s}
-.otp-inputs{display:flex;gap:10px;justify-content:center;margin:16px 0}
-.otp-inputs input{width:46px;height:54px;text-align:center;font-size:1.4rem;font-weight:700;border:2px solid var(--otp-border);border-radius:10px;outline:none;background:var(--inp-bg);color:var(--text);transition:border-color .2s}
-.otp-inputs input:focus{border-color:#e8401c}
-.auth-msg{font-size:.82rem;margin-top:10px;padding:9px 13px;border-radius:8px}
-#secret-pin-wrap{display:none;margin-top:18px;padding:14px;background:rgba(232,64,28,.06);border:1.5px dashed #e8401c;border-radius:10px}
-#secret-pin{width:100%;padding:10px;border:1.5px solid var(--otp-border);border-radius:8px;font-size:1rem;text-align:center;letter-spacing:6px;background:var(--inp-bg);color:var(--text);outline:none;font-weight:700}
-@media(max-width:680px){.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+.badge-green{background:var(--msg-ok-bg);color:var(--msg-ok-c);font-size:.7rem;font-weight:500;padding:2px 10px;border-radius:20px;border:1px solid var(--msg-ok-b)}
+.istep{padding:8px 16px;font-size:.78rem;font-weight:500;color:var(--text-sub);cursor:default;border-bottom:2px solid transparent;margin-bottom:-1.5px}
+.istep.active{color:#e8401c;border-bottom-color:#e8401c}
+.istep.done{color:#166534;border-bottom-color:#166534}
 </style>
 </head>
 <body>
-<!-- ══════════ AUTH SCREEN ══════════ -->
-<div id="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo" id="auth-logo" onclick="logoClick()">⚡</div>
-    <div class="auth-title">Zuper Data Manager</div>
-    <div class="auth-sub">Internal tool — authorised users only</div>
-
-    <!-- Secret PIN (hidden — click logo 5x to reveal) -->
-    <div id="secret-pin-wrap">
-      <div style="font-size:.75rem;color:#e8401c;font-weight:700;margin-bottom:8px">🔑 Admin Access</div>
-      <input id="secret-pin" type="password" placeholder="••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPin()">
-      <button class="btn btn-p" style="width:100%;margin-top:10px;justify-content:center" onclick="checkPin()">Enter →</button>
-    </div>
-
-    <!-- Step 1: Email -->
-    <div id="auth-step1" class="auth-step">
-      <div class="field-lbl" style="text-align:left">Work Email Address</div>
-      <input class="inp" id="auth-email" type="email" placeholder="you@zuper.co" onkeydown="if(event.key==='Enter')sendOtp()">
-      <button class="btn btn-p" style="width:100%;margin-top:12px;justify-content:center" onclick="sendOtp()" id="send-otp-btn">Send OTP →</button>
-      <div id="auth-msg1" class="auth-msg" style="display:none"></div>
-    </div>
-
-    <!-- Step 2: OTP -->
-    <div id="auth-step2" class="auth-step" style="display:none">
-      <div style="font-size:.82rem;color:#555;margin-bottom:4px">Enter the 6-digit code sent to</div>
-      <div id="auth-email-display" style="font-weight:700;color:#e8401c;font-size:.9rem;margin-bottom:16px"></div>
-      <div class="otp-inputs">
-        <input type="text" maxlength="1" id="o0" oninput="otpInput(0)" onkeydown="otpKey(event,0)">
-        <input type="text" maxlength="1" id="o1" oninput="otpInput(1)" onkeydown="otpKey(event,1)">
-        <input type="text" maxlength="1" id="o2" oninput="otpInput(2)" onkeydown="otpKey(event,2)">
-        <input type="text" maxlength="1" id="o3" oninput="otpInput(3)" onkeydown="otpKey(event,3)">
-        <input type="text" maxlength="1" id="o4" oninput="otpInput(4)" onkeydown="otpKey(event,4)">
-        <input type="text" maxlength="1" id="o5" oninput="otpInput(5)" onkeydown="otpKey(event,5)">
-      </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="verifyOtp()" id="verify-otp-btn">Verify & Sign In</button>
-      <div style="margin-top:10px"><button onclick="backToEmail()" style="background:none;border:none;color:#e8401c;font-size:.8rem;cursor:pointer;font-weight:600">← Use a different email</button></div>
-      <div id="auth-msg2" class="auth-msg" style="display:none"></div>
-    </div>
-  </div>
 </div>
 
 <div class="hdr">
   <h1>⚡ Zuper Data Manager</h1>
   <div style="display:flex;align-items:center;gap:10px">
-    <span id="auth-user-badge"></span>
     <span id="badge">○ Not connected</span>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
-    <button class="btn-signout" id="signout-btn" onclick="doSignOut()">Sign Out</button>
   </div>
 </div>
 <div class="wrap">
@@ -190,6 +138,7 @@ tbody tr:hover td{background:var(--tr-hover)}
     <button class="btn btn-o" id="connect-btn" onclick="doConnect()">🔌 Connect</button>
     <button class="btn btn-g" id="disconnect-btn" onclick="doDisconnect()" style="display:none">⏏ Disconnect</button>
     <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" style="display:none">📄 Fetch Records</button>
+    <button class="btn btn-p" id="import-btn" onclick="showImportCard()" style="display:none">📥 Import Products</button>
     <label id="dryrun-label" style="display:none;align-items:center;gap:6px;font-size:.82rem;font-weight:600;cursor:pointer;margin-left:4px">
       <input type="checkbox" id="dryrun" checked onchange="updatePill()">
       Dry Run <span id="mode-pill" class="mode-safe">● Safe</span>
@@ -229,6 +178,8 @@ tbody tr:hover td{background:var(--tr-hover)}
       <tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Connect to an account then click <strong>Fetch Records</strong></td></tr>
     </tbody></table>
   </div>
+  <!-- Pagination -->
+  <div id="pagination" style="display:none;gap:6px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border)"></div>
 </div>
 
 <!-- DELETE -->
@@ -269,6 +220,100 @@ tbody tr:hover td{background:var(--tr-hover)}
   </div>
 </div>
 
+<!-- IMPORT -->
+<div class="card" id="import-card" style="display:none">
+  <div class="sec-title">📥 Import Products (Parts &amp; Services)</div>
+
+  <!-- Steps bar -->
+  <div style="display:flex;margin-bottom:20px;border-bottom:1.5px solid var(--sec-border)">
+    <div class="istep active" id="istep1-tab">① Upload</div>
+    <div class="istep" id="istep2-tab">② Map Columns</div>
+    <div class="istep" id="istep3-tab">③ Validate</div>
+    <div class="istep" id="istep4-tab">④ Import</div>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div id="istep1">
+    <div id="imp-dropzone" onclick="document.getElementById('imp-file').click()"
+      style="border:2px dashed var(--border-inp);border-radius:var(--border-radius-lg);padding:32px;text-align:center;cursor:pointer;margin-bottom:14px">
+      <div style="font-size:2rem;margin-bottom:8px">📂</div>
+      <p style="font-size:.85rem;color:var(--text-sub)"><strong style="color:var(--text)">Click to upload</strong> or drag &amp; drop</p>
+      <p style="font-size:.76rem;color:var(--text-sub);margin-top:4px">CSV or Excel (.xlsx) — up to 5,000 rows</p>
+      <input type="file" id="imp-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="onImportFile(this)">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-o" onclick="downloadImportTemplate()">⬇ Download CSV Template</button>
+      <button class="btn btn-g" onclick="hideImportCard()">← Back</button>
+    </div>
+    <div id="imp-msg1" class="msg" style="display:none;margin-top:10px"></div>
+  </div>
+
+  <!-- Step 2: Map columns -->
+  <div id="istep2" style="display:none">
+    <div id="imp-file-info" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:var(--th-bg);border-radius:8px;font-size:.82rem">
+      <span>📄</span><span id="imp-fname" style="font-weight:600"></span>
+      <span id="imp-rowcount" class="badge badge-green" style="margin-left:4px"></span>
+    </div>
+    <div style="font-size:.75rem;font-weight:500;color:var(--text-sub);margin-bottom:10px">Map each Zuper field to the matching column in your file. <span style="color:#e8401c">★ Required</span></div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse" id="imp-map-table">
+        <thead><tr style="background:var(--th-bg)">
+          <th style="padding:8px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);font-weight:500;color:var(--text-sub);text-align:left">Zuper Field</th>
+          <th style="padding:8px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);font-weight:500;color:var(--text-sub);text-align:left">Your Column</th>
+          <th style="padding:8px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);font-weight:500;color:var(--text-sub);text-align:left">Sample Value</th>
+        </tr></thead>
+        <tbody id="imp-map-body"></tbody>
+      </table>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-p" onclick="runValidation()">Validate →</button>
+      <button class="btn btn-o" onclick="iGoTo(1)">← Back</button>
+    </div>
+    <div id="imp-msg2" class="msg" style="display:none;margin-top:10px"></div>
+  </div>
+
+  <!-- Step 3: Validate -->
+  <div id="istep3" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-total">0</div><div class="rs-lbl">Total</div></div>
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-valid" style="color:#16a34a">0</div><div class="rs-lbl">Ready</div></div>
+      <div class="rs" style="min-width:0;background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b)"><div class="rs-val" id="iv-warn" style="color:#d97706">0</div><div class="rs-lbl">Warnings</div></div>
+      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="iv-err" style="color:#dc2626">0</div><div class="rs-lbl">Errors</div></div>
+    </div>
+    <div style="overflow-x:auto;margin-bottom:14px">
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem" id="iv-preview-table">
+        <thead id="iv-thead"></thead>
+        <tbody id="iv-tbody"></tbody>
+      </table>
+    </div>
+    <div id="imp-msg3" class="msg" style="display:none;margin-bottom:10px"></div>
+    <div class="btn-row">
+      <button class="btn btn-p" id="iv-import-btn" onclick="startImport()">📥 Import Valid Rows →</button>
+      <button class="btn btn-o" onclick="iGoTo(2)">← Back</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Import -->
+  <div id="istep4" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-total">0</div><div class="rs-lbl">Total</div></div>
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-ok" style="color:#16a34a">0</div><div class="rs-lbl">Created</div></div>
+      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="ip-fail" style="color:#dc2626">0</div><div class="rs-lbl">Failed</div></div>
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-pct" style="color:#e8401c">0%</div><div class="rs-lbl">Progress</div></div>
+    </div>
+    <div class="prog-bar-wrap" style="margin-bottom:5px"><div class="prog-bar" id="ip-bar" style="width:0%"></div></div>
+    <div class="prog-lbl" id="ip-lbl" style="margin-bottom:12px">Ready</div>
+    <div class="log" id="ip-log" style="display:none;margin-bottom:12px"></div>
+    <div class="btn-row">
+      <button class="btn btn-d" id="ip-run-btn" onclick="runImport()">▶ Start Import</button>
+      <button class="btn btn-w" id="ip-pause-btn" onclick="toggleImportPause()" style="display:none">⏸ Pause</button>
+      <button class="btn btn-g" id="ip-cancel-btn" onclick="cancelImport()" style="display:none">✕ Cancel</button>
+      <button class="btn btn-o" id="ip-retry-btn" onclick="retryImport()" style="display:none">↩ Retry Failed</button>
+      <button class="btn btn-o" id="ip-dl-btn" onclick="downloadImportLog()" style="display:none">⬇ Download Log</button>
+    </div>
+  </div>
+</div>
+
 <!-- SETTINGS Ctrl+Shift+A -->
 <div class="card" id="settings-card">
   <div class="sec-title">⚙ Advanced Settings <span style="font-size:.7rem;font-weight:400;color:#aaa;text-transform:none;letter-spacing:0">(Ctrl+Shift+A)</span></div>
@@ -287,140 +332,6 @@ tbody tr:hover td{background:var(--tr-hover)}
 
 <script>
 'use strict';
-// ─────────────────────────────────────────
-// SUPABASE CONFIG
-// ─────────────────────────────────────────
-const SB_URL  = 'https://sdbnmkbivozqdbtjahzd.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYm5ta2Jpdm96cWRidGphaHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTU1MTYsImV4cCI6MjA5MDYzMTUxNn0.bHQe1fodpVdZCZfQc8ZBHjpnBhpGRDgzbJkaMwy-S-g';
-const SB_HDR  = {'apikey':SB_KEY,'Content-Type':'application/json'};
-
-async function sbGet(table, filter=''){
-  const res=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY}});
-  return res.ok?await res.json():[];
-}
-async function sbInsert(table, data){
-  const res = await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},body:JSON.stringify(data)});
-  return res;
-}
-async function sbUpdate(table, filter, data){
-  await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...SB_HDR,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},body:JSON.stringify(data)});
-}
-
-// Activity logger — call this throughout the tool
-async function logActivity(action, details={}){
-  if(!_authedEmail) return;
-  await sbInsert('zdm_activity_logs',{email:_authedEmail, action, details});
-}
-
-// ─────────────────────────────────────────
-// AUTH STATE
-// ─────────────────────────────────────────
-let _authedEmail = '';
-let _pendingEmail= '';
-const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
-let _otpSentAt = 0;
-
-function sbAuthMsg(step, txt, type){
-  const el=document.getElementById('auth-msg'+step);
-  const colors={ok:'#f0fdf4;border:1px solid #bbf7d0;color:#166534',err:'#fef2f2;border:1px solid #fecaca;color:#dc2626',info:'#f0f9ff;border:1px solid #bae6fd;color:#0369a1'};
-  el.style.cssText='display:block;padding:9px 13px;border-radius:8px;background:'+colors[type];
-  el.textContent=txt;
-}
-
-async function sendOtp(){
-  const email=(document.getElementById('auth-email').value||'').trim().toLowerCase();
-  if(!email||!email.includes('@')){sbAuthMsg(1,'✗ Please enter a valid email address.','err');return;}
-  if(!email.endsWith('@zuper.co')){sbAuthMsg(1,'✗ Only @zuper.co email addresses are allowed.','err');return;}
-  const btn=document.getElementById('send-otp-btn');
-  btn.textContent='⏳ Sending…';btn.disabled=true;
-  try{
-    _pendingEmail=email;
-    _otpSentAt=Date.now();
-    const res=await fetch(`${SB_URL}/functions/v1/zdm-otp`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY},
-      body:JSON.stringify({action:'send',email})
-    });
-    const data=await res.json().catch(()=>({}));
-    if(!res.ok)throw new Error(data.error||'Failed to send OTP');
-    document.getElementById('auth-email-display').textContent=email;
-    document.getElementById('auth-step1').style.display='none';
-    document.getElementById('auth-step2').style.display='block';
-    document.getElementById('o0').focus();
-    sbAuthMsg(2,'📧 OTP sent to '+email+'. Check your inbox — valid for 10 minutes.','info');
-  }catch(e){sbAuthMsg(1,'✗ '+e.message,'err');}
-  finally{btn.textContent='Send OTP →';btn.disabled=false;}
-}
-
-async function verifyOtp(){
-  const entered=[0,1,2,3,4,5].map(i=>(document.getElementById('o'+i).value||'').trim()).join('');
-  if(entered.length!==6){sbAuthMsg(2,'✗ Please enter all 6 digits.','err');return;}
-  if(Date.now()-_otpSentAt>OTP_EXPIRY_MS){sbAuthMsg(2,'✗ OTP has expired. Please request a new one.','err');backToEmail();return;}
-  const btn=document.getElementById('verify-otp-btn');
-  btn.textContent='⏳ Verifying…';btn.disabled=true;
-  try{
-    const res=await fetch(`${SB_URL}/functions/v1/zdm-otp`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY},
-      body:JSON.stringify({action:'verify',email:_pendingEmail,code:entered})
-    });
-    const data=await res.json().catch(()=>({}));
-    if(res.ok&&data.success){
-      _authedEmail=_pendingEmail;_pendingEmail='';
-      document.getElementById('auth-screen').style.display='none';
-      document.getElementById('auth-user-badge').textContent='👤 '+_authedEmail;
-      document.getElementById('auth-user-badge').style.display='inline-block';
-      document.getElementById('signout-btn').style.display='inline-block';
-      await logActivity('login',{email:_authedEmail});
-    }else{
-      sbAuthMsg(2,'✗ '+(data.error||'Incorrect OTP. Please try again.'),'err');
-      [0,1,2,3,4,5].forEach(i=>document.getElementById('o'+i).value='');
-      document.getElementById('o0').focus();
-    }
-  }catch(e){sbAuthMsg(2,'✗ '+e.message,'err');}
-  finally{btn.textContent='Verify & Sign In';btn.disabled=false;}
-}
-
-function backToEmail(){
-  _pendingEmail = '';
-  document.getElementById('auth-step2').style.display = 'none';
-  document.getElementById('auth-step1').style.display = 'block';
-  document.getElementById('auth-email').value = '';
-  document.getElementById('auth-msg1').style.display = 'none';
-  [0,1,2,3,4,5].forEach(i => document.getElementById('o'+i).value = '');
-}
-
-function otpInput(idx){
-  const val = document.getElementById('o'+idx).value;
-  if (val && idx < 5) document.getElementById('o'+(idx+1)).focus();
-  const all = [0,1,2,3,4,5].every(i => document.getElementById('o'+i).value !== '');
-  if (all) verifyOtp();
-}
-function otpKey(e, idx){
-  if (e.key==='Backspace' && !document.getElementById('o'+idx).value && idx>0) document.getElementById('o'+(idx-1)).focus();
-  if (e.key==='ArrowLeft' && idx>0) document.getElementById('o'+(idx-1)).focus();
-  if (e.key==='ArrowRight' && idx<5) document.getElementById('o'+(idx+1)).focus();
-}
-
-
-function doSignOut(){
-  if(running){alert('A deletion is in progress. Cancel it first.');return;}
-  if(!confirm('Sign out?'))return;
-  logActivity('signout',{});
-  _authedEmail='';
-  document.getElementById('auth-screen').style.display='flex';
-  document.getElementById('auth-user-badge').style.display='none';
-  document.getElementById('signout-btn').style.display='none';
-  // Reset auth screen to clean state
-  document.getElementById('auth-step1').style.display='block';
-  document.getElementById('auth-step2').style.display='none';
-  document.getElementById('secret-pin-wrap').style.display='none';
-  document.getElementById('secret-pin').value='';
-  document.getElementById('auth-email').value='';
-  document.getElementById('auth-msg1').style.display='none';
-  doDisconnect();
-}
-
 const MODULES={
   purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
   material_requests:{label:'Material Orders',uid:['material_request_uid','uid','_id'],del:'material_requests',cols:[{h:'MO #',f:'material_request_number'},{h:'Title',f:'material_request_title'},{h:'Status',f:'material_request_status'},{h:'Created',f:'created_at'}]},
@@ -428,7 +339,7 @@ const MODULES={
   property:{label:'Properties',uid:['property_uid','uid','_id'],del:'property',cols:[{h:'Name',f:'property_name'},{h:'Address',f:'property_address'},{h:'City',f:'city'},{h:'Status',f:'property_status'},{h:'Created',f:'created_at'}]},
   assets:{label:'Assets',uid:['asset_uid','uid','_id'],del:'assets',cols:[{h:'Name',f:'asset_name'},{h:'Serial #',f:'serial_number'},{h:'Type',f:'asset_type'},{h:'Status',f:'asset_status'},{h:'Created',f:'created_at'}]},
   product:{label:'Parts & Services',uid:['product_uid','uid','_id'],del:'product',cols:[{h:'Name',f:'product_name'},{h:'Type',f:'product_type'},{h:'Category',f:'category'},{h:'Price',f:'unit_price'},{h:'Created',f:'created_at'}]},
-  jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'jobs',cols:[{h:'Job #',f:'job_number'},{h:'Title',f:'job_title'},{h:'Status',f:'job_status'},{h:'Customer',f:'customer_name'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}]},
+  jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'job',cols:[{h:'Job #',f:'job_number'},{h:'Title',f:'job_title'},{h:'Status',f:'job_status'},{h:'Customer',f:'customer_name'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}]},
   invoice:{label:'Invoices',uid:['invoice_uid','uid','_id'],del:'invoice',cols:[{h:'Invoice #',f:'invoice_number'},{h:'Title',f:'invoice_title'},{h:'Status',f:'invoice_status'},{h:'Total',f:'invoice_total'},{h:'Due',f:'due_date'},{h:'Created',f:'created_at'}]},
   estimate:{label:'Quotes / Estimates',uid:['estimate_uid','quote_uid','uid'],del:'estimate',cols:[{h:'Quote #',f:'estimate_number'},{h:'Title',f:'estimate_title'},{h:'Status',f:'estimate_status'},{h:'Total',f:'estimate_total'},{h:'Created',f:'created_at'}]},
   user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',cols:[{h:'Name',f:['user_first_name','user_last_name']},{h:'Email',f:'user_email'},{h:'Role',f:'user_role'},{h:'Status',f:'user_status'},{h:'Created',f:'created_at'}]},
@@ -458,6 +369,7 @@ function showConnected(accountName, region){
   $('disconnect-btn').style.display='inline-flex';
   $('fetch-btn').style.display='inline-flex';
   $('dryrun-label').style.display='flex';
+  $('import-btn').style.display = modKey()==='product' ? 'inline-flex' : 'none';
   $('company').disabled=true;
   $('apikey').disabled=true;
   $('stats-section').style.display='grid';
@@ -468,7 +380,6 @@ function showConnected(accountName, region){
 
 function doDisconnect(){
   if(running){alert('A run is in progress. Cancel it first.');return;}
-  logActivity('disconnect',{account:$('s-account').textContent||'—'});
   // Reset all state
   _baseUrl=''; allRecs=[];filtRecs=[];selUids=new Set();uidField=null;dryCtx=null;failUids=[];logRows=[];
   $('badge').textContent='○ Not connected';
@@ -515,7 +426,6 @@ async function doConnect(){
       const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||company;
       showMsg('conn-msg','✓ Connected to "'+name+'" on '+dcName,'ok');
       showConnected(name, dcName);
-      logActivity('connect',{account:name,region:dcName});
     }else{
       const body=await authRes.text().catch(()=>'');
       _baseUrl='';
@@ -551,26 +461,46 @@ async function doFetch(){
     showMsg('fetch-msg','✓ Loaded '+allRecs.length+' record(s). UID field: "'+uidField+'".','ok');
     $('s-total').textContent=allRecs.length;$('s-module').textContent=cfg.label;
     filtRecs=[...allRecs];renderTable();
-    logActivity('fetch',{module:modKey(),account:$('s-account').textContent,count:allRecs.length});
   }catch(e){showMsg('fetch-msg','✗ '+e.message,'err');$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#dc2626">Error: '+esc(e.message)+'</td></tr>';}
   finally{btn.textContent='📄 Fetch Records';btn.disabled=false;}
 }
 
 function renderTable(){
   const cfg=modCfg();if(!cfg||!filtRecs.length||!uidField)return;
+  currentPage=1;
   $('thead').innerHTML='<tr><th><input type="checkbox" onchange="selAll(this.checked)"></th><th>UID</th>'+cfg.cols.map(c=>'<th>'+c.h+'</th>').join('')+'</tr>';
-  $('tbody').innerHTML=filtRecs.map(r=>{
+  renderRows();
+  $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
+  renderPagination();
+  updSel();
+}
+function renderRows(){
+  const cfg=modCfg();if(!cfg||!uidField)return;
+  $('tbody').innerHTML=pageRecs().map(r=>{
     const uid=String(r[uidField]||''),sel=selUids.has(uid);
     return'<tr class="'+(sel?'row-sel':'')+'" data-uid="'+esc(uid)+'"><td><input type="checkbox" '+(sel?'checked':'')+' onchange="toggleRow(\''+esc(uid)+'\',this.checked,this.closest(\'tr\'))"></td><td class="uid-cell" title="'+esc(uid)+'">'+esc(uid)+'</td>'+cfg.cols.map(c=>'<td>'+esc(fmt(getF(r,c.f)))+'</td>').join('')+'</tr>';
   }).join('')||'<tr><td colspan="10" style="padding:28px;text-align:center;color:#aaa">No matching records.</td></tr>';
-  $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
-  updSel();
 }
 function toggleRow(uid,checked,row){if(checked)selUids.add(uid);else selUids.delete(uid);if(row)row.className=checked?'row-sel':'';updSel();}
 function selAll(checked){filtRecs.forEach(r=>{const uid=String(r[uidField]||'');if(uid)checked?selUids.add(uid):selUids.delete(uid);});document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=checked);document.querySelectorAll('#tbody tr').forEach(tr=>tr.className=checked?'row-sel':'');$('selall').checked=checked;updSel();}
 function updSel(){$('s-sel').textContent=selUids.size;if(selUids.size>0)$('del-warn').textContent='⚠ '+selUids.size+' '+modCfg().label+' record(s) selected. '+($('dryrun').checked?'Dry Run ON — nothing will be deleted.':'⚠ LIVE MODE — records will be permanently deleted!');}
-function doSearch(){const q=($('search').value||'').toLowerCase().trim();filtRecs=q?allRecs.filter(r=>JSON.stringify(r).toLowerCase().includes(q)):[...allRecs];renderTable();}
-function onModuleChange(){const cfg=modCfg();$('s-module').textContent=cfg?cfg.label:modKey();allRecs=[];filtRecs=[];selUids=new Set();uidField=null;$('thead').innerHTML='';$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Module changed — click Fetch Records.</td></tr>';$('s-total').textContent='—';$('s-sel').textContent='0';$('rec-count').textContent='No records loaded';hideMsg('fetch-msg');}
+function doSearch(){const q=($('search').value||'').toLowerCase().trim();filtRecs=q?allRecs.filter(r=>JSON.stringify(r).toLowerCase().includes(q)):[...allRecs];currentPage=1;renderTable();}
+function onModuleChange(){
+  const cfg=modCfg();
+  $('s-module').textContent=cfg?cfg.label:modKey();
+  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
+  $('thead').innerHTML='';
+  $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Module changed — click Fetch Records.</td></tr>';
+  $('s-total').textContent='—';$('s-sel').textContent='0';
+  $('rec-count').textContent='No records loaded';
+  hideMsg('fetch-msg');
+  // Show Import button only for product module when connected
+  const isProduct=modKey()==='product';
+  const isConn=!!_baseUrl;
+  const ibtn=$('import-btn');
+  if(ibtn) ibtn.style.display=(isProduct&&isConn)?'inline-flex':'none';
+  if(!isProduct&&typeof hideImportCard==='function') hideImportCard();
+}
 
 function doExport(f){
   if(!allRecs.length){alert('No records to export.');return;}
@@ -592,8 +522,8 @@ async function hitOne(uid,dry){
     const res=await fetch(url,{method:dry?'GET':'DELETE',headers:hdrs()});
     if(res.ok)return{ok:true,msg:res.status+' '+(dry?'found':'deleted')};
     let d='';try{const b=await res.json();d=b.message||b.error||JSON.stringify(b).slice(0,80);}catch{d=await res.text().then(t=>t.slice(0,80)).catch(()=>'');}
-    return{ok:false,msg:res.status+' '+d};
-  }catch(e){return{ok:false,msg:'Network: '+e.message};}
+    return{ok:false,msg:res.status+' '+d+' ['+delEndpoint+']'};
+  }catch(e){return{ok:false,msg:'Network: '+e.message+' ['+delEndpoint+']'};}
 }
 async function waitUnpause(){while(paused&&!cancelled)await new Promise(r=>setTimeout(r,200));}
 
@@ -611,7 +541,6 @@ async function runEngine(uids,dry){
   await Promise.all(Array.from({length:Math.min(conc,uids.length)},worker));
   running=false;$('run-btn').disabled=false;$('pause-btn').style.display='none';$('cancel-btn').style.display='none';$('log-actions').style.display='block';
   $('prog-lbl').textContent=cancelled?'⚠ Cancelled at '+done+'/'+uids.length+' — '+ok+' OK, '+fail+' failed':'✓ Complete — '+ok+' OK, '+fail+' failed';
-  logActivity(dry?'dry_run':'delete',{module:modKey(),account:$('s-account').textContent,total:uids.length,success:ok,failed:fail,cancelled});
   if(dry&&okUids.length&&!cancelled){dryCtx={uids:okUids};$('proceed-btn').textContent='→ DELETE '+okUids.length+' found record(s) — REAL DELETE';$('proceed-btn').style.display='inline-flex';}
   if(!dry){const deleted=new Set(okUids);allRecs=allRecs.filter(r=>!deleted.has(String(r[uidField]||'')));filtRecs=[...allRecs];deleted.forEach(u=>selUids.delete(u));$('s-total').textContent=allRecs.length;updSel();renderTable();}
   if(failUids_.length&&!cancelled){failUids=[...failUids_];$('retry-btn').textContent='↩ Retry '+failUids.length+' failed';$('retry-btn').style.display='inline-flex';}
@@ -635,60 +564,507 @@ function downloadLog(){if(!logRows.length){alert('No log yet.');return;}const cs
 async function slackAudit(s){const url=($('webhook').value||'').trim();if(!url)return;const emp=($('empid').value||'unknown').trim();try{await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'*⚡ Zuper Data Manager* — '+s.mode+(s.cancelled?' (cancelled)':'')+'\n• Employee: `'+emp+'`\n• Account: `'+($('s-account').textContent||'—')+'`  Module: `'+modKey()+'`\n• Total: '+s.total+'  ✅ '+s.ok+'  ❌ '+s.fail})});}catch{}}
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='a'){e.preventDefault();const s=$('settings-card');s.style.display=s.style.display==='none'?'block':'none';if(s.style.display==='block')s.scrollIntoView({behavior:'smooth'});}});
 
-// ── DARK / LIGHT MODE ──────────────────────────────────────
-function toggleTheme(){
-  const dark=document.documentElement.getAttribute('data-theme')==='dark';
-  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
-  $('theme-btn').textContent=dark?'🌙 Dark':'☀️ Light';
-  localStorage.setItem('zdm-theme',dark?'light':'dark');
+// ── IMPORT MODULE ──────────────────────────────────────────────────────────────
+const IMPORT_FIELD_DEFS = [
+  { key:'product_id',         label:'Product ID',               col:'Product ID (*)',             required:true  },
+  { key:'product_name',       label:'Product Name',             col:'Product Name (*)',           required:true  },
+  { key:'product_type',       label:'Product Type',             col:'Product Type (*)',           required:true, hint:'PARTS | SERVICE | BUNDLE' },
+  { key:'product_category',   label:'Product Category',         col:'Product Category (*)',       required:true  },
+  { key:'price',              label:'Price',                    col:'Price (*)',                  required:true  },
+  { key:'has_custom_tax',     label:'Has Custom Tax',           col:'Has Custom Tax (*)',         required:true, hint:'YES | NO' },
+  { key:'description',        label:'Product Description',      col:'Product Description',        required:false },
+  { key:'brand',              label:'Brand',                    col:'Brand',                      required:false },
+  { key:'specification',      label:'Specification',            col:'Specification',              required:false },
+  { key:'purchase_price',     label:'Purchase Price',           col:'Purchase Price',             required:false },
+  { key:'uom',                label:'UOM',                      col:'UOM (Unit of Measurement)',  required:false },
+  { key:'location',           label:'Location',                 col:'Location',                   required:false },
+  { key:'available_qty',      label:'Quantity',                 col:'Quantity',                   required:false },
+  { key:'min_quantity',       label:'Min. Quantity',            col:'Min. Quantity',              required:false },
+  { key:'tax_exempt',         label:'Tax Exempt',               col:'Tax Exempt',                 required:false, hint:'YES | NO' },
+  { key:'tax_name',           label:'Tax Name',                 col:'Tax Name',                   required:false },
+  { key:'tax_rate',           label:'Tax Rate (%)',             col:'Tax Rate (In Percentage)',   required:false },
+  { key:'markup_type',        label:'Markup Type',              col:'Markup Type',                required:false, hint:'PERCENTAGE | FLAT' },
+  { key:'markup_value',       label:'Markup Value',             col:'Markup Value',               required:false },
+  { key:'track_quantity',     label:'Track Quantity',           col:'Track Quantity',             required:false, hint:'YES | NO' },
+];
+
+let impRows=[], impHeaders=[], impColMap={}, impCategories=[], impLocations=[];
+let impValid=[], impFailed=[], impLogRows=[];
+let impPaused=false, impCancelled=false, impRunning=false;
+
+// Show/hide import card
+function showImportCard(){
+  $('import-card').style.display='block';
+  $('import-card').scrollIntoView({behavior:'smooth',block:'start'});
+  iGoTo(1);
+  // Pre-fetch categories and locations in background
+  fetchImportMeta();
 }
+function hideImportCard(){$('import-card').style.display='none';}
+
+async function fetchImportMeta(){
+  if(!apiKey()||!_baseUrl) return;
+  try{
+    const [catRes, locRes] = await Promise.all([
+      fetch(baseUrl()+'products/category?count=200&page=1',{headers:hdrs()}),
+      fetch(baseUrl()+'products/location?count=50&page=1',{headers:hdrs()})
+    ]);
+    if(catRes.ok){ const d=await catRes.json(); impCategories=d.data||d.categories||[]; }
+    if(locRes.ok){ const d=await locRes.json(); impLocations=d.data||[]; }
+  }catch(e){ console.warn('Import meta fetch:',e.message); }
+}
+
+// Step navigation
+function iGoTo(n){
+  [1,2,3,4].forEach(i=>{
+    $('istep'+i).style.display = i===n?'block':'none';
+    const tab=$('istep'+i+'-tab');
+    tab.className='istep'+(i===n?' active':i<n?' done':'');
+  });
+}
+
+// ── FILE PARSING ───────────────────────────────────────────────────────────────
+function parseCSV(text){
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(!lines.length) return {headers:[],rows:[]};
+  function splitLine(line){
+    const vals=[]; let cur='', inQ=false;
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'&&!inQ){inQ=true;continue;}
+      if(line[i]==='"'&&inQ){inQ=false;continue;}
+      if(line[i]===','&&!inQ){vals.push(cur.trim());cur='';continue;}
+      cur+=line[i];
+    }
+    vals.push(cur.trim());
+    return vals;
+  }
+  const headers=splitLine(lines[0]);
+  const rows=lines.slice(1).map(line=>{
+    const vals=splitLine(line);
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(vals[i]||'').trim());
+    return obj;
+  }).filter(r=>Object.values(r).some(v=>v));
+  return {headers,rows};
+}
+
+function onImportFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let parsed;
+    if(ext==='csv'){
+      parsed = parseCSV(e.target.result);
+    } else {
+      // Excel via SheetJS
+      try{
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws,{defval:''});
+        const headers = json.length ? Object.keys(json[0]) : [];
+        parsed = {headers, rows:json.map(r=>{const o={};headers.forEach(h=>o[h]=String(r[h]||'').trim());return o;})};
+      }catch(ex){
+        showImpMsg(1,'✗ Could not parse Excel file: '+ex.message,'err'); return;
+      }
+    }
+    if(!parsed.rows.length){ showImpMsg(1,'✗ File appears empty or has no data rows.','err'); return; }
+    impHeaders=parsed.headers;
+    impRows=parsed.rows;
+    $('imp-fname').textContent=file.name;
+    $('imp-rowcount').textContent=parsed.rows.length+' rows';
+    buildColumnMapper();
+    iGoTo(2);
+  };
+  if(ext==='csv') reader.readAsText(file);
+  else reader.readAsBinaryString(file);
+}
+
+// ── COLUMN MAPPER ─────────────────────────────────────────────────────────────
+function buildColumnMapper(){
+  const colOptions = ['(skip)'].concat(impHeaders).map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join('');
+  const tbody = $('imp-map-body');
+  tbody.innerHTML = IMPORT_FIELD_DEFS.map(fd=>{
+    // Auto-match: find best column header by fuzzy similarity
+    const auto = autoMatch(fd.key, impHeaders);
+    const sel = ['(skip)'].concat(impHeaders).map(h=>`<option value="${esc(h)}" ${h===auto?'selected':''}>${esc(h)}</option>`).join('');
+    const sample = auto && impRows[0] ? esc(String(impRows[0][auto]||'').slice(0,40)) : '<span style="color:var(--text-sub)">—</span>';
+    return `<tr style="border-bottom:0.5px solid var(--border)">
+      <td style="padding:8px 12px;font-size:.82rem;white-space:nowrap">
+        ${fd.required?'<span style="color:#e8401c;margin-right:3px">★</span>':''}
+        <strong>${fd.label}</strong>
+        ${fd.hint?`<span style="font-size:.72rem;color:var(--text-sub);margin-left:6px">${fd.hint}</span>`:''}
+      </td>
+      <td style="padding:8px 12px">
+        <select id="imap-${fd.key}" onchange="updateSample('${fd.key}')" style="width:100%;padding:5px 8px;border:0.5px solid var(--border-inp);border-radius:6px;font-size:.8rem;background:var(--inp-bg);color:var(--text);outline:none">
+          ${sel}
+        </select>
+      </td>
+      <td id="isample-${fd.key}" style="padding:8px 12px;font-size:.78rem;color:var(--text-sub)">${sample}</td>
+    </tr>`;
+  }).join('');
+}
+
+function autoMatch(fieldKey, headers){
+  // First try exact match against the Zuper template column name
+  const fd = IMPORT_FIELD_DEFS.find(f=>f.key===fieldKey);
+  if(fd && fd.col){
+    const exact = headers.find(h=>h===fd.col || h.trim()===fd.col.trim());
+    if(exact) return exact;
+  }
+  // Fallback fuzzy aliases
+  const aliases = {
+    product_id:['product id','id','sku','number','product number','product_id'],
+    product_name:['product name','name','item name','product_name'],
+    product_type:['product type','type','item type','product_type'],
+    product_category:['product category','category','cat'],
+    price:['price','selling price','unit price'],
+    has_custom_tax:['has custom tax','custom tax'],
+    description:['description','desc','product description'],
+    brand:['brand'],
+    purchase_price:['purchase price','cost','buy price'],
+    uom:['uom','unit','unit of measurement'],
+    location:['location','warehouse'],
+    available_qty:['quantity','qty','available qty','stock'],
+    min_quantity:['min. quantity','min quantity','minimum','min qty'],
+    tax_exempt:['tax exempt'],
+    tax_name:['tax name'],
+    tax_rate:['tax rate','tax rate (in percentage)'],
+    markup_type:['markup type'],
+    markup_value:['markup value'],
+    track_quantity:['track quantity'],
+  };
+  const cands = aliases[fieldKey] || [fieldKey.replace(/_/g,' ')];
+  const headerLower = headers.map(h=>h.toLowerCase().trim());
+  for(const c of cands){
+    const idx=headerLower.indexOf(c.toLowerCase());
+    if(idx>=0) return headers[idx];
+  }
+  return '(skip)';
+}
+
+function updateSample(fieldKey){
+  const col = document.getElementById('imap-'+fieldKey)?.value;
+  const sample = $('isample-'+fieldKey);
+  if(sample){
+    const val = col&&col!=='(skip)'&&impRows[0] ? String(impRows[0][col]||'').slice(0,40) : '—';
+    sample.innerHTML = esc(val)||'<span style="color:var(--text-sub)">—</span>';
+  }
+}
+
+function getColMap(){
+  const map={};
+  IMPORT_FIELD_DEFS.forEach(fd=>{
+    const el=document.getElementById('imap-'+fd.key);
+    if(el&&el.value&&el.value!=='(skip)') map[fd.key]=el.value;
+  });
+  return map;
+}
+
+// ── VALIDATION ────────────────────────────────────────────────────────────────
+function runValidation(){
+  impColMap = getColMap();
+  const missing = IMPORT_FIELD_DEFS.filter(f=>f.required&&!impColMap[f.key]).map(f=>f.label);
+  if(missing.length){showImpMsg(2,'✗ Please map required fields: '+missing.join(', '),'err');return;}
+
+  const VALID_TYPES = new Set(['PARTS','SERVICE','BUNDLE']);
+  const results = impRows.map((row,i)=>{
+    const r = {};
+    IMPORT_FIELD_DEFS.forEach(fd=>{ r[fd.key]=impColMap[fd.key]?String(row[impColMap[fd.key]]||'').trim():''; });
+    const errs=[], warns=[];
+    if(!r.product_name) errs.push('Name required');
+    if(!r.product_type) errs.push('Type required');
+    else if(!VALID_TYPES.has(r.product_type.toUpperCase())) errs.push('Type must be PARTS, SERVICE, or BUNDLE');
+    else r.product_type = r.product_type.toUpperCase();
+    if(!r.product_id) errs.push('Product number required');
+    if(r.price===''||r.price===undefined) errs.push('Selling price required');
+    else if(isNaN(parseFloat(r.price))) errs.push('Price must be a number');
+    if(!r.product_category) errs.push('Category required');
+    if(r.available_qty && isNaN(parseInt(r.available_qty))) warns.push('Available qty not a number');
+    if(r.min_quantity && isNaN(parseInt(r.min_quantity))) warns.push('Min qty not a number');
+    return {row:i+2, data:r, errs, warns, valid:errs.length===0};
+  });
+
+  const valid=results.filter(r=>r.valid).length;
+  const errs=results.filter(r=>!r.valid).length;
+  const warns=results.filter(r=>r.valid&&r.warns.length).length;
+
+  $('iv-total').textContent=results.length;
+  $('iv-valid').textContent=valid;
+  $('iv-warn').textContent=warns;
+  $('iv-err').textContent=errs;
+
+  // Preview table — first 10 rows
+  const previewCols=['product_name','product_type','product_id','price','product_category'];
+  $('iv-thead').innerHTML='<tr style="background:var(--th-bg)"><th style="padding:7px 10px;font-size:.7rem;border-bottom:0.5px solid var(--border);color:var(--text-sub)">Row</th>'+
+    previewCols.map(k=>'<th style="padding:7px 10px;font-size:.7rem;border-bottom:0.5px solid var(--border);color:var(--text-sub)">'+IMPORT_FIELD_DEFS.find(f=>f.key===k)?.label+'</th>').join('')+
+    '<th style="padding:7px 10px;font-size:.7rem;border-bottom:0.5px solid var(--border);color:var(--text-sub)">Status</th></tr>';
+
+  $('iv-tbody').innerHTML=results.slice(0,20).map(r=>{
+    const statusCell = r.errs.length
+      ? `<td style="padding:7px 10px"><span style="background:var(--msg-err-bg);color:var(--msg-err-c);padding:2px 8px;border-radius:20px;font-size:.72rem">✗ ${esc(r.errs[0])}</span></td>`
+      : r.warns.length
+        ? `<td style="padding:7px 10px"><span style="background:var(--msg-warn-bg);color:var(--msg-warn-c);padding:2px 8px;border-radius:20px;font-size:.72rem">⚠ ${esc(r.warns[0])}</span></td>`
+        : `<td style="padding:7px 10px"><span style="background:var(--msg-ok-bg);color:var(--msg-ok-c);padding:2px 8px;border-radius:20px;font-size:.72rem">✓ OK</span></td>`;
+    return `<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:7px 10px;font-size:.75rem;color:var(--text-sub)">${r.row}</td>`+
+      previewCols.map(k=>`<td style="padding:7px 10px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${esc(r.data[k]||'—')}</td>`).join('')+
+      statusCell+'</tr>';
+  }).join('');
+
+  impValid = results.filter(r=>r.valid).map(r=>r.data);
+  $('iv-import-btn').textContent=`📥 Import ${valid} Valid Row${valid!==1?'s':''} →`;
+  if(errs>0) showImpMsg(3,errs+' row(s) have errors and will be skipped. '+valid+' row(s) are ready to import.','warn');
+  else showImpMsg(3,'✓ All '+valid+' row(s) are valid and ready to import.','ok');
+  iGoTo(3);
+}
+
+// ── IMPORT ENGINE ─────────────────────────────────────────────────────────────
+function startImport(){
+  if(!impValid.length){alert('No valid rows to import.');return;}
+  iGoTo(4);
+  $('ip-total').textContent=impValid.length;
+  $('ip-ok').textContent='0'; $('ip-fail').textContent='0';
+  $('ip-bar').style.width='0%'; $('ip-pct').textContent='0%';
+  $('ip-lbl').textContent='Ready — click Start Import';
+  $('ip-log').style.display='none'; $('ip-log').innerHTML='';
+  $('ip-run-btn').style.display='inline-flex';
+  $('ip-pause-btn').style.display='none';
+  $('ip-cancel-btn').style.display='none';
+  $('ip-retry-btn').style.display='none';
+  $('ip-dl-btn').style.display='none';
+  impFailed=[]; impLogRows=[];
+}
+
+function buildProductPayload(r){
+  // Resolve category uid
+  const catInput=(r.product_category||'').trim().toLowerCase();
+  let catUid='UNCATEGORIZED';
+  if(impCategories.length){
+    const match=impCategories.find(c=>
+      (c.product_category_name||c.category_name||'').toLowerCase()===catInput ||
+      (c.product_category_uid||c.category_uid||'')===r.product_category
+    );
+    catUid=match?(match.product_category_uid||match.category_uid||'UNCATEGORIZED'):r.product_category||'UNCATEGORIZED';
+  }
+  // Resolve location uid
+  let locUid=null;
+  if(r.location&&impLocations.length){
+    const locInput=r.location.trim().toLowerCase();
+    const match=impLocations.find(l=>
+      (l.location_name||'').toLowerCase()===locInput ||
+      (l.location_uid||'')=== r.location
+    );
+    if(match) locUid=match.location_uid||match.uid||null;
+  }
+  const price=parseFloat(r.price)||0;
+  const purchasePrice=r.purchase_price?parseFloat(r.purchase_price)||0:undefined;
+  const availQty=parseInt(r.available_qty)||0;
+  const minQty=parseInt(r.min_quantity)||0;
+  const taxExempt=(r.tax_exempt||'').toUpperCase()==='YES';
+  const hasCustomTax=(r.has_custom_tax||'').toUpperCase()==='YES';
+  const trackQty=(r.track_quantity||'').toUpperCase()==='YES';
+  const taxRate=parseFloat(r.tax_rate)||0;
+
+  const tax = taxExempt
+    ? { tax_exempt: true }
+    : hasCustomTax && r.tax_name
+      ? { tax_exempt: false, tax_name: r.tax_name||'', tax_rate: taxRate }
+      : { tax_exempt: false, tax_name:'', tax_rate:'' };
+
+  const product={
+    product_name: r.product_name,
+    product_id:   r.product_id,
+    product_type: (r.product_type||'PARTS').toUpperCase(),
+    price,
+    min_quantity: minQty,
+    quantity: 0,
+    is_available: true,
+    product_category: catUid,
+    uom: r.uom||'',
+    brand: r.brand||'',
+    specification: r.specification||'',
+    product_description: r.description?`<p>${r.description.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`:'',
+    product_image:'',
+    pricing_level:'ROLLUP',
+    track_quantity: trackQty,
+    has_custom_tax: hasCustomTax,
+    meta_data:[],
+    is_billable:true,
+    consider_profitability:true,
+    is_commissionable:true,
+    location_availability: locUid?[{location:locUid,min_quantity:minQty,quantity:availQty,serial_nos:[]}]:[],
+    tax,
+    product_files:[],
+    option:{customer_selection:false,option_label:'Option',option_values:[]},
+  };
+  if(purchasePrice!==undefined) product.purchase_price=purchasePrice;
+  if(r.markup_type&&r.markup_value){
+    product.markup={
+      markup_type:(r.markup_type||'PERCENTAGE').toUpperCase()==='FLAT'?'FLAT':'PERCENTAGE',
+      markup_value:parseFloat(r.markup_value)||0
+    };
+  }
+  return {product, vendor:[]};
+}
+
+function impLog(text, level){
+  const el=$('ip-log');
+  el.style.display='block';
+  const d=document.createElement('div');
+  d.style.color=level==='ok'?'#a3e635':level==='err'?'#f87171':'#fbbf24';
+  d.textContent=(level==='ok'?'✓ ':level==='err'?'✗ ':'⚠ ')+text;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+  impLogRows.push({status:level,message:text});
+}
+
+async function runImport(){
+  const btn=$('ip-run-btn');
+  btn.style.display='none';
+  $('ip-pause-btn').style.display='inline-flex';
+  $('ip-cancel-btn').style.display='inline-flex';
+  impPaused=false; impCancelled=false; impRunning=true;
+  impFailed=[]; impLogRows=[];
+  $('ip-log').innerHTML=''; $('ip-log').style.display='block';
+
+  let ok=0,fail=0,done=0;
+  const rows=[...impValid];
+  $('ip-total').textContent=rows.length;
+
+  for(const row of rows){
+    if(impCancelled) break;
+    while(impPaused&&!impCancelled) await new Promise(r=>setTimeout(r,200));
+
+    try{
+      const payload=buildProductPayload(row);
+      const res=await fetch(baseUrl()+'product',{method:'POST',headers:hdrs(),body:JSON.stringify(payload)});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&(data.type==='success'||data.data)){
+        ok++;
+        $('ip-ok').textContent=ok;
+        impLog(row.product_name+' — created ('+row.product_type+')', 'ok');
+      } else {
+        fail++;
+        impFailed.push(row);
+        $('ip-fail').textContent=fail;
+        const errMsg=data.message||data.error||JSON.stringify(data).slice(0,80);
+        impLog(row.product_name+' — '+res.status+' '+errMsg,'err');
+      }
+    }catch(e){
+      fail++;
+      impFailed.push(row);
+      $('ip-fail').textContent=fail;
+      impLog(row.product_name+' — Network: '+e.message,'err');
+    }
+
+    done++;
+    const pct=Math.round(done/rows.length*100);
+    $('ip-bar').style.width=pct+'%';
+    $('ip-pct').textContent=pct+'%';
+    $('ip-lbl').textContent=done+' / '+rows.length+' processed';
+  }
+
+  impRunning=false;
+  $('ip-pause-btn').style.display='none';
+  $('ip-cancel-btn').style.display='none';
+  $('ip-dl-btn').style.display='inline-flex';
+  if(impFailed.length){
+    $('ip-retry-btn').textContent='↩ Retry '+impFailed.length+' Failed';
+    $('ip-retry-btn').style.display='inline-flex';
+  }
+  $('ip-lbl').textContent=(impCancelled?'⚠ Cancelled — ':'✓ Complete — ')+ok+' created, '+fail+' failed';
+  // Refresh the fetched records table if on product module
+  if(modKey()==='product') doFetch();
+}
+
+function toggleImportPause(){
+  if(!impRunning) return;
+  impPaused=!impPaused;
+  $('ip-pause-btn').textContent=impPaused?'▶ Resume':'⏸ Pause';
+}
+function cancelImport(){
+  if(!impRunning) return;
+  if(confirm('Cancel import?')){ impCancelled=true; impPaused=false; }
+}
+async function retryImport(){
+  impValid=[...impFailed];
+  $('ip-retry-btn').style.display='none';
+  await runImport();
+}
+
+function downloadImportLog(){
+  if(!impLogRows.length){ alert('No log yet.'); return; }
+  const csv='status,message\n'+impLogRows.map(r=>'"'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='import-log-'+Date.now()+'.csv';
+  a.click();
+}
+
+function downloadImportTemplate(){
+  const headers='Product ID (*),Product Name (*),Product Type (*),Product Category (*),Price (*),Has Custom Tax (*),Product Description,Brand,Specification,Purchase Price,UOM (Unit of Measurement),Location,Quantity,Min. Quantity,Tax Exempt,Tax Name,Tax Rate (In Percentage),Markup Type,Markup Value,Track Quantity';
+  const sample1='PART-001,Circuit Breaker 20A,PARTS,Electrical,24.99,NO,20 amp single-pole breaker,Siemens,,15.00,EA,Warehouse,10,2,NO,,,,,NO';
+  const sample2='SVC-001,Installation Service,SERVICE,Labor,89.00,NO,Professional installation service,,,65.00,HR,,,0,NO,,,,,NO';
+  const blob=new Blob([headers+'\n'+sample1+'\n'+sample2],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='zuper-products-import-template.csv'; a.click();
+}
+
+function showImpMsg(step,text,type){
+  const el=$('imp-msg'+step);
+  el.className='msg msg-'+type; el.textContent=text; el.style.display='block';
+}
+
+
+// ── DARK / LIGHT MODE ─────────────────────────────────────────────────────────
+function toggleTheme(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', isDark?'light':'dark');
+  $('theme-btn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('zdm-theme', isDark?'light':'dark');
+}
+// Restore saved theme on load
 (function(){
   const saved=localStorage.getItem('zdm-theme');
-  if(saved==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('theme-btn').textContent='☀️ Light';}
+  if(saved==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    const btn=document.getElementById('theme-btn');
+    if(btn) btn.textContent='☀️ Light';
+  }
 })();
 
-// ── SECRET ADMIN LOGIN ─────────────────────────────────────
-// Click the ⚡ logo 5× fast to reveal the PIN input (only you know this)
-const SECRET_PIN='zuper@admin2025';
-let _logoClicks=0,_logoTimer=null;
-function logoClick(){
-  _logoClicks++;
-  clearTimeout(_logoTimer);
-  _logoTimer=setTimeout(()=>{_logoClicks=0;},3000);
-  if(_logoClicks>=5){
-    _logoClicks=0;
-    $('auth-step1').style.display='none';
-    $('auth-step2').style.display='none';
-    $('secret-pin-wrap').style.display='block';
-    $('secret-pin').focus();
-  }
+// ── PAGINATION ─────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 100;
+let currentPage = 1;
+
+function totalPages(){ return Math.max(1, Math.ceil(filtRecs.length / PAGE_SIZE)); }
+function pageRecs(){ return filtRecs.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE); }
+
+function renderPagination(){
+  const total = totalPages();
+  const el = $('pagination');
+  if(!el) return;
+  if(filtRecs.length <= PAGE_SIZE){ el.style.display='none'; return; }
+  el.style.display='flex';
+  const start = (currentPage-1)*PAGE_SIZE+1;
+  const end   = Math.min(currentPage*PAGE_SIZE, filtRecs.length);
+  el.innerHTML = `
+    <button class="btn btn-o" onclick="goPage(1)" ${currentPage===1?'disabled':''} style="padding:5px 10px;font-size:.78rem">«</button>
+    <button class="btn btn-o" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''} style="padding:5px 10px;font-size:.78rem">‹ Prev</button>
+    <span style="font-size:.78rem;color:var(--text-sub);padding:0 8px;align-self:center">
+      Page <strong style="color:var(--text)">${currentPage}</strong> of <strong style="color:var(--text)">${total}</strong>
+      &nbsp;·&nbsp; ${start}–${end} of ${filtRecs.length}
+    </span>
+    <button class="btn btn-o" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''} style="padding:5px 10px;font-size:.78rem">Next ›</button>
+    <button class="btn btn-o" onclick="goPage(${total})" ${currentPage===total?'disabled':''} style="padding:5px 10px;font-size:.78rem">»</button>`;
 }
-function checkPin(){
-  const entered=($('secret-pin').value||'').trim();
-  if(entered===SECRET_PIN){
-    _authedEmail='admin@zuper.co';
-    // Hide auth screen completely
-    $('auth-screen').style.display='none';
-    // Show header badges
-    $('auth-user-badge').textContent='🔑 Admin';
-    $('auth-user-badge').style.display='inline-block';
-    $('signout-btn').style.display='inline-block';
-    // Unlock the connection card — show all buttons
-    $('connect-btn').style.display='inline-flex';
-    $('fetch-btn').style.display='none'; // shown after connect
-    $('dryrun-label').style.display='none'; // shown after connect
-    $('disconnect-btn').style.display='none';
-    $('company').disabled=false;
-    $('apikey').disabled=false;
-  } else {
-    $('secret-pin').value='';
-    $('secret-pin').style.borderColor='#ef4444';
-    setTimeout(()=>{
-      $('secret-pin').style.borderColor='';
-      $('secret-pin-wrap').style.display='none';
-      $('auth-step1').style.display='block';
-    },800);
-  }
+
+function goPage(n){
+  const total = totalPages();
+  currentPage = Math.max(1, Math.min(n, total));
+  renderRows();
+  renderPagination();
+  $('table-card').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 onModuleChange();
