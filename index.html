@@ -1,1073 +1,965 @@
 <!DOCTYPE html>
-<html lang="en">
+<html data-theme="light" lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Zuper Data Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zuper Training Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#f0f2f5;--card:#fff;--card-shadow:0 2px 8px rgba(0,0,0,.07);
-  --text:#1f2937;--text-sub:#6b7280;--border:#e5e7eb;--border-inp:#ddd;
-  --inp-bg:#fff;--th-bg:#f9fafb;--tr-hover:#fff8f7;--row-sel:#fff5f5;
-  --sec-border:#fce8e3;--lbl:#555;--prog-bg:#f3f4f6;
-  --rs-g-bg:#f0fdf4;--rs-r-bg:#fef2f2;
-  --auth-bg:linear-gradient(135deg,#fff5f3,#fce8e3);--auth-card:#fff;--auth-sub:#888;--otp-border:#ddd;
-  --msg-ok-bg:#f0fdf4;--msg-ok-b:#bbf7d0;--msg-ok-c:#166534;
-  --msg-err-bg:#fef2f2;--msg-err-b:#fecaca;--msg-err-c:#dc2626;
-  --msg-info-bg:#f0f9ff;--msg-info-b:#bae6fd;--msg-info-c:#0369a1;
-  --msg-warn-bg:#fffbeb;--msg-warn-b:#fde68a;--msg-warn-c:#92400e;
+/* ── THEME VARIABLES ─────────────────────────────────────── */
+:root {
+  --orange:#e8622a; --blue:#3b82f6; --green:#10b981;
+  --amber:#f59e0b; --purple:#8b5cf6; --pink:#ec4899; --teal:#14b8a6;
+  --transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
-[data-theme=dark]{
-  --bg:#0f172a;--card:#1e293b;--card-shadow:0 2px 8px rgba(0,0,0,.3);
-  --text:#f1f5f9;--text-sub:#94a3b8;--border:#334155;--border-inp:#475569;
-  --inp-bg:#1e293b;--th-bg:#162032;--tr-hover:#1e3a5f;--row-sel:#3b1f1f;
-  --sec-border:#4b2d27;--lbl:#94a3b8;--prog-bg:#334155;
-  --rs-g-bg:#052e16;--rs-r-bg:#2d0a0a;
-  --auth-bg:linear-gradient(135deg,#0f172a,#1e293b);--auth-card:#1e293b;--auth-sub:#64748b;--otp-border:#475569;
-  --msg-ok-bg:#052e16;--msg-ok-b:#166534;--msg-ok-c:#86efac;
-  --msg-err-bg:#2d0a0a;--msg-err-b:#991b1b;--msg-err-c:#fca5a5;
-  --msg-info-bg:#0c1a2e;--msg-info-b:#1e40af;--msg-info-c:#93c5fd;
-  --msg-warn-bg:#1c1408;--msg-warn-b:#92400e;--msg-warn-c:#fcd34d;
+[data-theme="dark"] {
+  --bg:#0a0e17; --surface:#111622; --card:#161e2e; --border:#1e2a3d;
+  --text:#e5e0df; --muted:#7a8499; --dim:#3d4a5c;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-hover: 0 8px 32px rgba(0,0,0,0.6);
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:14px;background:var(--bg);min-height:100vh;color:var(--text);transition:background .2s,color .2s}
-.hdr{background:linear-gradient(135deg,#e8401c,#c0320f);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.22)}
-.hdr h1{color:#fff;font-size:1.2rem;font-weight:800}
-#badge{background:rgba(255,255,255,.18);color:#fff;font-size:.74rem;font-weight:700;padding:4px 14px;border-radius:20px}
-.wrap{max-width:1140px;margin:22px auto;padding:0 16px}
-.card{background:var(--card);border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:var(--card-shadow)}
-.sec-title{font-size:.72rem;font-weight:800;color:#e8401c;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid var(--sec-border);padding-bottom:8px;margin-bottom:16px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.field-lbl{font-size:.73rem;font-weight:700;color:var(--lbl);margin-bottom:5px}
-.inp,select{width:100%;padding:9px 13px;border:1.5px solid var(--border-inp);border-radius:8px;font-size:.84rem;outline:none;background:var(--inp-bg);color:var(--text);box-sizing:border-box;font-family:inherit}
-.inp:focus,select:focus{border-color:#e8401c}
-.pw-wrap{position:relative}.pw-wrap .inp{padding-right:36px}
-.pw-eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:.85rem;line-height:1;padding:2px;color:var(--text-sub)}
-.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
-.btn-p{background:#e8401c;color:#fff}.btn-p:hover{background:#c9330f}
-.btn-o{background:transparent;color:#e8401c;border:1.5px solid #e8401c}.btn-o:hover{background:rgba(232,64,28,.08)}
-.btn-d{background:#ef4444;color:#fff}.btn-d:hover{background:#dc2626}
-.btn-w{background:#f59e0b;color:#fff}
-.btn-g{background:#6b7280;color:#fff}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
-.msg{padding:10px 14px;border-radius:8px;font-size:.82rem;margin-top:10px}
-.msg-ok{background:var(--msg-ok-bg);border:1px solid var(--msg-ok-b);color:var(--msg-ok-c)}
-.msg-err{background:var(--msg-err-bg);border:1px solid var(--msg-err-b);color:var(--msg-err-c)}
-.msg-info{background:var(--msg-info-bg);border:1px solid var(--msg-info-b);color:var(--msg-info-c)}
-.msg-warn{background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b);color:var(--msg-warn-c)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat{background:var(--card);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--card-shadow)}
-.stat-val{font-size:1.65rem;font-weight:900}
-.stat-lbl{font-size:.68rem;color:var(--text-sub);margin-top:3px}
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-thead th{padding:9px 11px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:800;color:var(--text);background:var(--th-bg);white-space:nowrap}
-tbody td{padding:9px 11px;font-size:.82rem;border-bottom:1px solid var(--border);color:var(--text)}
-tbody tr:hover td{background:var(--tr-hover)}
-.uid-cell{font-family:monospace;font-size:.71rem;color:var(--text-sub);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row-sel td{background:var(--row-sel)!important}
-.prog-bar-wrap{background:var(--prog-bg);border-radius:99px;height:9px;overflow:hidden}
-.prog-bar{height:9px;border-radius:99px;background:linear-gradient(90deg,#ef4444,#f97316);width:0%;transition:width .25s}
-.prog-lbl{font-size:.75rem;color:var(--text-sub);margin-top:5px}
-.log{max-height:230px;overflow-y:auto;background:#0f172a;border-radius:8px;padding:12px;font-family:monospace;font-size:.74rem}
-.log-ok{color:#a3e635}.log-err{color:#f87171}.log-warn{color:#fbbf24}
-.run-stats{display:flex;gap:10px;flex-wrap:wrap}
-.rs{border-radius:8px;padding:10px 18px;text-align:center;min-width:80px}
-.rs-val{font-size:1.4rem;font-weight:900}
-.rs-lbl{font-size:.67rem;color:var(--text-sub);margin-top:2px}
-.rs-g{background:var(--rs-g-bg);border:1px solid #166534}.rs-g .rs-val{color:#22c55e}
-.rs-r{background:var(--rs-r-bg);border:1px solid #991b1b}.rs-r .rs-val{color:#ef4444}
-.mode-safe{background:#dcfce7;color:#166534;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
-.mode-live{background:#fee2e2;color:#991b1b;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
-#settings-card{display:none}
-.theme-btn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 12px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer}
-.theme-btn:hover{background:rgba(255,255,255,.28)}
-.badge-green{background:var(--msg-ok-bg);color:var(--msg-ok-c);font-size:.7rem;font-weight:500;padding:2px 10px;border-radius:20px;border:1px solid var(--msg-ok-b)}
-.istep{padding:8px 16px;font-size:.78rem;font-weight:500;color:var(--text-sub);cursor:default;border-bottom:2px solid transparent;margin-bottom:-1.5px}
-.istep.active{color:#e8401c;border-bottom-color:#e8401c}
-.istep.done{color:#166534;border-bottom-color:#166534}
+[data-theme="light"] {
+  --bg:#f0ede8; --surface:#faf9f7; --card:#ffffff; --border:#e0dbd2;
+  --text:#1a1f2e; --muted:#6b7280; --dim:#c4beb6;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-hover: 0 8px 32px rgba(0,0,0,0.14);
+}
+
+/* ── RESET & BASE ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; transition: var(--transition);
+  line-height: 1.6;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::placeholder { color: var(--dim); }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+input, textarea { font-family: inherit; }
+
+/* ── TYPOGRAPHY ──────────────────────────────────────────── */
+h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
+
+/* ── UTILITY CLASSES ─────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 6px; padding: 4px 12px; font-size: 11px;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap; transition: var(--transition);
+}
+.pill {
+  display: inline-flex; align-items: center;
+  border-radius: 20px; padding: 3px 11px; font-size: 12px;
+  font-weight: 600; white-space: nowrap; transition: var(--transition);
+}
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; transition: var(--transition);
+}
+.btn {
+  border: none; border-radius: 10px; padding: 10px 20px;
+  font-size: 14px; font-weight: 600; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn:disabled { opacity: 0.4; cursor: default; }
+.icon-btn {
+  background: none; border: none; color: var(--muted);
+  font-size: 14px; padding: 6px 0; display: flex; align-items: center; gap: 6px;
+  transition: color 0.15s;
+}
+.icon-btn:hover { color: var(--text); }
+.divider { height: 1px; background: var(--border); width: 100%; }
+
+/* ── NAV ─────────────────────────────────────────────────── */
+#nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  height: 64px; display: flex; align-items: center;
+  padding: 0 24px; gap: 16px;
+  transition: var(--transition);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: none; flex-shrink: 0; cursor: pointer;
+}
+.nav-logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--orange); display: flex; align-items: center;
+  justify-content: center; font-size: 16px; font-weight: 800; color: #fff;
+  font-family: 'Outfit', sans-serif;
+}
+.nav-logo-text { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 16px; color: var(--text); }
+.nav-search-wrap { flex: 1; max-width: 400px; position: relative; }
+.nav-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; }
+.nav-search {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 9px 12px 9px 34px; color: var(--text);
+  font-size: 13px; outline: none; transition: border-color 0.15s, var(--transition);
+}
+.nav-search:focus { border-color: color-mix(in srgb, var(--orange) 60%, transparent); }
+.nav-spacer { flex: 1; }
+.nav-breadcrumb { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 13px; }
+.nav-breadcrumb .sep { color: var(--dim); }
+.nav-breadcrumb .crumb-link { color: var(--muted); background: none; border: none; font-size: 13px; padding: 0; }
+.nav-breadcrumb .crumb-link:hover { color: var(--text); }
+.nav-breadcrumb .crumb-cur { color: var(--orange); font-weight: 600; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* Theme toggle */
+.theme-toggle {
+  width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--card); display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.15s;
+}
+.theme-toggle:hover { border-color: color-mix(in srgb, var(--orange) 60%, transparent); }
+
+/* ── MAIN LAYOUT ─────────────────────────────────────────── */
+#main { padding: 32px 0 64px; }
+
+/* ── HOME VIEW ───────────────────────────────────────────── */
+.home-wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.hero {
+  background: linear-gradient(135deg, var(--card) 0%, color-mix(in srgb, var(--card) 70%, var(--orange) 5%) 100%);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 40px 48px; margin-bottom: 36px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  position: relative; overflow: hidden;
+  transition: var(--transition);
+}
+.hero::before {
+  content: ''; position: absolute; top: -80px; right: -80px;
+  width: 320px; height: 320px; border-radius: 50%;
+  background: color-mix(in srgb, var(--orange) 8%, transparent);
+  pointer-events: none;
+}
+.hero-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.hero h1 { font-size: 30px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+.hero h1 span { color: var(--orange); }
+.hero-sub { color: var(--muted); font-size: 15px; margin-bottom: 16px; max-width: 480px; }
+.quick-searches { display: flex; flex-wrap: wrap; gap: 8px; }
+.qs-btn {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 6px 14px; font-size: 12px; color: var(--muted); transition: all 0.15s;
+}
+.qs-btn:hover { border-color: color-mix(in srgb, var(--orange) 60%, transparent); color: var(--text); }
+.track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.track-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.track-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.track-card-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+.track-icon { font-size: 28px; margin-bottom: 10px; }
+.track-name { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.track-desc { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+.track-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.track-pills { display: flex; gap: 8px; }
+.track-rec { color: var(--green); font-size: 12px; font-weight: 600; }
+
+/* ── TRACK VIEW ──────────────────────────────────────────── */
+.track-wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+.track-header {
+  border-radius: 16px; padding: 28px 32px; margin-bottom: 28px;
+  border-left-width: 4px; border-left-style: solid;
+  transition: var(--transition);
+}
+.track-header-icon { font-size: 32px; margin-bottom: 10px; }
+.track-header h2 { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.track-header p { color: var(--muted); font-size: 15px; }
+.module-list { display: flex; flex-direction: column; gap: 12px; }
+.module-row {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 20px 24px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 20px;
+}
+.module-row:hover { box-shadow: var(--shadow); }
+.module-num {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 15px; font-weight: 800; color: var(--muted);
+  font-family: 'Outfit', sans-serif; transition: var(--transition);
+}
+.module-row-info { flex: 1; min-width: 0; }
+.module-row-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.module-row-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.module-row-meta span { color: var(--muted); font-size: 12px; }
+.module-row-meta .dot { color: var(--dim); }
+.module-arrow { color: var(--muted); font-size: 18px; flex-shrink: 0; }
+
+/* ── MODULE VIEW ─────────────────────────────────────────── */
+.module-wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+.module-header {
+  border-radius: 16px; padding: 24px 28px; margin-bottom: 0;
+  border-left-width: 4px; border-left-style: solid;
+}
+.module-header-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.module-header h2 { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.module-header-meta { color: var(--muted); font-size: 13px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-top: 24px; border-bottom: 1px solid var(--border); }
+.tab-btn {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); padding: 12px 18px; font-size: 14px; font-weight: 600;
+  margin-bottom: -1px; border-radius: 8px 8px 0 0; transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); background: color-mix(in srgb, var(--orange) 8%, transparent); }
+.tab-content {
+  background: var(--card); border: 1px solid var(--border);
+  border-top: none; border-radius: 0 0 16px 16px; padding: 32px;
+  transition: var(--transition);
+}
+
+/* Overview tab */
+.section-title { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.summary-text { color: var(--text); line-height: 1.75; font-size: 15px; margin-bottom: 28px; }
+.key-points { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.key-point {
+  display: flex; gap: 14px; align-items: flex-start;
+  border-radius: 10px; padding: 12px 16px;
+}
+.key-point-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff; margin-top: 1px;
+  font-family: 'Outfit', sans-serif;
+}
+.key-point p { margin: 0; color: var(--text); font-size: 14px; line-height: 1.6; }
+.action-cards { display: flex; gap: 12px; flex-wrap: wrap; }
+.action-card {
+  flex: 1; min-width: 200px; padding: 14px 18px; border-radius: 12px;
+  display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.15s;
+  border-width: 1px; border-style: solid;
+}
+.action-card:hover { transform: translateY(-1px); }
+.action-card-icon { font-size: 22px; }
+.action-card-title { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 2px; }
+.action-card-sub { color: var(--muted); font-size: 13px; }
+.action-card-arrow { margin-left: auto; font-size: 16px; }
+
+/* Cheat sheet tab */
+.cheat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+.cheat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.cheat-section {
+  background: var(--surface); border-radius: 14px; padding: 20px;
+  border-top-width: 3px; border-top-style: solid;
+  border-left: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  transition: var(--transition);
+}
+.cheat-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+.cheat-section ul { list-style: none; }
+.cheat-section li {
+  color: var(--text); font-size: 13px; line-height: 1.6; padding: 5px 0;
+  border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-start;
+}
+.cheat-section li:last-child { border-bottom: none; }
+.cheat-section li::before { content: '›'; flex-shrink: 0; margin-top: 1px; color: var(--section-color, var(--orange)); }
+
+/* ── RECORDING TAB ───────────────────────────────────────── */
+.recording-warning {
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 25%, transparent);
+  border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: var(--amber);
+}
+.video-player-wrap { background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; width: 100%; margin-bottom: 16px; }
+.video-player-wrap iframe, .video-player-wrap video { width: 100%; height: 100%; border: none; }
+.video-info { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.video-title { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 15px; }
+.video-url { color: var(--muted); font-size: 12px; margin-top: 3px; word-break: break-all; }
+.video-actions { display: flex; gap: 8px; }
+.video-tip { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); }
+.url-input-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; }
+.url-box-title { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 14px; }
+.url-row { display: flex; gap: 10px; }
+.url-input {
+  flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; color: var(--text); font-size: 14px; outline: none;
+  transition: border-color 0.15s, var(--transition);
+}
+.url-input:focus { border-color: color-mix(in srgb, var(--orange) 60%, transparent); }
+.title-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; margin-bottom: 10px;
+  transition: border-color 0.15s, var(--transition); box-sizing: border-box;
+}
+.title-input:focus { border-color: color-mix(in srgb, var(--orange) 60%, transparent); }
+.url-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.or-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+.or-divider span { color: var(--dim); font-size: 13px; }
+.upload-zone {
+  background: var(--surface); border: 2px dashed var(--border); border-radius: 14px;
+  padding: 36px 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.upload-zone.dragover { border-color: var(--orange); background: color-mix(in srgb, var(--orange) 8%, transparent); }
+.upload-zone-icon { font-size: 40px; margin-bottom: 12px; }
+.upload-zone-title { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 15px; margin-bottom: 6px; }
+.upload-zone-sub { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+.upload-warn { background: color-mix(in srgb, var(--amber) 12%, transparent); border: 1px solid color-mix(in srgb, var(--amber) 20%, transparent); border-radius: 8px; padding: 8px 14px; display: inline-block; font-size: 12px; color: var(--amber); }
+
+/* ── SEARCH VIEW ─────────────────────────────────────────── */
+.search-wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+.search-result {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 20px 24px; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; gap: 16px;
+  margin-bottom: 12px;
+}
+.search-result:hover { box-shadow: var(--shadow); }
+.search-icon-wrap {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.search-result-info { flex: 1; min-width: 0; }
+.search-result-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.search-result-meta { color: var(--muted); font-size: 13px; }
+.search-arrow { color: var(--muted); font-size: 18px; flex-shrink: 0; align-self: center; }
+.search-empty { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 48px 32px; text-align: center; }
+.search-empty-icon { font-size: 48px; margin-bottom: 16px; }
+.search-empty p { color: var(--muted); }
+
+/* ── AI TUTOR ────────────────────────────────────────────── */
+.tutor-wrap { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+.tutor-box {
+  background: var(--card); border: 1px solid color-mix(in srgb, var(--orange) 30%, transparent);
+  border-radius: 20px; display: flex; flex-direction: column; height: 580px; overflow: hidden;
+  transition: var(--transition);
+}
+.tutor-header {
+  padding: 18px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.tutor-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: color-mix(in srgb, var(--orange) 30%, transparent);
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.tutor-name { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 15px; }
+.tutor-sub { color: var(--muted); font-size: 12px; }
+.tutor-messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+.tutor-msg { display: flex; gap: 12px; align-items: flex-start; }
+.tutor-msg.user { flex-direction: row-reverse; }
+.msg-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.msg-bubble {
+  border-radius: 16px; padding: 12px 16px; max-width: 80%;
+  font-size: 14px; line-height: 1.7; white-space: pre-wrap;
+  border-width: 1px; border-style: solid;
+}
+.tutor-msg.assistant .msg-bubble {
+  background: var(--surface);
+  border-color: var(--border);
+  border-radius: 4px 16px 16px 16px;
+}
+.tutor-msg.user .msg-bubble {
+  background: color-mix(in srgb, var(--blue) 15%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 25%, transparent);
+  border-radius: 16px 4px 16px 16px;
+}
+.tutor-typing { display: flex; gap: 5px; align-items: center; padding: 14px 20px; }
+.dot-pulse span {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--orange);
+  display: inline-block; animation: pulse 1.4s ease-in-out infinite;
+}
+.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,60%,100%{opacity:.3;transform:scale(.8)} 30%{opacity:1;transform:scale(1)} }
+.tutor-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tutor-sug {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 8px 14px; font-size: 13px; color: var(--muted); transition: all 0.15s;
+}
+.tutor-sug:hover { border-color: color-mix(in srgb, var(--orange) 50%, transparent); color: var(--text); }
+.tutor-input-row { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+.tutor-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 16px; color: var(--text); font-size: 14px; outline: none;
+  transition: border-color 0.15s, var(--transition);
+}
+.tutor-input:focus { border-color: color-mix(in srgb, var(--orange) 60%, transparent); }
+.send-btn {
+  width: 48px; height: 48px; border: none; border-radius: 12px; background: var(--orange);
+  color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.send-btn:disabled { background: var(--border); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .hero { padding: 24px; flex-direction: column; }
+  #nav { padding: 0 16px; gap: 10px; }
+  .nav-breadcrumb { display: none; }
+  .track-grid { grid-template-columns: 1fr; }
+  .cheat-grid { grid-template-columns: 1fr; }
+  .action-cards { flex-direction: column; }
+  .tutor-box { height: 500px; }
+}
+
+/* ── FADE ANIMATION ──────────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.2s ease forwards; }
 </style>
 </head>
 <body>
-</div>
 
-<div class="hdr">
-  <h1>⚡ Zuper Data Manager</h1>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span id="badge">○ Not connected</span>
-    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+<nav id="nav">
+  <button class="nav-logo" onclick="navigate('home')">
+    <div class="nav-logo-icon">Z</div>
+    <span class="nav-logo-text">Training Hub</span>
+  </button>
+  <div class="nav-search-wrap">
+    <span class="nav-search-icon">🔍</span>
+    <input id="searchInput" class="nav-search" placeholder="Search videos, workflows, personas…" oninput="handleSearchInput(this.value)" onkeydown="if(event.key==='Enter')triggerSearch()">
   </div>
-</div>
-<div class="wrap">
+  <div class="nav-spacer"></div>
+  <div id="breadcrumb" class="nav-breadcrumb"></div>
+  <div class="nav-actions">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="themeToggle">🌙</button>
+    <button class="btn" style="background:color-mix(in srgb,var(--orange) 18%,transparent);color:var(--orange);border:1px solid color-mix(in srgb,var(--orange) 35%,transparent)" onclick="navigate('tutor')">🤖 Ask AI</button>
+  </div>
+</nav>
 
-<!-- CONNECTION -->
-<div class="card" id="conn-card">
-  <div class="sec-title">🔗 Connection Setup</div>
-  <div class="grid3">
-    <div>
-      <div class="field-lbl">Company Login Name</div>
-      <input class="inp" id="company" placeholder="e.g. bestroofs" onkeydown="if(event.key==='Enter')doConnect()">
-    </div>
-    <div>
-      <div class="field-lbl">API Key</div>
-      <div class="pw-wrap">
-        <input class="inp" id="apikey" type="password" placeholder="Paste your API key" onkeydown="if(event.key==='Enter')doConnect()">
-        <button class="pw-eye" onclick="togglePw()" title="Show/hide">👁</button>
-      </div>
-    </div>
-    <div id="module-field">
-      <div class="field-lbl">Module</div>
-      <select id="module" onchange="onModuleChange()">
-        <option value="purchase_orders">Purchase Orders</option>
-        <option value="material_requests">Material Orders</option>
-        <option value="customers">Customers</option>
-        <option value="property">Properties</option>
-        <option value="assets">Assets</option>
-        <option value="product">Parts &amp; Services</option>
-        <option value="jobs">Jobs</option>
-        <option value="invoice">Invoices</option>
-        <option value="estimate">Quotes / Estimates</option>
-        <option value="user">Users</option>
-        <option value="team">Teams</option>
-      </select>
-    </div>
-  </div>
-  <div class="btn-row">
-    <button class="btn btn-o" id="connect-btn" onclick="doConnect()">🔌 Connect</button>
-    <button class="btn btn-g" id="disconnect-btn" onclick="doDisconnect()" style="display:none">⏏ Disconnect</button>
-    <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" style="display:none">📄 Fetch Records</button>
-    <button class="btn btn-p" id="import-btn" onclick="showImportCard()" style="display:none">📥 Import Products</button>
-    <label id="dryrun-label" style="display:none;align-items:center;gap:6px;font-size:.82rem;font-weight:600;cursor:pointer;margin-left:4px">
-      <input type="checkbox" id="dryrun" checked onchange="updatePill()">
-      Dry Run <span id="mode-pill" class="mode-safe">● Safe</span>
-    </label>
-  </div>
-  <div id="conn-msg" style="display:none" class="msg"></div>
-</div>
-
-<!-- STATS -->
-<div class="stats" id="stats-section" style="display:none">
-  <div class="stat" style="border-left:4px solid #e8401c"><div class="stat-val" id="s-total" style="color:#e8401c">—</div><div class="stat-lbl">Total Records</div></div>
-  <div class="stat" style="border-left:4px solid #22c55e"><div class="stat-val" id="s-sel" style="color:#22c55e">0</div><div class="stat-lbl">Selected</div></div>
-  <div class="stat" style="border-left:4px solid #6366f1"><div class="stat-val" id="s-module" style="color:#6366f1;font-size:.85rem;padding-top:6px">—</div><div class="stat-lbl">Module</div></div>
-  <div class="stat" style="border-left:4px solid #f59e0b"><div class="stat-val" id="s-account" style="color:#f59e0b;font-size:.78rem;padding-top:4px">—</div><div class="stat-lbl">Account</div></div>
-</div>
-
-<!-- TABLE -->
-<div class="card" id="table-card" style="display:none">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-    <div class="sec-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0">📊 Fetched Records</div>
-    <div class="btn-row">
-      <button class="btn btn-o" onclick="doExport('csv')">📊 Export CSV</button>
-      <button class="btn btn-o" onclick="doExport('json')">📄 Export JSON</button>
-      <button class="btn btn-d" onclick="showDelete()">🗑 Delete Selected</button>
-    </div>
-  </div>
-  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-    <input class="inp" id="search" type="text" placeholder="🔍 Search…" style="max-width:240px" oninput="doSearch()">
-    <span id="rec-count" style="font-size:.75rem;color:#777">No records loaded</span>
-    <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;cursor:pointer">
-      <input type="checkbox" id="selall" onchange="selAll(this.checked)"> Select All
-    </label>
-  </div>
-  <div id="fetch-msg" style="display:none" class="msg msg-info"></div>
-  <div class="tbl-wrap">
-    <table><thead id="thead"></thead><tbody id="tbody">
-      <tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Connect to an account then click <strong>Fetch Records</strong></td></tr>
-    </tbody></table>
-  </div>
-  <!-- Pagination -->
-  <div id="pagination" style="display:none;gap:6px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border)"></div>
-</div>
-
-<!-- DELETE -->
-<div class="card" id="del-card" style="display:none">
-  <div class="sec-title">🗑 Delete Selected Records</div>
-  <div id="del-warn" class="msg msg-warn" style="margin-bottom:14px">⚠ Select records above first.</div>
-  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:14px">
-    <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600">
-      Concurrency:
-      <select id="concurrency" style="padding:4px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:.82rem;outline:none;background:#fff">
-        <option value="1">1 — sequential (safest)</option>
-        <option value="3" selected>3 — recommended</option>
-        <option value="5">5</option>
-        <option value="10">10 — fastest</option>
-      </select>
-    </label>
-  </div>
-  <div class="btn-row" style="margin-bottom:14px">
-    <button class="btn btn-d"  id="run-btn"     onclick="startRun()">🗑 Start Deletion</button>
-    <button class="btn btn-w"  id="pause-btn"   onclick="togglePause()" style="display:none">⏸ Pause</button>
-    <button class="btn btn-g"  id="cancel-btn"  onclick="cancelRun()"   style="display:none">✕ Cancel</button>
-    <button class="btn btn-d"  id="proceed-btn" onclick="proceedReal()" style="display:none">→ Proceed with Real DELETE</button>
-    <button class="btn btn-o"  id="retry-btn"   onclick="retryFailed()" style="display:none">↩ Retry Failed</button>
-    <button class="btn btn-o"  onclick="hideDelete()">← Back</button>
-  </div>
-  <div id="prog-wrap" style="display:none;margin-bottom:12px">
-    <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
-    <div class="prog-lbl" id="prog-lbl">Ready</div>
-  </div>
-  <div class="run-stats" id="run-stats" style="display:none;margin-bottom:12px">
-    <div class="rs rs-g"><div class="rs-val" id="rs-total">0</div><div class="rs-lbl">Total</div></div>
-    <div class="rs rs-g"><div class="rs-val" id="rs-ok">0</div><div class="rs-lbl" id="rs-ok-lbl">Found</div></div>
-    <div class="rs rs-r"><div class="rs-val" id="rs-fail">0</div><div class="rs-lbl" id="rs-fail-lbl">Not Found</div></div>
-  </div>
-  <div class="log" id="log" style="display:none"></div>
-  <div id="log-actions" style="display:none;margin-top:8px">
-    <button class="btn btn-o" onclick="downloadLog()">⬇ Download Log CSV</button>
-  </div>
-</div>
-
-<!-- IMPORT -->
-<div class="card" id="import-card" style="display:none">
-  <div class="sec-title">📥 Import Products (Parts &amp; Services)</div>
-
-  <!-- Steps bar -->
-  <div style="display:flex;margin-bottom:20px;border-bottom:1.5px solid var(--sec-border)">
-    <div class="istep active" id="istep1-tab">① Upload</div>
-    <div class="istep" id="istep2-tab">② Map Columns</div>
-    <div class="istep" id="istep3-tab">③ Validate</div>
-    <div class="istep" id="istep4-tab">④ Import</div>
-  </div>
-
-  <!-- Step 1: Upload -->
-  <div id="istep1">
-    <div id="imp-dropzone" onclick="document.getElementById('imp-file').click()"
-      style="border:2px dashed var(--border-inp);border-radius:var(--border-radius-lg);padding:32px;text-align:center;cursor:pointer;margin-bottom:14px">
-      <div style="font-size:2rem;margin-bottom:8px">📂</div>
-      <p style="font-size:.85rem;color:var(--text-sub)"><strong style="color:var(--text)">Click to upload</strong> or drag &amp; drop</p>
-      <p style="font-size:.76rem;color:var(--text-sub);margin-top:4px">CSV or Excel (.xlsx) — up to 5,000 rows</p>
-      <input type="file" id="imp-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="onImportFile(this)">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-o" onclick="downloadImportTemplate()">⬇ Download CSV Template</button>
-      <button class="btn btn-g" onclick="hideImportCard()">← Back</button>
-    </div>
-    <div id="imp-msg1" class="msg" style="display:none;margin-top:10px"></div>
-  </div>
-
-  <!-- Step 2: Map columns -->
-  <div id="istep2" style="display:none">
-    <div id="imp-file-info" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:var(--th-bg);border-radius:8px;font-size:.82rem">
-      <span>📄</span><span id="imp-fname" style="font-weight:600"></span>
-      <span id="imp-rowcount" class="badge badge-green" style="margin-left:4px"></span>
-    </div>
-    <div style="font-size:.75rem;font-weight:500;color:var(--text-sub);margin-bottom:10px">Map each Zuper field to the matching column in your file. <span style="color:#e8401c">★ Required</span></div>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse" id="imp-map-table">
-        <thead><tr style="background:var(--th-bg)">
-          <th style="padding:8px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);font-weight:500;color:var(--text-sub);text-align:left">Zuper Field</th>
-          <th style="padding:8px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);font-weight:500;color:var(--text-sub);text-align:left">Your Column</th>
-          <th style="padding:8px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);font-weight:500;color:var(--text-sub);text-align:left">Sample Value</th>
-        </tr></thead>
-        <tbody id="imp-map-body"></tbody>
-      </table>
-    </div>
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn btn-p" onclick="runValidation()">Validate →</button>
-      <button class="btn btn-o" onclick="iGoTo(1)">← Back</button>
-    </div>
-    <div id="imp-msg2" class="msg" style="display:none;margin-top:10px"></div>
-  </div>
-
-  <!-- Step 3: Validate -->
-  <div id="istep3" style="display:none">
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-total">0</div><div class="rs-lbl">Total</div></div>
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-valid" style="color:#16a34a">0</div><div class="rs-lbl">Ready</div></div>
-      <div class="rs" style="min-width:0;background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b)"><div class="rs-val" id="iv-warn" style="color:#d97706">0</div><div class="rs-lbl">Warnings</div></div>
-      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="iv-err" style="color:#dc2626">0</div><div class="rs-lbl">Errors</div></div>
-    </div>
-    <div style="overflow-x:auto;margin-bottom:14px">
-      <table style="width:100%;border-collapse:collapse;font-size:.78rem" id="iv-preview-table">
-        <thead id="iv-thead"></thead>
-        <tbody id="iv-tbody"></tbody>
-      </table>
-    </div>
-    <div id="imp-msg3" class="msg" style="display:none;margin-bottom:10px"></div>
-    <div class="btn-row">
-      <button class="btn btn-p" id="iv-import-btn" onclick="startImport()">📥 Import Valid Rows →</button>
-      <button class="btn btn-o" onclick="iGoTo(2)">← Back</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Import -->
-  <div id="istep4" style="display:none">
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-total">0</div><div class="rs-lbl">Total</div></div>
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-ok" style="color:#16a34a">0</div><div class="rs-lbl">Created</div></div>
-      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="ip-fail" style="color:#dc2626">0</div><div class="rs-lbl">Failed</div></div>
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-pct" style="color:#e8401c">0%</div><div class="rs-lbl">Progress</div></div>
-    </div>
-    <div class="prog-bar-wrap" style="margin-bottom:5px"><div class="prog-bar" id="ip-bar" style="width:0%"></div></div>
-    <div class="prog-lbl" id="ip-lbl" style="margin-bottom:12px">Ready</div>
-    <div class="log" id="ip-log" style="display:none;margin-bottom:12px"></div>
-    <div class="btn-row">
-      <button class="btn btn-d" id="ip-run-btn" onclick="runImport()">▶ Start Import</button>
-      <button class="btn btn-w" id="ip-pause-btn" onclick="toggleImportPause()" style="display:none">⏸ Pause</button>
-      <button class="btn btn-g" id="ip-cancel-btn" onclick="cancelImport()" style="display:none">✕ Cancel</button>
-      <button class="btn btn-o" id="ip-retry-btn" onclick="retryImport()" style="display:none">↩ Retry Failed</button>
-      <button class="btn btn-o" id="ip-dl-btn" onclick="downloadImportLog()" style="display:none">⬇ Download Log</button>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS Ctrl+Shift+A -->
-<div class="card" id="settings-card">
-  <div class="sec-title">⚙ Advanced Settings <span style="font-size:.7rem;font-weight:400;color:#aaa;text-transform:none;letter-spacing:0">(Ctrl+Shift+A)</span></div>
-  <div class="grid2">
-    <div>
-      <div class="field-lbl">Slack Webhook URL</div>
-      <input class="inp" id="webhook" type="text" placeholder="https://hooks.slack.com/services/…">
-    </div>
-    <div>
-      <div class="field-lbl">Employee ID</div>
-      <input class="inp" id="empid" type="text" placeholder="EMP-1234">
-    </div>
-  </div>
-</div>
-</div>
+<div id="main"></div>
 
 <script>
-'use strict';
-const MODULES={
-  purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
-  material_requests:{label:'Material Orders',uid:['material_request_uid','uid','_id'],del:'material_requests',cols:[{h:'MO #',f:'material_request_number'},{h:'Title',f:'material_request_title'},{h:'Status',f:'material_request_status'},{h:'Created',f:'created_at'}]},
-  customers:{label:'Customers',uid:['customer_uid','uid','_id'],del:'customers',cols:[{h:'Name',f:['customer_first_name','customer_last_name']},{h:'Email',f:'customer_email'},{h:'Phone',f:'customer_phone'},{h:'Type',f:'customer_type'},{h:'Created',f:'created_at'}]},
-  property:{label:'Properties',uid:['property_uid','uid','_id'],del:'property',cols:[{h:'Name',f:'property_name'},{h:'Address',f:'property_address'},{h:'City',f:'city'},{h:'Status',f:'property_status'},{h:'Created',f:'created_at'}]},
-  assets:{label:'Assets',uid:['asset_uid','uid','_id'],del:'assets',cols:[{h:'Name',f:'asset_name'},{h:'Serial #',f:'serial_number'},{h:'Type',f:'asset_type'},{h:'Status',f:'asset_status'},{h:'Created',f:'created_at'}]},
-  product:{label:'Parts & Services',uid:['product_uid','uid','_id'],del:'product',cols:[{h:'Name',f:'product_name'},{h:'Type',f:'product_type'},{h:'Category',f:'category'},{h:'Price',f:'unit_price'},{h:'Created',f:'created_at'}]},
-  jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'job',cols:[{h:'Job #',f:'job_number'},{h:'Title',f:'job_title'},{h:'Status',f:'job_status'},{h:'Customer',f:'customer_name'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}]},
-  invoice:{label:'Invoices',uid:['invoice_uid','uid','_id'],del:'invoice',cols:[{h:'Invoice #',f:'invoice_number'},{h:'Title',f:'invoice_title'},{h:'Status',f:'invoice_status'},{h:'Total',f:'invoice_total'},{h:'Due',f:'due_date'},{h:'Created',f:'created_at'}]},
-  estimate:{label:'Quotes / Estimates',uid:['estimate_uid','quote_uid','uid'],del:'estimate',cols:[{h:'Quote #',f:'estimate_number'},{h:'Title',f:'estimate_title'},{h:'Status',f:'estimate_status'},{h:'Total',f:'estimate_total'},{h:'Created',f:'created_at'}]},
-  user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',cols:[{h:'Name',f:['user_first_name','user_last_name']},{h:'Email',f:'user_email'},{h:'Role',f:'user_role'},{h:'Status',f:'user_status'},{h:'Created',f:'created_at'}]},
-  team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',cols:[{h:'Name',f:'team_name'},{h:'Members',f:'members_count'},{h:'Created',f:'created_at'}]}
+// ── COLORS ──────────────────────────────────────────────────
+const C = {
+  bg:"#0a0e17",surface:"#111622",card:"#161e2e",border:"#1e2a3d",
+  orange:"#e8622a",blue:"#3b82f6",green:"#10b981",amber:"#f59e0b",
+  purple:"#8b5cf6",pink:"#ec4899",teal:"#14b8a6",
+  text:"#e5e0df",muted:"#7a8499",dim:"#3d4a5c",
 };
-let allRecs=[],filtRecs=[],selUids=new Set(),uidField=null,running=false,paused=false,cancelled=false,dryCtx=null,failUids=[],logRows=[];
-let _baseUrl=''; // set after config lookup
-const $=id=>document.getElementById(id);
-const apiKey=()=>$('apikey').value.trim();
-const modKey=()=>$('module').value;
-const modCfg=()=>MODULES[modKey()];
-const baseUrl=()=>_baseUrl;
-const hdrs=()=>({'x-api-key':apiKey(),'Content-Type':'application/json'});
-function showMsg(id,txt,type){const e=$(id);e.className='msg msg-'+type;e.textContent=txt;e.style.display='block';}
-function hideMsg(id){$(id).style.display='none';}
-function fmt(v){if(v==null||v==='')return'—';if(typeof v==='object')return v.name||JSON.stringify(v).slice(0,40);const s=String(v);if(/^\d{4}-\d{2}-\d{2}T/.test(s))return s.slice(0,10);return s.length>54?s.slice(0,51)+'…':s;}
-function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function getF(rec,f){if(Array.isArray(f)){return f.map(k=>rec[k]).filter(v=>v!=null&&v!=='').join(' ');}return rec[f]??'';}
-function findUid(rec,cands){for(const f of cands)if(rec[f]!=null&&rec[f]!=='')return f;return null;}
-function togglePw(){const i=$('apikey');i.type=i.type==='password'?'text':'password';}
-function updatePill(){const d=$('dryrun').checked,p=$('mode-pill');p.className=d?'mode-safe':'mode-live';p.textContent=d?'● Safe':'● Live';}
 
-// Show/hide sections progressively
-function showConnected(accountName, region){
-  $('badge').textContent='✓ '+accountName+' ('+region+')';
-  $('connect-btn').style.display='none';
-  $('disconnect-btn').style.display='inline-flex';
-  $('fetch-btn').style.display='inline-flex';
-  $('dryrun-label').style.display='flex';
-  $('import-btn').style.display = modKey()==='product' ? 'inline-flex' : 'none';
-  $('company').disabled=true;
-  $('apikey').disabled=true;
-  $('stats-section').style.display='grid';
-  $('table-card').style.display='block';
-  $('s-account').textContent=accountName;
-  $('s-module').textContent=modCfg()?modCfg().label:'—';
-}
-
-function doDisconnect(){
-  if(running){alert('A run is in progress. Cancel it first.');return;}
-  // Reset all state
-  _baseUrl=''; allRecs=[];filtRecs=[];selUids=new Set();uidField=null;dryCtx=null;failUids=[];logRows=[];
-  $('badge').textContent='○ Not connected';
-  $('connect-btn').style.display='inline-flex';
-  $('disconnect-btn').style.display='none';
-  $('fetch-btn').style.display='none';
-  $('dryrun-label').style.display='none';
-  $('company').disabled=false; $('company').value='';
-  $('apikey').disabled=false; $('apikey').value='';
-  $('stats-section').style.display='none';
-  $('table-card').style.display='none';
-  $('del-card').style.display='none';
-  $('s-total').textContent='—'; $('s-sel').textContent='0'; $('s-module').textContent='—'; $('s-account').textContent='—';
-  $('thead').innerHTML=''; $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Connect to an account then click <strong>Fetch Records</strong></td></tr>';
-  $('rec-count').textContent='No records loaded';
-  hideMsg('conn-msg'); hideMsg('fetch-msg');
-}
-
-async function doConnect(){
-  const company=($('company').value||'').trim();
-  if(!company){showMsg('conn-msg','✗ Please enter your company login name.','err');return;}
-  if(!apiKey()){showMsg('conn-msg','✗ Please enter your API key.','err');return;}
-  const btn=$('connect-btn');btn.textContent='⏳ Connecting…';btn.disabled=true;hideMsg('conn-msg');
-  try{
-    // Step 1 — resolve company → region/base URL
-    showMsg('conn-msg','🔍 Looking up region for "'+company+'"…','info');
-    const cfgRes=await fetch('https://accounts.zuperpro.com/api/config',{
-      method:'POST',
-      headers:{'Content-Type':'application/json;charset=UTF-8'},
-      body:JSON.stringify({company_name:company})
-    });
-    if(!cfgRes.ok){showMsg('conn-msg','✗ Could not find company "'+company+'". Check the login name and try again.','err');return;}
-    const cfgData=await cfgRes.json();
-    const dcUrl=cfgData?.config?.dc_api_url;
-    const dcName=cfgData?.config?.dc_name||'unknown';
-    if(!dcUrl){showMsg('conn-msg','✗ Config response missing dc_api_url.','err');return;}
-    _baseUrl=dcUrl.replace(/\/$/,'')+'/api/';
-
-    // Step 2 — verify API key against that region
-    showMsg('conn-msg','🔌 Verifying API key on '+dcName+'…','info');
-    const authRes=await fetch(_baseUrl+'user/company',{method:'GET',headers:hdrs()});
-    if(authRes.ok){
-      const data=await authRes.json().catch(()=>({}));
-      const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||company;
-      showMsg('conn-msg','✓ Connected to "'+name+'" on '+dcName,'ok');
-      showConnected(name, dcName);
-    }else{
-      const body=await authRes.text().catch(()=>'');
-      _baseUrl='';
-      showMsg('conn-msg','✗ '+authRes.status+' '+authRes.statusText+(body?' — '+body.slice(0,120):''),'err');
-    }
-  }catch(e){_baseUrl='';showMsg('conn-msg','✗ '+e.message,'err');}
-  finally{btn.textContent='🔌 Connect';btn.disabled=false;}
-}
-
-async function doFetch(){
-  if(!apiKey()){showMsg('conn-msg','✗ API key missing.','err');return;}
-  const cfg=modCfg(),btn=$('fetch-btn');
-  btn.textContent='⏳ Fetching…';btn.disabled=true;
-  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
-  $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">Loading…</td></tr>';
-  showMsg('fetch-msg','📥 Connecting to '+_baseUrl+'…','info');
-  try{
-    let page=1,limit=100,maxPages=100;
-    while(page<=maxPages){
-      showMsg('fetch-msg','📥 Fetching page '+page+'… ('+allRecs.length+' records so far)','info');
-      const res=await fetch(baseUrl()+modKey()+'?page='+page+'&count='+limit,{method:'GET',headers:hdrs()});
-      if(!res.ok){const b=await res.text().catch(()=>'');throw new Error(res.status+' '+res.statusText+' — '+b.slice(0,200));}
-      const data=await res.json();
-      const recs=Array.isArray(data)?data:Array.isArray(data.data)?data.data:Array.isArray(data.results)?data.results:Array.isArray(data.records)?data.records:[];
-      if(!recs.length)break;
-      allRecs.push(...recs);
-      if(recs.length<limit)break;
-      page++;
-    }
-    if(!allRecs.length){showMsg('fetch-msg','⚠ No records returned for this module.','warn');$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">No records found.</td></tr>';return;}
-    uidField=findUid(allRecs[0],cfg.uid);
-    if(!uidField){showMsg('fetch-msg','⚠ Could not detect UID field. Keys: '+Object.keys(allRecs[0]).slice(0,8).join(', '),'warn');return;}
-    showMsg('fetch-msg','✓ Loaded '+allRecs.length+' record(s). UID field: "'+uidField+'".','ok');
-    $('s-total').textContent=allRecs.length;$('s-module').textContent=cfg.label;
-    filtRecs=[...allRecs];renderTable();
-  }catch(e){showMsg('fetch-msg','✗ '+e.message,'err');$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#dc2626">Error: '+esc(e.message)+'</td></tr>';}
-  finally{btn.textContent='📄 Fetch Records';btn.disabled=false;}
-}
-
-function renderTable(){
-  const cfg=modCfg();if(!cfg||!filtRecs.length||!uidField)return;
-  currentPage=1;
-  $('thead').innerHTML='<tr><th><input type="checkbox" onchange="selAll(this.checked)"></th><th>UID</th>'+cfg.cols.map(c=>'<th>'+c.h+'</th>').join('')+'</tr>';
-  renderRows();
-  $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
-  renderPagination();
-  updSel();
-}
-function renderRows(){
-  const cfg=modCfg();if(!cfg||!uidField)return;
-  $('tbody').innerHTML=pageRecs().map(r=>{
-    const uid=String(r[uidField]||''),sel=selUids.has(uid);
-    return'<tr class="'+(sel?'row-sel':'')+'" data-uid="'+esc(uid)+'"><td><input type="checkbox" '+(sel?'checked':'')+' onchange="toggleRow(\''+esc(uid)+'\',this.checked,this.closest(\'tr\'))"></td><td class="uid-cell" title="'+esc(uid)+'">'+esc(uid)+'</td>'+cfg.cols.map(c=>'<td>'+esc(fmt(getF(r,c.f)))+'</td>').join('')+'</tr>';
-  }).join('')||'<tr><td colspan="10" style="padding:28px;text-align:center;color:#aaa">No matching records.</td></tr>';
-}
-function toggleRow(uid,checked,row){if(checked)selUids.add(uid);else selUids.delete(uid);if(row)row.className=checked?'row-sel':'';updSel();}
-function selAll(checked){filtRecs.forEach(r=>{const uid=String(r[uidField]||'');if(uid)checked?selUids.add(uid):selUids.delete(uid);});document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=checked);document.querySelectorAll('#tbody tr').forEach(tr=>tr.className=checked?'row-sel':'');$('selall').checked=checked;updSel();}
-function updSel(){$('s-sel').textContent=selUids.size;if(selUids.size>0)$('del-warn').textContent='⚠ '+selUids.size+' '+modCfg().label+' record(s) selected. '+($('dryrun').checked?'Dry Run ON — nothing will be deleted.':'⚠ LIVE MODE — records will be permanently deleted!');}
-function doSearch(){const q=($('search').value||'').toLowerCase().trim();filtRecs=q?allRecs.filter(r=>JSON.stringify(r).toLowerCase().includes(q)):[...allRecs];currentPage=1;renderTable();}
-function onModuleChange(){
-  const cfg=modCfg();
-  $('s-module').textContent=cfg?cfg.label:modKey();
-  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
-  $('thead').innerHTML='';
-  $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Module changed — click Fetch Records.</td></tr>';
-  $('s-total').textContent='—';$('s-sel').textContent='0';
-  $('rec-count').textContent='No records loaded';
-  hideMsg('fetch-msg');
-  // Show Import button only for product module when connected
-  const isProduct=modKey()==='product';
-  const isConn=!!_baseUrl;
-  const ibtn=$('import-btn');
-  if(ibtn) ibtn.style.display=(isProduct&&isConn)?'inline-flex':'none';
-  if(!isProduct&&typeof hideImportCard==='function') hideImportCard();
-}
-
-function doExport(f){
-  if(!allRecs.length){alert('No records to export.');return;}
-  const ts=Date.now(),mod=modKey();
-  if(f==='json'){dlFile(JSON.stringify(allRecs,null,2),mod+'-'+ts+'.json','application/json');}
-  else{const keys=[...new Set(allRecs.flatMap(r=>Object.keys(r)))];const q=v=>{if(v==null)return'';if(typeof v==='object')v=JSON.stringify(v);const s=String(v).replace(/"/g,'""');return/[",\n\r]/.test(s)?'"'+s+'"':s;};dlFile([keys.join(','),...allRecs.map(r=>keys.map(k=>q(r[k])).join(','))].join('\n'),mod+'-'+ts+'.csv','text/csv');}
-}
-function dlFile(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
-
-function showDelete(){if(!selUids.size){alert('Select at least one record first.');return;}updSel();$('del-card').style.display='block';$('del-card').scrollIntoView({behavior:'smooth',block:'start'});}
-function hideDelete(){$('del-card').style.display='none';}
-
-function logLine(uid,level,msg){const el=$('log');const d=document.createElement('div');d.className='log-'+level;d.textContent=(level==='ok'?'✓':level==='err'?'✗':'⚠')+' '+uid+' — '+msg;el.appendChild(d);el.scrollTop=el.scrollHeight;logRows.push({uid,status:level==='ok'?'success':level==='warn'?'warning':'failed',message:msg});}
-
-async function hitOne(uid,dry){
-  const cfg=modCfg(),delEndpoint=cfg.del||modKey();
-  const url=baseUrl()+delEndpoint+'/'+encodeURIComponent(uid);
-  try{
-    const res=await fetch(url,{method:dry?'GET':'DELETE',headers:hdrs()});
-    if(res.ok)return{ok:true,msg:res.status+' '+(dry?'found':'deleted')};
-    let d='';try{const b=await res.json();d=b.message||b.error||JSON.stringify(b).slice(0,80);}catch{d=await res.text().then(t=>t.slice(0,80)).catch(()=>'');}
-    return{ok:false,msg:res.status+' '+d+' ['+delEndpoint+']'};
-  }catch(e){return{ok:false,msg:'Network: '+e.message+' ['+delEndpoint+']'};}
-}
-async function waitUnpause(){while(paused&&!cancelled)await new Promise(r=>setTimeout(r,200));}
-
-async function runEngine(uids,dry){
-  logRows=[];$('log').innerHTML='';$('log').style.display='block';$('log-actions').style.display='none';
-  $('prog-wrap').style.display='block';$('prog-bar').style.width='0%';$('prog-lbl').textContent='Starting…';
-  $('run-stats').style.display='flex';$('rs-total').textContent=uids.length;$('rs-ok').textContent='0';$('rs-fail').textContent='0';
-  $('rs-ok-lbl').textContent=dry?'Found':'Deleted';$('rs-fail-lbl').textContent=dry?'Not Found':'Failed';
-  $('run-btn').disabled=true;$('proceed-btn').style.display='none';$('retry-btn').style.display='none';
-  $('pause-btn').style.display='inline-flex';$('pause-btn').textContent='⏸ Pause';$('cancel-btn').style.display='inline-flex';
-  running=true;paused=false;cancelled=false;
-  const conc=parseInt($('concurrency').value)||3;
-  let ok=0,fail=0,done=0,idx=0;const okUids=[],failUids_=[];
-  async function worker(){while(true){if(cancelled)return;await waitUnpause();const i=idx++;if(i>=uids.length)return;const uid=uids[i];const r=await hitOne(uid,dry);if(r.ok){ok++;okUids.push(uid);$('rs-ok').textContent=ok;logLine(uid,'ok',r.msg);}else{fail++;failUids_.push(uid);$('rs-fail').textContent=fail;logLine(uid,'err',r.msg);}done++;$('prog-bar').style.width=(done/uids.length*100).toFixed(1)+'%';$('prog-lbl').textContent=done+' / '+uids.length+' processed';}}
-  await Promise.all(Array.from({length:Math.min(conc,uids.length)},worker));
-  running=false;$('run-btn').disabled=false;$('pause-btn').style.display='none';$('cancel-btn').style.display='none';$('log-actions').style.display='block';
-  $('prog-lbl').textContent=cancelled?'⚠ Cancelled at '+done+'/'+uids.length+' — '+ok+' OK, '+fail+' failed':'✓ Complete — '+ok+' OK, '+fail+' failed';
-  if(dry&&okUids.length&&!cancelled){dryCtx={uids:okUids};$('proceed-btn').textContent='→ DELETE '+okUids.length+' found record(s) — REAL DELETE';$('proceed-btn').style.display='inline-flex';}
-  if(!dry){const deleted=new Set(okUids);allRecs=allRecs.filter(r=>!deleted.has(String(r[uidField]||'')));filtRecs=[...allRecs];deleted.forEach(u=>selUids.delete(u));$('s-total').textContent=allRecs.length;updSel();renderTable();}
-  if(failUids_.length&&!cancelled){failUids=[...failUids_];$('retry-btn').textContent='↩ Retry '+failUids.length+' failed';$('retry-btn').style.display='inline-flex';}
-  slackAudit({mode:dry?'dry-run':'delete',total:uids.length,ok,fail,cancelled});
-}
-
-async function startRun(){
-  if(!apiKey()){alert('API key missing.');return;}if(!selUids.size){alert('No records selected.');return;}
-  const dry=$('dryrun').checked,uids=Array.from(selUids);
-  const action=dry?'DRY RUN CHECK':'⚠ PERMANENTLY DELETE';
-  const note=dry?'\n\nDry run — nothing will be deleted.':'\n\n⚠ THIS CANNOT BE UNDONE.';
-  const preview=uids.slice(0,5).join('\n')+(uids.length>5?'\n…+'+( uids.length-5)+' more':'');
-  if(!confirm(action+' '+uids.length+' '+modCfg().label+' record(s) on '+$('s-account').textContent+'?\n\nFirst UIDs:\n'+preview+note))return;
-  await runEngine(uids,dry);
-}
-async function proceedReal(){if(!dryCtx)return;const{uids}=dryCtx;dryCtx=null;const preview=uids.slice(0,5).join('\n')+(uids.length>5?'\n…+'+( uids.length-5)+' more':'');if(!confirm('⚠ PERMANENTLY DELETE '+uids.length+' record(s) on '+$('s-account').textContent+'?\n\n'+preview+'\n\nThis CANNOT be undone.'))return;await runEngine(uids,false);}
-async function retryFailed(){if(!failUids.length)return;if(!confirm('Retry '+failUids.length+' failed record(s)?'))return;const uids=[...failUids];failUids=[];await runEngine(uids,$('dryrun').checked);}
-function togglePause(){if(!running)return;paused=!paused;$('pause-btn').textContent=paused?'▶ Resume':'⏸ Pause';}
-function cancelRun(){if(!running)return;if(confirm('Cancel? Progress so far will be in the log.')){cancelled=true;paused=false;}}
-function downloadLog(){if(!logRows.length){alert('No log yet.');return;}const csv='uid,status,message\n'+logRows.map(r=>'"'+(r.uid||'').replace(/"/g,'""')+'","'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');dlFile(csv,'zdm-log-'+modKey()+'-'+Date.now()+'.csv','text/csv');}
-async function slackAudit(s){const url=($('webhook').value||'').trim();if(!url)return;const emp=($('empid').value||'unknown').trim();try{await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'*⚡ Zuper Data Manager* — '+s.mode+(s.cancelled?' (cancelled)':'')+'\n• Employee: `'+emp+'`\n• Account: `'+($('s-account').textContent||'—')+'`  Module: `'+modKey()+'`\n• Total: '+s.total+'  ✅ '+s.ok+'  ❌ '+s.fail})});}catch{}}
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='a'){e.preventDefault();const s=$('settings-card');s.style.display=s.style.display==='none'?'block':'none';if(s.style.display==='block')s.scrollIntoView({behavior:'smooth'});}});
-
-// ── IMPORT MODULE ──────────────────────────────────────────────────────────────
-const IMPORT_FIELD_DEFS = [
-  { key:'product_id',         label:'Product ID',               col:'Product ID (*)',             required:true  },
-  { key:'product_name',       label:'Product Name',             col:'Product Name (*)',           required:true  },
-  { key:'product_type',       label:'Product Type',             col:'Product Type (*)',           required:true, hint:'PARTS | SERVICE | BUNDLE' },
-  { key:'product_category',   label:'Product Category',         col:'Product Category (*)',       required:true  },
-  { key:'price',              label:'Price',                    col:'Price (*)',                  required:true  },
-  { key:'has_custom_tax',     label:'Has Custom Tax',           col:'Has Custom Tax (*)',         required:true, hint:'YES | NO' },
-  { key:'description',        label:'Product Description',      col:'Product Description',        required:false },
-  { key:'brand',              label:'Brand',                    col:'Brand',                      required:false },
-  { key:'specification',      label:'Specification',            col:'Specification',              required:false },
-  { key:'purchase_price',     label:'Purchase Price',           col:'Purchase Price',             required:false },
-  { key:'uom',                label:'UOM',                      col:'UOM (Unit of Measurement)',  required:false },
-  { key:'location',           label:'Location',                 col:'Location',                   required:false },
-  { key:'available_qty',      label:'Quantity',                 col:'Quantity',                   required:false },
-  { key:'min_quantity',       label:'Min. Quantity',            col:'Min. Quantity',              required:false },
-  { key:'tax_exempt',         label:'Tax Exempt',               col:'Tax Exempt',                 required:false, hint:'YES | NO' },
-  { key:'tax_name',           label:'Tax Name',                 col:'Tax Name',                   required:false },
-  { key:'tax_rate',           label:'Tax Rate (%)',             col:'Tax Rate (In Percentage)',   required:false },
-  { key:'markup_type',        label:'Markup Type',              col:'Markup Type',                required:false, hint:'PERCENTAGE | FLAT' },
-  { key:'markup_value',       label:'Markup Value',             col:'Markup Value',               required:false },
-  { key:'track_quantity',     label:'Track Quantity',           col:'Track Quantity',             required:false, hint:'YES | NO' },
+const TRACKS = [
+  { id:"lead",    label:"Lead Intake Pipeline",       icon:"📥", color:C.blue,   desc:"Videos 1–10 · Inbound calls, Kanban workflow, booking widget leads, door-knock mobile entry & HubSpot sync" },
+  { id:"field",   label:"Inspection — Field Execution",icon:"🔍", color:C.green,  desc:"Videos 11–19 · Assisted scheduling, day-of-job mobile flow, safety setup, full inspection report & clock-out" },
+  { id:"cpq",     label:"CPQ & Intelligent Quoting",  icon:"📊", color:C.orange, desc:"Videos 20–48 · Configure-Price-Quote flow, packages, formula library, conditional rules & financing" },
+  { id:"proposals",label:"Proposals, Layouts & Data", icon:"📄", color:C.amber,  desc:"Videos 49–86 · Proposal layouts, page design, data import mapping & proposal presentation/acceptance" },
+  { id:"production",label:"Production Pipeline",      icon:"🏗️", color:C.purple, desc:"Videos 87–116 · Vendor setup, purchase orders, crew scheduling & multi-trade execution" },
+  { id:"revenue", label:"Revenue Pipeline",           icon:"💰", color:C.pink,   desc:"Videos 117–119 · Final QA review, invoice generation, payment collection & job closure" },
 ];
 
-let impRows=[], impHeaders=[], impColMap={}, impCategories=[], impLocations=[];
-let impValid=[], impFailed=[], impLogRows=[];
-let impPaused=false, impCancelled=false, impRunning=false;
+const MODULES = [
+{id:"inbound-calls-lead-creation",track:"lead",title:"Inbound Calls & Auto Lead Creation",persona:"CSR Agent",platform:"Web",videos:[1,2,3],presenter:"Sai Rakul",duration:"~30 min",summary:"Master inbound call handling via Zuper Connect — auto-creation of contacts + lead qualification jobs, live checklist completion on a call, and qualified lead conversion into the Inspection Pipeline.",keyPoints:["Inbound call via Zuper Connect auto-creates a contact + LQ job simultaneously — no manual entry needed.","The lead qualification checklist opens automatically when the CSR sets status to 'Call in Progress'.","Marking 'Genuine Lead = Yes' at the end of the checklist auto-pushes the job into the Inspection Pipeline.","If the lead is not genuine, the contact is saved as a 'Cold Lead' — never deleted."],cheatSheet:[{title:"Inbound Call Flow (Video 1–2)",items:["Call comes in via Zuper Connect — call card opens","Contact auto-created from caller ID","LQ job created, status = New","CSR sets status to 'Call in Progress'","Checklist auto-opens — complete live on call"]},{title:"Lead Conversion (Video 3)",items:["Genuine Lead = Yes → job transitions to Inspection Pipeline","Genuine Lead = No → contact saved as Cold Lead","Schedule inspection before ending the call","Sales rep assigned + date/time set during conversion"]}]},
+{id:"scheduling-kanban",track:"lead",title:"Scheduling, Kanban & Unreachable Leads",persona:"CSR Agent",platform:"Web",videos:[4,5,6,7],presenter:"Sai Rakul",duration:"~40 min",summary:"Learn how to schedule inspections with skill-set matching, manage leads from booking widgets and AI responders on the Kanban board, handle unreachable customers across 3 attempts, and create shared team Kanban views.",keyPoints:["Inspection scheduling matches the sales rep by skill set, availability, and preferred date — all from the LQ job.","The Kanban board is the CSR's primary workspace for widget and Nova AI leads — not just phone leads.","Unreachable customer flow: 3 timed attempts → if still no response, mark as Cold Lead with reason.","Shared Kanban views (e.g. 'Lead Qualification for Today') can be built and shared across the CSR team."],cheatSheet:[{title:"Scheduling (Video 4)",items:["Open LQ job → Schedule Inspection","Select skill set required (e.g. Residential Roofing)","Pick date/time slot → system checks availability","Assign sales rep from matched list","Confirmation sent automatically"]},{title:"Kanban & Unreachable Workflow (Videos 5–7)",items:["Kanban view: each column = job status","Widget/Nova leads appear as cards in 'New'","Drag card → status updates + checklist fires","Unreachable: Attempt 1 → Attempt 2 → Attempt 3 → Cold Lead","Create shared view: Name it, select columns, share with team"]}]},
+{id:"mobile-lead-ai",track:"lead",title:"Mobile Lead Entry & AI Voice Tools",persona:"Sales Rep",platform:"Mobile",videos:[8,9],presenter:"Sai Rakul",duration:"~20 min",summary:"Learn how sales reps capture door-knock leads on the mobile app and use Zuper's AI voice-to-text transcription inside mobile checklists to document inspection findings hands-free.",keyPoints:["Door-knock leads are entered directly on the mobile app — contact + LQ job created on the spot.","AI voice-to-text transcription lets sales reps dictate checklist answers on the roof — no typing required.","Mobile lead entry captures all standard fields: name, address, phone, email, and damage notes.","Voice transcription works in any text field of any mobile checklist — not just inspection reports."],cheatSheet:[{title:"Door-Knock Lead Entry (Video 8)",items:["Open Zuper mobile app → Jobs → Create","Select Lead Qualification job category","Enter contact details at the door","Add address (GPS autofill available)","Save → LQ job created + synced to web"]},{title:"AI Voice Transcription (Video 9)",items:["Open any checklist text field on mobile","Tap the microphone icon","Speak naturally — Zuper AI transcribes","Review and confirm the transcribed text","Works offline — syncs when connected"]}]},
+{id:"hubspot-leads",track:"lead",title:"HubSpot-Driven Lead Qualification",persona:"Back Office",platform:"Web",videos:[10],presenter:"Kirti",duration:"~20 min",summary:"Understand how Zuper and HubSpot sync contacts bidirectionally, and how HubSpot deal-stage changes can automatically push qualified leads into the Zuper Lead Intake Pipeline.",keyPoints:["HubSpot contacts sync bidirectionally with Zuper customers — changes in either system reflect in both.","A HubSpot workflow triggers the lead push when a deal reaches a configured stage (e.g. 'Qualified').","The HubSpot workflow requires Professional/Enterprise plan — Starter plan does not support automation.","Field values must match exactly (same text, same casing) between HubSpot and Zuper for syncs to succeed."],cheatSheet:[{title:"HubSpot → Zuper Lead Flow (Video 10)",items:["HubSpot deal reaches trigger stage (e.g. 'SQL')","HubSpot workflow fires → pushes deal to Zuper","Zuper creates contact + LQ job automatically","Job appears in Kanban board (source: HubSpot)","Back office assigns CSR for qualification"]},{title:"Setup & Troubleshooting",items:["Requires HubSpot Pro/Enterprise for workflow automation","Install HubSpot integration from Zuper Marketplace","Field values must match exactly — case-sensitive","Use 'Push to Zuper' custom property as workflow trigger to avoid sync loop","Check Sync History for detailed error logs"]}]},
+{id:"scheduling-day-of-job",track:"field",title:"Assisted Scheduling & Day-of-Job Flow",persona:"Back Office / Sales Rep",platform:"Web & Mobile",videos:[11,12],presenter:"Sai Rakul",duration:"~25 min",summary:"Learn how back office uses Assisted Scheduling on web to assign sales reps to inspections, and how reps use the mobile app for the day-of-job flow: On My Way, Start Job, and Arrived on Site.",keyPoints:["Assisted Scheduling filters available reps by skill set and checks calendar conflicts before assigning.","The sales rep receives a push notification when assigned — job appears on their mobile app immediately.","Day-of-job flow: rep taps 'On My Way' → 'Start Job' → 'Arrived on Site' — each updates job status in real-time.","Back office can see the rep's location and status live on the web app dispatch board."],cheatSheet:[{title:"Assisted Scheduling — Web (Video 11)",items:["Open inspection job → Schedule","Click 'Assisted Scheduling'","Filter by skill set + date","Select available rep (green = available)","Assign → rep notified instantly"]},{title:"Day-of-Job Mobile Flow (Video 12)",items:["Rep receives push notification for job","Opens job on mobile app → reviews scope","Taps 'On My Way' → status updates + customer notified","Arrives → taps 'Start Job' → clock-in starts","Taps 'Arrived on Site' → inspection begins"]}]},
+{id:"safety-measurements",track:"field",title:"Safety Setup & Roof Measurements",persona:"Sales Rep",platform:"Mobile",videos:[13,14],presenter:"Sai Rakul",duration:"~20 min",summary:"Cover the safety setup checklist (ladder strap, D-ring, harness photos) that reps must complete before accessing the roof, and the measurements module for manual entry of roof area, ridge, valley, pitch, and waste factor.",keyPoints:["Safety checklist must be completed before the inspection report — includes photo evidence of safety equipment.","Required safety items: ladder strap secured, D-ring attached, harness worn — all photo-documented.","Measurements captured: total roof area (squares), ridge, valley, hip, rake, eave, pitch, and waste factor.","Waste factor is a key CPQ input — it adjusts material quantities to account for cuts and overlap."],cheatSheet:[{title:"Safety Checklist (Video 13)",items:["Tap Safety Setup checklist in job","Photo: ladder strap secured to roof","Photo: D-ring attachment confirmed","Photo: harness worn by rep","Submit → safety section marked complete"]},{title:"Measurements Entry (Video 14)",items:["Tap Measurements in job","Manual entry: total area, ridge ft, valley ft, hip ft, rake ft, eave ft","Enter pitch (e.g. 6/12) and waste factor %","Save → measurement tokens populated","These tokens feed directly into CPQ formulas"]}]},
+{id:"inspection-report-basics",track:"field",title:"Inspection Report — Property & Roof Components",persona:"Sales Rep",platform:"Mobile",videos:[15,16],presenter:"Sai Rakul",duration:"~25 min",summary:"Walk through the first two sections of the mobile inspection report: Property & Roof Basics (structure type, age, layers) and Roof Components (drip edge, starter, underlayment, shingles, and ridge cap).",keyPoints:["Property & Roof Basics captures: structure type, roof age, number of layers, and accessibility notes.","Roof Components section documents each component's brand, color, and condition — drives CPQ line items.","Conditional fields appear/hide based on prior answers — reduces clutter and guides accurate documentation.","Photos can be attached to any field in the inspection report — they populate the proposal gallery."],cheatSheet:[{title:"Property & Roof Basics (Video 15)",items:["Structure type: residential / commercial / multi-family","Roof age (years) + number of layers","Material type: shingle / tile / metal / flat","Accessibility: ground level / ladder / multi-story","Relevant notes captured for CPQ conditionals"]},{title:"Roof Components (Video 16)",items:["Drip Edge: existing / not existing / damaged","Starter: existing / needs replacement","Underlayment: type + condition","Shingles: brand, color, style — drives CPQ option selection","Ridge Cap: type + linear feet → quantity formula"]}]},
+{id:"inspection-report-advanced",track:"field",title:"Inspection Report — Advanced Sections",persona:"Sales Rep",platform:"Mobile",videos:[17,18],presenter:"Sai Rakul",duration:"~20 min",summary:"Complete the inspection report with Ventilation, Penetrations & Flashing (using conditional fields for different vent types), and the Damage, Gutter & Siding sections with photo documentation.",keyPoints:["Ventilation section: ridge vent, box vents, powered vents — conditional fields show different specs per type.","Penetrations & Flashing covers pipe boots, skylights, chimneys, and step/counter flashing condition.","Damage section documents hail size, wind damage, granule loss, and interior damage with required photos.","Gutter and Siding sections capture dimensions and condition — additional upsell line items in CPQ."],cheatSheet:[{title:"Ventilation & Penetrations (Video 17)",items:["Ventilation type → conditional sub-fields appear","Ridge vent: LF needed","Box/Turtle vents: quantity + size","Pipe boots: quantity + sizes (1½\", 2\", 3\", 4\")","Chimney/skylight: flashing condition + photos"]},{title:"Damage, Gutters & Siding (Video 18)",items:["Damage type: hail, wind, impact — document hail size","Granule loss: percentage + photo","Interior damage: yes/no + water stain photos","Gutters: LF + condition → gutter guard upsell","Siding: material + damaged area → CPQ line item"]}]},
+{id:"clock-out-status",track:"field",title:"Clock Out & Status Updates",persona:"Sales Rep",platform:"Mobile",videos:[19],presenter:"Sai Rakul",duration:"~15 min",summary:"Understand the two clock-out options in Zuper — Stop Timer Only (keeps job status unchanged for return visits) vs. Stop Timer & Update Status (marks inspection complete and triggers next workflow step).",keyPoints:["'Stop Timer Only' pauses the time log without changing job status — used when returning another day.","'Stop Timer & Update Status' ends the visit and moves the job to the configured next status.","Status update at clock-out can trigger CPQ proposal generation if the status matches the CPQ trigger.","The correct clock-out option prevents accidental early status advancement in the pipeline."],cheatSheet:[{title:"Clock Out Options (Video 19)",items:["Option 1 — Stop Timer Only: pauses time log, status unchanged, rep can return","Option 2 — Stop Timer & Update Status: ends visit, advances job status","Status advance may trigger CPQ auto-generation","Choose carefully — wrong option can skip pipeline steps","Supervisor can manually correct status if needed"]},{title:"When to Use Each",items:["Stop Timer Only: multi-day inspection, waiting for measurements, return visit needed","Stop Timer & Update Status: inspection fully complete, ready for CPQ trigger","After clock-out: job visible in Kanban with updated status","Time log automatically tallied for job costing"]}]},
+{id:"cpq-overview-setup",track:"cpq",title:"CPQ Overview & Template Setup",persona:"Admin",platform:"Web",videos:[20,21,22,23],presenter:"Maxwell Arthur",duration:"~40 min",summary:"Introduction to the Configure → Price → Quote flow, creating CPQ-based proposal templates, setting auto-apply triggers by job category and status, and choosing between industry templates (GAF/OC/CT) or generic Good/Better/Best presets.",keyPoints:["CPQ = Configure (which items) → Price (formula-calculated costs) → Quote (customer-facing proposal).","CPQ-based templates differ from Standard templates — they support formulas, conditions, and auto-calculation.","Triggers define when the CPQ engine fires: a specific Job Category + Job Status combination.","Industry templates (GAF, Owens Corning, CertainTeed) give pre-loaded shingle options and line items."],cheatSheet:[{title:"Creating a Template (Videos 20–22)",items:["Navigate to Settings → CPQ Templates → New","Choose 'CPQ-Based' (not Standard)","Set trigger: Job Category = Inspection, Status = 'Create Proposal'","Name the template (e.g. 'GAF Residential Roofing')","Save as Draft first — Publish when ready"]},{title:"Starting Point (Video 23)",items:["Industry template: pre-loaded with GAF/OC/CT shingle options","Generic preset: Good/Better/Best structure with empty line items","Industry templates save setup time for roofing-specific proposals","Generic presets give maximum flexibility","Either can be fully customized after selection"]}]},
+{id:"cpq-packages",track:"cpq",title:"Package Configuration & Line Items",persona:"Admin",platform:"Web",videos:[24,25,26,27,28,29],presenter:"Maxwell Arthur",duration:"~50 min",summary:"Build out CPQ proposal options by adding materials, services, bundles, and service packages; organize with sections; configure checklist look-up items, deposits, add-ons, and drag-and-drop line item ordering.",keyPoints:["A package = one option in the proposal (e.g. Good, Better, Best) — each has its own line items.","Sections group related line items within a package — section-level conditions apply to all items below.","Checklist Look-Up items pull field data from the inspection checklist — quantity can be Fixed or Formula.","Deposits can be percentage-based or fixed-amount — configured per package option."],cheatSheet:[{title:"Package Structure (Videos 24–26)",items:["Add package → name it (e.g. '3-Tab Standard')","Line item types: Material, Service, Bundle, Service Package","Use Sections to group (e.g. 'Roofing Materials', 'Accessories')","Checklist Look-Up: links to inspection field data","Fixed qty vs Formula qty — set per line item"]},{title:"Deposits, Add-ons & Ordering (Videos 27–29)",items:["Deposit: % of package total OR fixed $ amount","Add-ons: optional extras shown at acceptance (e.g. gutters, attic insulation)","Drag-and-drop to reorder line items within a package","'Recommended' label: highlights the preferred option for the customer","Changes auto-save in draft mode"]}]},
+{id:"cpq-formulas",track:"cpq",title:"Quantity Sources, Formulas & Formula Library",persona:"Admin",platform:"Web",videos:[30,31,32,33,34,35,36,37,38],presenter:"Maxwell Arthur",duration:"~60 min",summary:"Master CPQ's formula engine: understand fixed vs formula quantity sources, explore the formula library, create new formulas using @ field insertion, apply functions (CEIL/FLOOR/MAX), add IF/ELSE logic, validate with Preview, configure rounding, and manage formulas with Edit/Deactivate/Clone.",keyPoints:["Quantity Source per line item: Fixed (manual number) or Formula (auto-calculated from field data).","Formulas reference fields using @ — measurement tokens, checklist fields, custom job fields.","Functions available: CEIL(), FLOOR(), MAX(), MIN(), AVG() — critical for matching real roofing quantities.","IF/ELSE logic inside formulas: IF [condition] THEN [expression] ELSE [fallback] — handles edge cases."],cheatSheet:[{title:"Building a Formula (Videos 32–36)",items:["Name + Key + Category — key must be unique","Type @ to insert a field (measurement token, checklist field, custom field)","Add math: (Total_Area * 1.1) / 100 = squares with 10% waste","Functions: CEIL(x) rounds UP, FLOOR(x) rounds DOWN","Add IF/ELSE: IF Pitch > 6 THEN formula_A ELSE formula_B","Preview panel: test with sample values before saving"]},{title:"Rounding & Management (Videos 37–38)",items:["Rounding: Next Whole, Previous Whole, Next Half, Previous Half","Roofing tip: always round UP (CEIL) on materials — never under-order","Edit formula: change expression, rename, re-categorize","Deactivate: hides from new use but preserves on existing templates","Clone: duplicates formula as starting point for variation"]}]},
+{id:"cpq-rules-financing",track:"cpq",title:"Conditional Rules, Financing & Publishing",persona:"Admin",platform:"Web",videos:[39,40,41,42,43,44,45,46,47,48],presenter:"Maxwell Arthur",duration:"~60 min",summary:"Build conditional IF/THEN/ELSE rules at the line-item and section level, configure ALL (AND) vs ANY (OR) multi-condition logic, set THEN/ELSE actions (Add, Remove, Adjust Markup), handle null values, enable financing options, and publish the completed template.",keyPoints:["Conditional rules fire at the line-item level: IF [data source field] [operator] [value] THEN [action].","ALL = AND logic (every condition must pass); ANY = OR logic (at least one condition must pass).","Section-level rules override item-level rules — a 'Remove Section' action hides all items beneath.","Missing/null checklist values are treated as zero in formula and rule evaluations — plan for this edge case."],cheatSheet:[{title:"Building Rules (Videos 39–45)",items:["Data source: Job Fields / Checklist / System field","Operator: equals, not equals, greater than, less than, contains","ALL = AND (all conditions true) / ANY = OR (any condition true)","THEN: Add Item / Remove Item / Adjust Markup %","ELSE: define fallback if condition is NOT met","Section rule: 'Remove Section' hides section + all items below"]},{title:"Financing & Publishing (Videos 46–48)",items:["Enable Financing per package: toggle on providers (e.g. GreenSky)","Set APR plans per option — customer sees monthly payment estimate","Add custom provider: Settings → Financing Options → New Provider","Dealer fee: separate taxable line item OR markup on existing items","Save as Draft → review fully → Publish Template"]}]},
+{id:"layouts-overview",track:"proposals",title:"Proposal Layouts — Overview & Page Management",persona:"Admin",platform:"Web",videos:[49,50,51,52,53],presenter:"Sandeep",duration:"~35 min",summary:"Introduction to Zuper's Proposal Layouts module — how to access it, create a new layout from scratch or template, understand the 7 default pages, and manage pages with rename, reorder, duplicate, hide, and lock controls.",keyPoints:["Proposal Layouts is a separate module from CPQ — it controls how proposals look, not what's in them.","Access via Quote & Invoice Settings → Proposal Layouts (may require Beta access request).","7 default pages: Cover, About Us, Inspection Summary, Scope of Work, Estimate, Terms, Signature.","Pages can be renamed, reordered, duplicated, hidden (per proposal), or locked (prevent editing)."],cheatSheet:[{title:"Creating a Layout (Videos 49–52)",items:["Settings → Quote & Invoice Settings → Proposal Layouts","Click 'New Layout'","Start from Scratch OR Choose from Template","Layout name + assign to team/trade type","Default pages auto-added — customize each one"]},{title:"Page Management (Video 53)",items:["Rename: click page name → edit","Reorder: drag-and-drop in page list","Duplicate: create a copy to use as starting point","Hide: page excluded from this proposal (toggle per use)","Lock: page cannot be edited when used on a specific proposal"]}]},
+{id:"layouts-content",track:"proposals",title:"Layout Content Design & Configuration",persona:"Admin",platform:"Web",videos:[54,55,56,57,58,59],presenter:"Sandeep",duration:"~50 min",summary:"Design each layout page: choose cover styles, insert dynamic merge tags, configure text/PDF content pages, set estimate display options, import inspection forms into Inspection Summary, and set up the signature page.",keyPoints:["Cover page offers 4 styles: Classic, Executive, Split Screen, Cinematic — choose per brand.","Merge tags inject dynamic data: customer name, property address, proposal date, rep name, etc.","Estimate Options page: configurable to show/hide images, descriptions, quantities, taxes, and financing totals.","Inspection Summary page: import inspection forms, checklists, and job photos from the gallery."],cheatSheet:[{title:"Cover & Content Pages (Videos 54–57)",items:["Cover: select style → add company logo + background photo","Merge tags: {{customer.name}}, {{job.address}}, {{proposal.date}}","About Us, Scope, Terms: use rich text editor OR upload PDF","Estimate Options: toggle show/hide for images, qty, tax line, financing","Conditional show: display Estimate only if specific option is selected"]},{title:"Inspection Summary & Signature (Videos 58–59)",items:["Inspection Summary: import from job's inspection checklist forms","Select which checklist sections to include","Pull job gallery photos into the page","Signature page: choose layout style (1 or 2 column)","Signature page: add text above/below signature block"]}]},
+{id:"layouts-advanced",track:"proposals",title:"Advanced Layout Features & Multi-Signer",persona:"Admin / Sales Rep",platform:"Web",videos:[60,61,62,63,64],presenter:"Sandeep",duration:"~35 min",summary:"Configure multi-signer proposals (up to 3 co-signers + company counter-signer), add custom pages (text, PDF, gallery, checklist), set job image gallery display options, edit a layout for a single proposal without changing the master, and set the organization's default layout.",keyPoints:["Multi-Signer: up to 3 co-signers plus a Company Authorization counter-signer — all must sign before job advances.","Custom page types: Text, PDF Upload, Job Checklist, Job Gallery — any can be added to a layout.","Job Image Gallery page: configurable mandatory images and layout (grid, large, strip).","Per-proposal edits: a sales rep can edit page content for a specific proposal without altering the master layout."],cheatSheet:[{title:"Multi-Signer & Custom Pages (Videos 60–62)",items:["Signature page → 'Add Co-Signer' → up to 3 additional signers","Company Authorization: Zuper user must also sign (internal signing = contract)","Custom page types: Text Page, PDF Upload, Job Checklist, Job Gallery","Job Gallery settings: select mandatory images to include","Gallery layout: Grid, Large Single, Strip options"]},{title:"Per-Proposal Edit & Default Layout (Videos 63–64)",items:["From a specific job's proposal: 'Edit Layout' opens a proposal-specific copy","Changes apply only to that proposal — master layout unchanged","Useful for one-off customizations (unique scope, special notes)","Default Layout: Settings → Quote & Invoice → General Settings → Default Proposal Layout","Default auto-applied to new proposals unless overridden"]}]},
+{id:"data-import-overview",track:"proposals",title:"Data Import — Overview & File Preparation",persona:"Admin",platform:"Web",videos:[65,66,67,68,69,70,71,72,73,74],presenter:"Sai Rakul",duration:"~50 min",summary:"Navigate the Data Import module, understand Master Data vs Transaction Data imports, learn the correct first-time setup import order, prepare compliant CSV files, download sample templates, handle validation errors, select primary keys, and configure conflict resolution.",keyPoints:["Import hierarchy: Master Data first (Customers, Organizations, Properties), then Transaction Data (Jobs).","CSV requirements: max 25 MB, max 20,000 rows, single sheet, UTF-8 encoding, no merged cells.","Primary Key: a unique identifier field (e.g. Customer ID) that prevents duplicate imports.","Conflict resolution: Skip (ignore duplicate), Merge (update existing), or Create Duplicates — choose carefully."],cheatSheet:[{title:"Import Setup (Videos 65–73)",items:["Navigate: Settings → Data Administration → Data Import","Choose: Import using file OR Use Saved Template","Master Data: Customers, Organizations, Products, Properties","Transaction Data: Jobs, Quotes, Invoices (require linked Master Data)","CSV: 25MB max, 20K rows, single sheet, no merged cells","Primary Key: unique field to identify records (e.g. email for Customers)"]},{title:"Validation & Conflict (Videos 72–74)",items:["Download Zuper sample template — headers must match exactly","Conflict resolution: Skip = ignore duplicate records","Merge = update matching record with file data","Create Duplicates = always create new (use rarely)","Select conflict strategy before mapping begins"]}]},
+{id:"data-import-mapping",track:"proposals",title:"Data Import — Mapping, Execution & Troubleshooting",persona:"Admin",platform:"Web",videos:[75,76,77,78,79,80,81],presenter:"Sai Rakul",duration:"~40 min",summary:"Map CSV columns to Zuper fields, handle mandatory vs unmapped columns, save mappings as reusable templates, control workflow/webhook triggers during import, review import results, troubleshoot errors, and handle one-to-many associations.",keyPoints:["Field mapping: drag CSV columns to matching Zuper fields — mandatory Zuper fields must be mapped.","Unmapped columns are ignored — no error, but that data is not imported.","Save mapping as a reusable template (e.g. 'HubSpot Contacts → Customers') to avoid re-mapping next time.","Disable subsequent triggers during import to prevent workflows/webhooks from firing on each imported record."],cheatSheet:[{title:"Mapping & Templates (Videos 75–77)",items:["Mapping table: left = CSV columns, right = Zuper fields","Drag/select to map each column","Mandatory fields highlighted — must be mapped","Unmapped columns: data ignored, no error thrown","'Save as Template': name the mapping for reuse","Saved templates reusable for repeated imports (e.g. monthly HubSpot sync)"]},{title:"Triggers, Results & Troubleshooting (Videos 78–81)",items:["'Disable Subsequent Triggers': prevents workflows/webhooks on each imported record","Past Imports: shows total, created, failed, and merged counts","Download error file: rows that failed + reason column","Common errors: missing required field, value not in allowed list, invalid date format","One-to-many: Customer → multiple Properties (use Customer ID as the linking key)"]}]},
+{id:"proposal-acceptance",track:"proposals",title:"Proposal Presentation & Customer Acceptance",persona:"Sales Rep / Project Engineer",platform:"Web & Mobile",videos:[82,83,84,85,86],presenter:"Sandeep / Sai Rakul",duration:"~35 min",summary:"Create a proposal from a CPQ template on a job, present it in Full PDF or Options Only mode, walk through the customer acceptance flow (option selection, color picker, add-ons, digital signature), review post-acceptance on web, and submit for Project Engineer approval into Production.",keyPoints:["Full PDF view shows all proposal pages; Options Only view focuses just on the options/packages for faster customer review.","Customer acceptance flow: 1) Select option, 2) Choose color/material, 3) Select add-ons, 4) Sign digitally.","Post-acceptance: rep reviews the accepted proposal on the web app to confirm scope before submitting for approval.","Project Engineer approval moves the job from Inspection to the Production Pipeline — this is the production gate."],cheatSheet:[{title:"Proposal Creation & Presentation (Videos 82–83)",items:["Open inspection job → Quotes → Create from CPQ Template","Select the appropriate CPQ template (e.g. GAF Residential)","Review generated proposal — check quantities and pricing","Present to customer: Full PDF (all pages) OR Options Only (focused review)","Options Only view: faster for on-site presentations"]},{title:"Acceptance & Approval (Videos 84–86)",items:["Customer selects option (Good/Better/Best)","Color picker: select shingle color/material variant","Add-ons: customer opts in/out of optional extras","Digital signature: customer signs on screen or via emailed link","Submit for Approval → Project Engineer reviews → Approves → Production Pipeline begins"]}]},
+{id:"vendor-management",track:"production",title:"Vendor Management Overview & Setup",persona:"Admin",platform:"Web",videos:[87,88,89,90],presenter:"Maxwell Arthur",duration:"~35 min",summary:"Set up the Vendor Management module: understand its role in centralizing vendor data and transactions, create vendors with primary details, configure transaction details (delivery methods), and set lead time, payment terms, and tax settings.",keyPoints:["Vendor Management centralizes all supplier data, product catalogs, and PO transactions in one place.","Delivery methods per vendor: Direct Shipment (to job site), Warehouse, or Pickup Only.","Lead time configuration enables accurate delivery date calculations on purchase orders.","Payment Terms and Default Tax Rate per vendor auto-populate when creating POs."],cheatSheet:[{title:"Creating a Vendor (Videos 87–89)",items:["Purchasing → Vendors → New Vendor","Primary Details: name, contact name, email, phone, display name","Transaction Details: select delivery method(s)","Delivery: Direct Shipment / Warehouse / Pickup Only","Multiple delivery methods can be enabled per vendor"]},{title:"Financial & Tax Settings (Video 90)",items:["Lead Time: days from PO submission to expected delivery","Payment Terms: Net 30, Net 60, COD, etc. (auto-fills on POs)","Vendor Tax ID: for tax reporting","Default Tax Rate: auto-applied to vendor's line items on POs","All settings editable after creation"]}]},
+{id:"vendor-catalog",track:"production",title:"Vendor Catalog, Product Mapping & Preferences",persona:"Admin",platform:"Web",videos:[91,92,93,94,95,96,97],presenter:"Maxwell Arthur",duration:"~50 min",summary:"Build vendor-specific product catalogs with vendor SKUs and costs, understand master vs vendor-level management, map item options (size/color/model) to vendors, add billing and pickup addresses, enter bank details, and assign preferred vendors for PO autofill.",keyPoints:["Vendor catalog maps your Zuper inventory items to vendor-specific SKUs and purchase costs.","Master catalog approach: one item, multiple vendor SKU mappings — enables preferred vendor autofill.","Item Options mapping: different sizes, colors, or models of the same product mapped to vendor-specific SKUs.","Preferred vendor assignment on a product ensures POs auto-assign the correct vendor without manual selection."],cheatSheet:[{title:"Product Catalog Setup (Videos 91–93)",items:["Vendor → Product Catalog tab → Add Items","Search Zuper inventory → select item → enter vendor SKU + vendor cost","Vendor cost = what you pay; sell price stays in Zuper inventory","Item Options: map specific colors/sizes to different vendor SKUs","Master catalog vs vendor-level: master = one item, many vendor mappings"]},{title:"Addresses, Bank & Preferred Vendor (Videos 94–97)",items:["Billing Address: for PO and invoice matching","Pickup Address: where crew picks up materials","'Pick from map': search and pin address with Google Maps","Bank Details: account name, number, bank name, branch identifier","Preferred Vendor: set in product record → auto-fills on POs"]}]},
+{id:"vendor-views",track:"production",title:"Vendor Views, Filters & Advanced Management",persona:"Admin",platform:"Web",videos:[98,99,100,101,102,103],presenter:"Maxwell Arthur",duration:"~35 min",summary:"Master the Vendor list management: create pinned quick-access filters, build and share custom column views with team-level permissions, manage all vendor detail tabs (Details, Catalog, Notes, Activity), and use More Actions to send communications, deactivate, and delete vendors.",keyPoints:["Pinned filters: save up to 3 quick-access filters on the Vendor list for fast navigation.","Custom Views: select which columns to display, share with specific users or teams, set visibility.","View permissions: edit access (can modify the view) vs view-only (can use but not change the view).","More Actions on a vendor: send email/SMS, deactivate (hides from PO selection), or permanently delete."],cheatSheet:[{title:"Filters & Views (Videos 98–101)",items:["Pinned filter: click filter icon → apply criteria → 'Pin' → appears as quick tab","Max 3 pinned filters per user","Custom View: 'Columns' button → select/deselect columns → save","Name the view → choose sharing: specific users / teams / all","View permission: Edit (can modify) / View-only (read-only access)"]},{title:"Vendor Management & Actions (Videos 102–103)",items:["Vendor detail tabs: Details (edit), Product Catalog, Notes, Activity (audit log)","Activity tab: full history of changes with timestamp and user","More Actions (three dots): Email / SMS vendor","Deactivate vendor: hidden from PO vendor selection, data preserved","Delete vendor: permanent — only if no linked POs or transactions"]}]},
+{id:"purchase-orders",track:"production",title:"Purchase Orders & Pre-Production",persona:"Back Office / Project Engineer",platform:"Web",videos:[104,105,106,107,108,109],presenter:"Maxwell Arthur / Sai Rakul",duration:"~45 min",summary:"Move a job into Production, create purchase orders from job line items with vendor mapping, configure PO details, submit and send POs through the approval hierarchy, receive items (partial and full), and complete the pre-production task with expected delivery details.",keyPoints:["Moving to Production changes the job category from 'Inspection' to 'Production Roof' — approved by Project Engineer.","POs are created directly from job line items — Zuper auto-splits into separate POs per vendor.","Approval hierarchy: Draft → Submitted → (Approval) → Sent to Vendor — configured in Settings.","Partial receiving: log received quantities against a PO without waiting for full delivery."],cheatSheet:[{title:"Creating & Submitting POs (Videos 104–107)",items:["Project Eng. approves proposal → job category changes to 'Production Roof'","Job → Purchasing → Create PO from Line Items","Zuper auto-groups by preferred vendor → one PO per vendor","Configure: quantities, delivery method, payment terms, PO template","Submit for approval if hierarchy configured → Sent to Vendor via email"]},{title:"Receiving & Pre-Production (Videos 108–109)",items:["PO → 'Receive Items' → enter quantities received vs ordered","Partial receive: log partial delivery, PO stays open for remainder","Full receive: all items received → PO status = Received","Mark as 'Invoiced' when supplier invoice arrives","Pre-production task: enter PO numbers, supplier, expected delivery date → job ready to schedule"]}]},
+{id:"crew-scheduling",track:"production",title:"Crew Scheduling & Multi-Trade Execution",persona:"Back Office / Crew",platform:"Web & Mobile",videos:[110,111,112,113,114,115,116],presenter:"Sai Rakul",duration:"~45 min",summary:"Schedule crew with Assisted Scheduling, walk through the full crew mobile flow (pre-job review, On My Way, Start Job, site prep safety checklist, clock-out with completion documentation), move jobs to next trade, and understand multi-trade handoff visibility.",keyPoints:["Assisted Scheduling for crew checks availability and skill set — just like inspection scheduling.","Crew pre-job review on mobile: measurements, gallery photos, and back-office notes all visible.","Site Preparation safety checklist: materials must be confirmed on-site before work begins (guardrail).","Multi-trade handoff: when a trade completes, schedule auto-clears and the next crew's Kanban card is created."],cheatSheet:[{title:"Crew Scheduling & Mobile Flow (Videos 110–113)",items:["Back office: Assisted Scheduling → crew assigned to install dates","Crew receives push notification on mobile","Pre-job review: see measurements, site photos, back-office notes","Tap 'On My Way' → 'Start Job' → clock-in begins","Site Prep checklist: confirm materials on site before starting work"]},{title:"Completion & Multi-Trade (Videos 114–116)",items:["Crew clock-out: add notes, upload after photos, log unused materials","Customer signature captured on mobile at completion","Supervisor marks trade complete → schedule auto-clears","New Kanban card created for next trade (e.g. gutters after roofing)","Next crew mobile: can see prior trade's history, photos, and notes"]}]},
+{id:"final-qa-invoice",track:"revenue",title:"Final QA, Invoice Generation & Payment Closure",persona:"Project Engineer / Back Office",platform:"Web",videos:[117,118,119],presenter:"Sai Rakul",duration:"~25 min",summary:"Complete the revenue cycle: project engineer conducts the final QA review of completed work, back office generates and sends the invoice, collects payment via Zuper Pay or manual entry, and closes the job.",keyPoints:["Final QA: project engineer reviews completion photos, crew notes, and customer signature before invoicing.","Invoice is auto-generated from the accepted proposal line items — no manual re-entry of pricing.","Payment methods: Zuper Pay (card/ACH), manual payment entry, or customer portal self-pay.","Job closure: all POs must be fulfilled or closed before the job can reach terminal status."],cheatSheet:[{title:"Final QA & Invoice (Videos 117–118)",items:["Project Eng. opens completed job → reviews after photos + crew notes","Confirms all completion checklist items are done","Checks customer signature from crew clock-out","Approves completion → triggers invoice generation","Invoice auto-built from accepted proposal items","Review invoice → apply any adjustments → Send to customer via email/SMS"]},{title:"Payment & Job Closure (Video 119)",items:["Payment methods: card (Zuper Pay), ACH, manual entry","Send payment link via SMS or email — customer pays online","Customer portal: customer logs in and pays directly","Cash/check: record manually in Payments → Apply to invoice","Invoice status: Sent → Partial → Paid","Job closure: verify all open POs resolved → move job to terminal status"]}]},
+];
 
-// Show/hide import card
-function showImportCard(){
-  $('import-card').style.display='block';
-  $('import-card').scrollIntoView({behavior:'smooth',block:'start'});
-  iGoTo(1);
-  // Pre-fetch categories and locations in background
-  fetchImportMeta();
-}
-function hideImportCard(){$('import-card').style.display='none';}
+// ── STATE ────────────────────────────────────────────────────
+let state = { view:'home', trackId:null, moduleId:null, tab:'overview', searchQuery:'' };
+let videos = {}, blobUrls = {};
+const VIDEOS_KEY = 'zuper_training_videos_v2';
 
-async function fetchImportMeta(){
-  if(!apiKey()||!_baseUrl) return;
-  try{
-    const [catRes, locRes] = await Promise.all([
-      fetch(baseUrl()+'products/category?count=200&page=1',{headers:hdrs()}),
-      fetch(baseUrl()+'products/location?count=50&page=1',{headers:hdrs()})
-    ]);
-    if(catRes.ok){ const d=await catRes.json(); impCategories=d.data||d.categories||[]; }
-    if(locRes.ok){ const d=await locRes.json(); impLocations=d.data||[]; }
-  }catch(e){ console.warn('Import meta fetch:',e.message); }
-}
+async function loadVideos() { try { const r = await window.storage.get(VIDEOS_KEY); videos = r ? JSON.parse(r.value) : {}; } catch { videos = {}; } }
+async function saveVideos() { try { await window.storage.set(VIDEOS_KEY, JSON.stringify(videos)); } catch {} }
 
-// Step navigation
-function iGoTo(n){
-  [1,2,3,4].forEach(i=>{
-    $('istep'+i).style.display = i===n?'block':'none';
-    const tab=$('istep'+i+'-tab');
-    tab.className='istep'+(i===n?' active':i<n?' done':'');
-  });
-}
+// ── HELPERS ──────────────────────────────────────────────────
+const getTrack = id => TRACKS.find(t => t.id === id);
+const getModule = id => MODULES.find(m => m.id === id);
+const getModsByTrack = id => MODULES.filter(m => m.track === id);
+const videoLabel = m => m.videos.length === 1 ? `Video ${m.videos[0]}` : `Videos ${m.videos[0]}–${m.videos[m.videos.length-1]}`;
+const hex2alpha = (hex, a) => `color-mix(in srgb, ${hex} ${Math.round(a*100)}%, transparent)`;
 
-// ── FILE PARSING ───────────────────────────────────────────────────────────────
-function parseCSV(text){
-  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
-  if(!lines.length) return {headers:[],rows:[]};
-  function splitLine(line){
-    const vals=[]; let cur='', inQ=false;
-    for(let i=0;i<line.length;i++){
-      if(line[i]==='"'&&!inQ){inQ=true;continue;}
-      if(line[i]==='"'&&inQ){inQ=false;continue;}
-      if(line[i]===','&&!inQ){vals.push(cur.trim());cur='';continue;}
-      cur+=line[i];
-    }
-    vals.push(cur.trim());
-    return vals;
-  }
-  const headers=splitLine(lines[0]);
-  const rows=lines.slice(1).map(line=>{
-    const vals=splitLine(line);
-    const obj={};
-    headers.forEach((h,i)=>obj[h]=(vals[i]||'').trim());
-    return obj;
-  }).filter(r=>Object.values(r).some(v=>v));
-  return {headers,rows};
+function detectVideoType(url) {
+  if (!url) return null;
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  if (yt) return { type:'youtube', embedUrl:`https://www.youtube.com/embed/${yt[1]}?rel=0` };
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return { type:'vimeo', embedUrl:`https://player.vimeo.com/video/${vimeo[1]}` };
+  const loom = url.match(/loom\.com\/(?:share|embed)\/([a-zA-Z0-9]+)/);
+  if (loom) return { type:'loom', embedUrl:`https://www.loom.com/embed/${loom[1]}` };
+  if (url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i) || url.startsWith('blob:')) return { type:'direct', embedUrl:url };
+  return { type:'iframe', embedUrl:url };
 }
 
-function onImportFile(input){
-  const file = input.files[0];
-  if(!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  const reader = new FileReader();
-  reader.onload = function(e){
-    let parsed;
-    if(ext==='csv'){
-      parsed = parseCSV(e.target.result);
-    } else {
-      // Excel via SheetJS
-      try{
-        const wb = XLSX.read(e.target.result, {type:'binary'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws,{defval:''});
-        const headers = json.length ? Object.keys(json[0]) : [];
-        parsed = {headers, rows:json.map(r=>{const o={};headers.forEach(h=>o[h]=String(r[h]||'').trim());return o;})};
-      }catch(ex){
-        showImpMsg(1,'✗ Could not parse Excel file: '+ex.message,'err'); return;
-      }
-    }
-    if(!parsed.rows.length){ showImpMsg(1,'✗ File appears empty or has no data rows.','err'); return; }
-    impHeaders=parsed.headers;
-    impRows=parsed.rows;
-    $('imp-fname').textContent=file.name;
-    $('imp-rowcount').textContent=parsed.rows.length+' rows';
-    buildColumnMapper();
-    iGoTo(2);
-  };
-  if(ext==='csv') reader.readAsText(file);
-  else reader.readAsBinaryString(file);
+function searchModules(q) {
+  if (!q.trim()) return [];
+  const lq = q.toLowerCase();
+  return MODULES.filter(m => [m.title, m.summary, m.persona, m.platform, ...m.keyPoints,
+    ...m.cheatSheet.flatMap(s=>[s.title,...s.items])].join(' ').toLowerCase().includes(lq));
 }
 
-// ── COLUMN MAPPER ─────────────────────────────────────────────────────────────
-function buildColumnMapper(){
-  const colOptions = ['(skip)'].concat(impHeaders).map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join('');
-  const tbody = $('imp-map-body');
-  tbody.innerHTML = IMPORT_FIELD_DEFS.map(fd=>{
-    // Auto-match: find best column header by fuzzy similarity
-    const auto = autoMatch(fd.key, impHeaders);
-    const sel = ['(skip)'].concat(impHeaders).map(h=>`<option value="${esc(h)}" ${h===auto?'selected':''}>${esc(h)}</option>`).join('');
-    const sample = auto && impRows[0] ? esc(String(impRows[0][auto]||'').slice(0,40)) : '<span style="color:var(--text-sub)">—</span>';
-    return `<tr style="border-bottom:0.5px solid var(--border)">
-      <td style="padding:8px 12px;font-size:.82rem;white-space:nowrap">
-        ${fd.required?'<span style="color:#e8401c;margin-right:3px">★</span>':''}
-        <strong>${fd.label}</strong>
-        ${fd.hint?`<span style="font-size:.72rem;color:var(--text-sub);margin-left:6px">${fd.hint}</span>`:''}
-      </td>
-      <td style="padding:8px 12px">
-        <select id="imap-${fd.key}" onchange="updateSample('${fd.key}')" style="width:100%;padding:5px 8px;border:0.5px solid var(--border-inp);border-radius:6px;font-size:.8rem;background:var(--inp-bg);color:var(--text);outline:none">
-          ${sel}
-        </select>
-      </td>
-      <td id="isample-${fd.key}" style="padding:8px 12px;font-size:.78rem;color:var(--text-sub)">${sample}</td>
-    </tr>`;
-  }).join('');
+// ── COMPONENTS ───────────────────────────────────────────────
+function badge(text, color, extraStyle='') {
+  return `<span class="badge" style="background:${hex2alpha(color,.12)};color:${color};border:1px solid ${hex2alpha(color,.3)};${extraStyle}">${text}</span>`;
+}
+function pill(text, color) {
+  return `<span class="pill" style="background:${hex2alpha(color,.14)};color:${color};border:1px solid ${hex2alpha(color,.25)}">${text}</span>`;
 }
 
-function autoMatch(fieldKey, headers){
-  // First try exact match against the Zuper template column name
-  const fd = IMPORT_FIELD_DEFS.find(f=>f.key===fieldKey);
-  if(fd && fd.col){
-    const exact = headers.find(h=>h===fd.col || h.trim()===fd.col.trim());
-    if(exact) return exact;
-  }
-  // Fallback fuzzy aliases
-  const aliases = {
-    product_id:['product id','id','sku','number','product number','product_id'],
-    product_name:['product name','name','item name','product_name'],
-    product_type:['product type','type','item type','product_type'],
-    product_category:['product category','category','cat'],
-    price:['price','selling price','unit price'],
-    has_custom_tax:['has custom tax','custom tax'],
-    description:['description','desc','product description'],
-    brand:['brand'],
-    purchase_price:['purchase price','cost','buy price'],
-    uom:['uom','unit','unit of measurement'],
-    location:['location','warehouse'],
-    available_qty:['quantity','qty','available qty','stock'],
-    min_quantity:['min. quantity','min quantity','minimum','min qty'],
-    tax_exempt:['tax exempt'],
-    tax_name:['tax name'],
-    tax_rate:['tax rate','tax rate (in percentage)'],
-    markup_type:['markup type'],
-    markup_value:['markup value'],
-    track_quantity:['track quantity'],
-  };
-  const cands = aliases[fieldKey] || [fieldKey.replace(/_/g,' ')];
-  const headerLower = headers.map(h=>h.toLowerCase().trim());
-  for(const c of cands){
-    const idx=headerLower.indexOf(c.toLowerCase());
-    if(idx>=0) return headers[idx];
-  }
-  return '(skip)';
+// ── NAVIGATE ─────────────────────────────────────────────────
+function navigate(view, trackId=null, moduleId=null) {
+  state.view = view;
+  state.trackId = trackId || state.trackId;
+  state.moduleId = moduleId || state.moduleId;
+  if (view === 'home') { state.trackId = null; state.moduleId = null; }
+  if (view === 'track') { state.moduleId = null; state.tab = 'overview'; }
+  if (view === 'module') state.tab = 'overview';
+  renderApp();
 }
 
-function updateSample(fieldKey){
-  const col = document.getElementById('imap-'+fieldKey)?.value;
-  const sample = $('isample-'+fieldKey);
-  if(sample){
-    const val = col&&col!=='(skip)'&&impRows[0] ? String(impRows[0][col]||'').slice(0,40) : '—';
-    sample.innerHTML = esc(val)||'<span style="color:var(--text-sub)">—</span>';
+function setTab(tab) {
+  state.tab = tab;
+  const html = renderModule();
+  document.getElementById('main').innerHTML = '<div class="fade-in">' + html + '</div>';
+  attachListeners();
+}
+
+// ── BREADCRUMB ───────────────────────────────────────────────
+function renderBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (!bc) return;
+  if (state.view === 'track' && state.trackId) {
+    const t = getTrack(state.trackId);
+    bc.innerHTML = `<button class="crumb-link" onclick="navigate('home')">Tracks</button><span class="sep">›</span><span style="color:var(--text);font-weight:600;font-size:13px">${t.label}</span>`;
+  } else if (state.view === 'module' && state.moduleId) {
+    const t = getTrack(state.trackId), m = getModule(state.moduleId);
+    bc.innerHTML = `<button class="crumb-link" onclick="navigate('home')">Tracks</button><span class="sep">›</span><button class="crumb-link" onclick="navigate('track','${t.id}')">${t.label}</button><span class="sep">›</span><span class="crumb-cur">${m.title.split(' ').slice(0,3).join(' ')}</span>`;
+  } else {
+    bc.innerHTML = '';
   }
 }
 
-function getColMap(){
-  const map={};
-  IMPORT_FIELD_DEFS.forEach(fd=>{
-    const el=document.getElementById('imap-'+fd.key);
-    if(el&&el.value&&el.value!=='(skip)') map[fd.key]=el.value;
-  });
-  return map;
+// ── MAIN RENDER ──────────────────────────────────────────────
+async function renderApp() {
+  renderBreadcrumb();
+  const main = document.getElementById('main');
+  let html = '';
+  if (state.view === 'home')   html = renderHome();
+  if (state.view === 'track')  html = renderTrack();
+  if (state.view === 'module') html = renderModule();
+  if (state.view === 'search') html = renderSearch();
+  if (state.view === 'tutor')  html = renderTutor();
+  main.innerHTML = '<div class="fade-in">' + html + '</div>';
+  attachListeners();
 }
 
-// ── VALIDATION ────────────────────────────────────────────────────────────────
-function runValidation(){
-  impColMap = getColMap();
-  const missing = IMPORT_FIELD_DEFS.filter(f=>f.required&&!impColMap[f.key]).map(f=>f.label);
-  if(missing.length){showImpMsg(2,'✗ Please map required fields: '+missing.join(', '),'err');return;}
-
-  const VALID_TYPES = new Set(['PARTS','SERVICE','BUNDLE']);
-  const results = impRows.map((row,i)=>{
-    const r = {};
-    IMPORT_FIELD_DEFS.forEach(fd=>{ r[fd.key]=impColMap[fd.key]?String(row[impColMap[fd.key]]||'').trim():''; });
-    const errs=[], warns=[];
-    if(!r.product_name) errs.push('Name required');
-    if(!r.product_type) errs.push('Type required');
-    else if(!VALID_TYPES.has(r.product_type.toUpperCase())) errs.push('Type must be PARTS, SERVICE, or BUNDLE');
-    else r.product_type = r.product_type.toUpperCase();
-    if(!r.product_id) errs.push('Product number required');
-    if(r.price===''||r.price===undefined) errs.push('Selling price required');
-    else if(isNaN(parseFloat(r.price))) errs.push('Price must be a number');
-    if(!r.product_category) errs.push('Category required');
-    if(r.available_qty && isNaN(parseInt(r.available_qty))) warns.push('Available qty not a number');
-    if(r.min_quantity && isNaN(parseInt(r.min_quantity))) warns.push('Min qty not a number');
-    return {row:i+2, data:r, errs, warns, valid:errs.length===0};
-  });
-
-  const valid=results.filter(r=>r.valid).length;
-  const errs=results.filter(r=>!r.valid).length;
-  const warns=results.filter(r=>r.valid&&r.warns.length).length;
-
-  $('iv-total').textContent=results.length;
-  $('iv-valid').textContent=valid;
-  $('iv-warn').textContent=warns;
-  $('iv-err').textContent=errs;
-
-  // Preview table — first 10 rows
-  const previewCols=['product_name','product_type','product_id','price','product_category'];
-  $('iv-thead').innerHTML='<tr style="background:var(--th-bg)"><th style="padding:7px 10px;font-size:.7rem;border-bottom:0.5px solid var(--border);color:var(--text-sub)">Row</th>'+
-    previewCols.map(k=>'<th style="padding:7px 10px;font-size:.7rem;border-bottom:0.5px solid var(--border);color:var(--text-sub)">'+IMPORT_FIELD_DEFS.find(f=>f.key===k)?.label+'</th>').join('')+
-    '<th style="padding:7px 10px;font-size:.7rem;border-bottom:0.5px solid var(--border);color:var(--text-sub)">Status</th></tr>';
-
-  $('iv-tbody').innerHTML=results.slice(0,20).map(r=>{
-    const statusCell = r.errs.length
-      ? `<td style="padding:7px 10px"><span style="background:var(--msg-err-bg);color:var(--msg-err-c);padding:2px 8px;border-radius:20px;font-size:.72rem">✗ ${esc(r.errs[0])}</span></td>`
-      : r.warns.length
-        ? `<td style="padding:7px 10px"><span style="background:var(--msg-warn-bg);color:var(--msg-warn-c);padding:2px 8px;border-radius:20px;font-size:.72rem">⚠ ${esc(r.warns[0])}</span></td>`
-        : `<td style="padding:7px 10px"><span style="background:var(--msg-ok-bg);color:var(--msg-ok-c);padding:2px 8px;border-radius:20px;font-size:.72rem">✓ OK</span></td>`;
-    return `<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:7px 10px;font-size:.75rem;color:var(--text-sub)">${r.row}</td>`+
-      previewCols.map(k=>`<td style="padding:7px 10px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${esc(r.data[k]||'—')}</td>`).join('')+
-      statusCell+'</tr>';
-  }).join('');
-
-  impValid = results.filter(r=>r.valid).map(r=>r.data);
-  $('iv-import-btn').textContent=`📥 Import ${valid} Valid Row${valid!==1?'s':''} →`;
-  if(errs>0) showImpMsg(3,errs+' row(s) have errors and will be skipped. '+valid+' row(s) are ready to import.','warn');
-  else showImpMsg(3,'✓ All '+valid+' row(s) are valid and ready to import.','ok');
-  iGoTo(3);
+// ── HOME ─────────────────────────────────────────────────────
+function renderHome() {
+  const totalVids = Object.keys(videos).length + Object.keys(blobUrls).length;
+  const qSearches = ['CPQ trigger','formula CEIL','vendor catalog','multi-signer','data import CSV','unreachable leads','crew clock-out','HubSpot sync'];
+  return `<div class="home-wrap">
+    <div class="hero">
+      <div>
+        <div class="hero-kicker">${badge('Partner Training Hub', C.orange)}</div>
+        <h1>Zuper Roofing <span>Video Curriculum</span></h1>
+        <p class="hero-sub">${MODULES.length} topics across 6 tracks · ${totalVids}/${MODULES.length} videos uploaded · AI tutor</p>
+        <div class="quick-searches">${qSearches.map(q=>`<button class="qs-btn" onclick="triggerSearch('${q}')">🔍 ${q}</button>`).join('')}</div>
+      </div>
+    </div>
+    <div class="track-grid">${TRACKS.map(t => renderTrackCard(t)).join('')}</div>
+  </div>`;
 }
 
-// ── IMPORT ENGINE ─────────────────────────────────────────────────────────────
-function startImport(){
-  if(!impValid.length){alert('No valid rows to import.');return;}
-  iGoTo(4);
-  $('ip-total').textContent=impValid.length;
-  $('ip-ok').textContent='0'; $('ip-fail').textContent='0';
-  $('ip-bar').style.width='0%'; $('ip-pct').textContent='0%';
-  $('ip-lbl').textContent='Ready — click Start Import';
-  $('ip-log').style.display='none'; $('ip-log').innerHTML='';
-  $('ip-run-btn').style.display='inline-flex';
-  $('ip-pause-btn').style.display='none';
-  $('ip-cancel-btn').style.display='none';
-  $('ip-retry-btn').style.display='none';
-  $('ip-dl-btn').style.display='none';
-  impFailed=[]; impLogRows=[];
+function renderTrackCard(t) {
+  const mods = getModsByTrack(t.id);
+  const total = mods.length;
+  const uploaded = mods.filter(m => videos[m.id] || blobUrls[m.id]).length;
+  const allDone = uploaded === total;
+  const someDone = uploaded > 0 && !allDone;
+  const uploadColor = allDone ? 'var(--green)' : someDone ? 'var(--amber)' : 'var(--muted)';
+  const uploadIcon = allDone ? '✅' : someDone ? '▶' : '○';
+  return `<div class="track-card" onclick="navigate('track','${t.id}')" style="border-color:var(--border)" onmouseenter="this.style.borderColor='${t.color}'" onmouseleave="this.style.borderColor=''">
+    <div class="track-card-bar" style="background:linear-gradient(90deg,${t.color} ${Math.round((uploaded/total)*100)}%,var(--border) ${Math.round((uploaded/total)*100)}%)"></div>
+    <div class="track-icon">${t.icon}</div>
+    <div class="track-name">${t.label}</div>
+    <div class="track-desc">${t.desc}</div>
+    <div class="track-footer">
+      <div class="track-pills">
+        ${pill(total + ' topics', t.color)}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="color:${uploadColor};font-size:13px;font-weight:600">${uploadIcon} ${uploaded}/${total} videos uploaded</span>
+      </div>
+    </div>
+  </div>`;
 }
 
-function buildProductPayload(r){
-  // Resolve category uid
-  const catInput=(r.product_category||'').trim().toLowerCase();
-  let catUid='UNCATEGORIZED';
-  if(impCategories.length){
-    const match=impCategories.find(c=>
-      (c.product_category_name||c.category_name||'').toLowerCase()===catInput ||
-      (c.product_category_uid||c.category_uid||'')===r.product_category
-    );
-    catUid=match?(match.product_category_uid||match.category_uid||'UNCATEGORIZED'):r.product_category||'UNCATEGORIZED';
-  }
-  // Resolve location uid
-  let locUid=null;
-  if(r.location&&impLocations.length){
-    const locInput=r.location.trim().toLowerCase();
-    const match=impLocations.find(l=>
-      (l.location_name||'').toLowerCase()===locInput ||
-      (l.location_uid||'')=== r.location
-    );
-    if(match) locUid=match.location_uid||match.uid||null;
-  }
-  const price=parseFloat(r.price)||0;
-  const purchasePrice=r.purchase_price?parseFloat(r.purchase_price)||0:undefined;
-  const availQty=parseInt(r.available_qty)||0;
-  const minQty=parseInt(r.min_quantity)||0;
-  const taxExempt=(r.tax_exempt||'').toUpperCase()==='YES';
-  const hasCustomTax=(r.has_custom_tax||'').toUpperCase()==='YES';
-  const trackQty=(r.track_quantity||'').toUpperCase()==='YES';
-  const taxRate=parseFloat(r.tax_rate)||0;
-
-  const tax = taxExempt
-    ? { tax_exempt: true }
-    : hasCustomTax && r.tax_name
-      ? { tax_exempt: false, tax_name: r.tax_name||'', tax_rate: taxRate }
-      : { tax_exempt: false, tax_name:'', tax_rate:'' };
-
-  const product={
-    product_name: r.product_name,
-    product_id:   r.product_id,
-    product_type: (r.product_type||'PARTS').toUpperCase(),
-    price,
-    min_quantity: minQty,
-    quantity: 0,
-    is_available: true,
-    product_category: catUid,
-    uom: r.uom||'',
-    brand: r.brand||'',
-    specification: r.specification||'',
-    product_description: r.description?`<p>${r.description.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`:'',
-    product_image:'',
-    pricing_level:'ROLLUP',
-    track_quantity: trackQty,
-    has_custom_tax: hasCustomTax,
-    meta_data:[],
-    is_billable:true,
-    consider_profitability:true,
-    is_commissionable:true,
-    location_availability: locUid?[{location:locUid,min_quantity:minQty,quantity:availQty,serial_nos:[]}]:[],
-    tax,
-    product_files:[],
-    option:{customer_selection:false,option_label:'Option',option_values:[]},
-  };
-  if(purchasePrice!==undefined) product.purchase_price=purchasePrice;
-  if(r.markup_type&&r.markup_value){
-    product.markup={
-      markup_type:(r.markup_type||'PERCENTAGE').toUpperCase()==='FLAT'?'FLAT':'PERCENTAGE',
-      markup_value:parseFloat(r.markup_value)||0
-    };
-  }
-  return {product, vendor:[]};
+// ── TRACK ─────────────────────────────────────────────────────
+function renderTrack() {
+  const t = getTrack(state.trackId);
+  const mods = getModsByTrack(t.id);
+  return `<div class="track-wrap">
+    <button class="icon-btn" onclick="navigate('home')" style="margin-bottom:24px">← Back to all tracks</button>
+    <div class="track-header card" style="border-left-color:${t.color};background:var(--card)">
+      <div class="track-header-icon">${t.icon}</div>
+      <h2>${t.label}</h2>
+      <p>${t.desc}</p>
+    </div>
+    <div class="module-list">${mods.map((m,i) => renderModuleRow(m, t, i)).join('')}</div>
+  </div>`;
 }
 
-function impLog(text, level){
-  const el=$('ip-log');
-  el.style.display='block';
-  const d=document.createElement('div');
-  d.style.color=level==='ok'?'#a3e635':level==='err'?'#f87171':'#fbbf24';
-  d.textContent=(level==='ok'?'✓ ':level==='err'?'✗ ':'⚠ ')+text;
-  el.appendChild(d); el.scrollTop=el.scrollHeight;
-  impLogRows.push({status:level,message:text});
+function renderModuleRow(m, t, i) {
+  const hasVid = !!(videos[m.id]||blobUrls[m.id]);
+  return `<div class="module-row" onclick="navigate('module','${t.id}','${m.id}')" onmouseenter="this.style.borderColor='${t.color}'" onmouseleave="this.style.borderColor=''">
+    <div class="module-num" style="color:var(--muted)">${i+1}</div>
+    <div class="module-row-info">
+      <div class="module-row-title">
+        ${m.title}
+        ${hasVid ? pill('▶ Recording', C.green) : ''}
+      </div>
+      <div class="module-row-meta">
+        <span>${videoLabel(m)}</span><span class="dot">·</span>
+        <span>${m.persona}</span><span class="dot">·</span>
+        <span>${m.platform}</span><span class="dot">·</span>
+        <span>${m.duration}</span>
+      </div>
+    </div>
+    <span class="module-arrow">→</span>
+  </div>`;
 }
 
-async function runImport(){
-  const btn=$('ip-run-btn');
-  btn.style.display='none';
-  $('ip-pause-btn').style.display='inline-flex';
-  $('ip-cancel-btn').style.display='inline-flex';
-  impPaused=false; impCancelled=false; impRunning=true;
-  impFailed=[]; impLogRows=[];
-  $('ip-log').innerHTML=''; $('ip-log').style.display='block';
+// ── MODULE ────────────────────────────────────────────────────
+function renderModule() {
+  const m = getModule(state.moduleId);
+  const t = getTrack(m.track);
+  const hasVid = !!(videos[m.id]||blobUrls[m.id]);
+  const tabs = [
+    { id:'overview',   label:'📋 Overview' },
+    { id:'cheatsheet', label:'📄 Cheat Sheet' },
+    { id:'recording',  label: hasVid ? '▶ Recording' : '📹 Recording' },
+  ];
+  let tabContent = '';
+  if (state.tab === 'overview')   tabContent = renderOverview(m, t);
+  if (state.tab === 'cheatsheet') tabContent = renderCheatSheet(m, t);
+  if (state.tab === 'recording')  tabContent = renderRecording(m, t);
 
-  let ok=0,fail=0,done=0;
-  const rows=[...impValid];
-  $('ip-total').textContent=rows.length;
-
-  for(const row of rows){
-    if(impCancelled) break;
-    while(impPaused&&!impCancelled) await new Promise(r=>setTimeout(r,200));
-
-    try{
-      const payload=buildProductPayload(row);
-      const res=await fetch(baseUrl()+'product',{method:'POST',headers:hdrs(),body:JSON.stringify(payload)});
-      const data=await res.json().catch(()=>({}));
-      if(res.ok&&(data.type==='success'||data.data)){
-        ok++;
-        $('ip-ok').textContent=ok;
-        impLog(row.product_name+' — created ('+row.product_type+')', 'ok');
-      } else {
-        fail++;
-        impFailed.push(row);
-        $('ip-fail').textContent=fail;
-        const errMsg=data.message||data.error||JSON.stringify(data).slice(0,80);
-        impLog(row.product_name+' — '+res.status+' '+errMsg,'err');
-      }
-    }catch(e){
-      fail++;
-      impFailed.push(row);
-      $('ip-fail').textContent=fail;
-      impLog(row.product_name+' — Network: '+e.message,'err');
-    }
-
-    done++;
-    const pct=Math.round(done/rows.length*100);
-    $('ip-bar').style.width=pct+'%';
-    $('ip-pct').textContent=pct+'%';
-    $('ip-lbl').textContent=done+' / '+rows.length+' processed';
-  }
-
-  impRunning=false;
-  $('ip-pause-btn').style.display='none';
-  $('ip-cancel-btn').style.display='none';
-  $('ip-dl-btn').style.display='inline-flex';
-  if(impFailed.length){
-    $('ip-retry-btn').textContent='↩ Retry '+impFailed.length+' Failed';
-    $('ip-retry-btn').style.display='inline-flex';
-  }
-  $('ip-lbl').textContent=(impCancelled?'⚠ Cancelled — ':'✓ Complete — ')+ok+' created, '+fail+' failed';
-  // Refresh the fetched records table if on product module
-  if(modKey()==='product') doFetch();
+  return `<div class="module-wrap">
+    <button class="icon-btn" onclick="navigate('track','${t.id}')" style="margin-bottom:24px">← Back to ${t.label}</button>
+    <div class="module-header card" style="border-left-color:${t.color};background:var(--card)">
+      <div class="module-header-badges">
+        ${badge(`${t.icon} ${t.label}`, t.color)}
+        ${pill(videoLabel(m), t.color)}
+        ${pill(m.persona, C.purple)}
+        ${pill(m.platform, C.teal)}
+        ${hasVid ? pill('▶ Recording', C.green) : ''}
+      </div>
+      <h2>${m.title}</h2>
+      <div class="module-header-meta">${m.duration}</div>
+    </div>
+    <div class="tabs">${tabs.map(tb=>`<button class="tab-btn ${state.tab===tb.id?'active':''}" style="${state.tab===tb.id?`color:${t.color};border-bottom-color:${t.color};background:${hex2alpha(t.color,.08)}`:''}" onclick="setTab('${tb.id}')">${tb.label}</button>`).join('')}</div>
+    <div class="tab-content">${tabContent}</div>
+  </div>`;
 }
 
-function toggleImportPause(){
-  if(!impRunning) return;
-  impPaused=!impPaused;
-  $('ip-pause-btn').textContent=impPaused?'▶ Resume':'⏸ Pause';
-}
-function cancelImport(){
-  if(!impRunning) return;
-  if(confirm('Cancel import?')){ impCancelled=true; impPaused=false; }
-}
-async function retryImport(){
-  impValid=[...impFailed];
-  $('ip-retry-btn').style.display='none';
-  await runImport();
-}
-
-function downloadImportLog(){
-  if(!impLogRows.length){ alert('No log yet.'); return; }
-  const csv='status,message\n'+impLogRows.map(r=>'"'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='import-log-'+Date.now()+'.csv';
-  a.click();
-}
-
-function downloadImportTemplate(){
-  const headers='Product ID (*),Product Name (*),Product Type (*),Product Category (*),Price (*),Has Custom Tax (*),Product Description,Brand,Specification,Purchase Price,UOM (Unit of Measurement),Location,Quantity,Min. Quantity,Tax Exempt,Tax Name,Tax Rate (In Percentage),Markup Type,Markup Value,Track Quantity';
-  const sample1='PART-001,Circuit Breaker 20A,PARTS,Electrical,24.99,NO,20 amp single-pole breaker,Siemens,,15.00,EA,Warehouse,10,2,NO,,,,,NO';
-  const sample2='SVC-001,Installation Service,SERVICE,Labor,89.00,NO,Professional installation service,,,65.00,HR,,,0,NO,,,,,NO';
-  const blob=new Blob([headers+'\n'+sample1+'\n'+sample2],{type:'text/csv'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='zuper-products-import-template.csv'; a.click();
+function renderOverview(m, t) {
+  return `<div>
+    <div class="section-title">Session Summary</div>
+    <p class="summary-text">${m.summary}</p>
+    <div class="section-title">🎯 Key Learning Points</div>
+    <div class="key-points">${m.keyPoints.map((kp,i)=>`
+      <div class="key-point" style="background:${hex2alpha(t.color,.06)};border:1px solid ${hex2alpha(t.color,.18)}">
+        <div class="key-point-num" style="background:${t.color}">${i+1}</div>
+        <p>${kp}</p>
+      </div>`).join('')}</div>
+    <div class="action-cards">
+      <div class="action-card" style="background:${hex2alpha(t.color,.08)};border-color:${hex2alpha(t.color,.25)}" onclick="setTab('cheatsheet')">
+        <span class="action-card-icon">📄</span>
+        <div><div class="action-card-title">Cheat Sheet</div><div class="action-card-sub">Quick reference cards</div></div>
+        <span class="action-card-arrow" style="color:${t.color}">→</span>
+      </div>
+      <div class="action-card" style="background:${hex2alpha(C.green,.08)};border-color:${hex2alpha(C.green,.25)}" onclick="setTab('recording')">
+        <span class="action-card-icon">${videos[m.id]||blobUrls[m.id] ? '▶' : '📹'}</span>
+        <div><div class="action-card-title">${videos[m.id]||blobUrls[m.id] ? 'Watch Recording' : 'Add Recording'}</div><div class="action-card-sub">${videoLabel(m)}</div></div>
+        <span class="action-card-arrow" style="color:${C.green}">→</span>
+      </div>
+    </div>
+  </div>`;
 }
 
-function showImpMsg(step,text,type){
-  const el=$('imp-msg'+step);
-  el.className='msg msg-'+type; el.textContent=text; el.style.display='block';
+function renderCheatSheet(m, t) {
+  return `<div>
+    <div class="cheat-header">
+      <div class="section-title" style="margin-bottom:0">Quick Reference</div>
+      <div style="display:flex;gap:8px">${pill(m.persona, C.purple)}${pill(m.platform, C.teal)}</div>
+    </div>
+    <div class="cheat-grid">${m.cheatSheet.map(s=>`
+      <div class="cheat-section" style="border-top-color:${t.color};--section-color:${t.color}">
+        <div class="cheat-section-title" style="color:${t.color}">${s.title}</div>
+        <ul>${s.items.map(item=>`<li>${item}</li>`).join('')}</ul>
+      </div>`).join('')}
+    </div>
+  </div>`;
 }
 
-
-// ── DARK / LIGHT MODE ─────────────────────────────────────────────────────────
-function toggleTheme(){
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  document.documentElement.setAttribute('data-theme', isDark?'light':'dark');
-  $('theme-btn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
-  localStorage.setItem('zdm-theme', isDark?'light':'dark');
+// ── RECORDING TAB ─────────────────────────────────────────────
+function renderRecording(m, t) {
+  const vd = videos[m.id] || (blobUrls[m.id] ? {url:blobUrls[m.id], title:blobUrls[m.id+'_title']||'Uploaded video', isLocal:true} : null);
+  if (vd) return renderVideoPlayer(m, t, vd);
+  return renderVideoUpload(m, t, false);
 }
-// Restore saved theme on load
-(function(){
-  const saved=localStorage.getItem('zdm-theme');
-  if(saved==='dark'){
-    document.documentElement.setAttribute('data-theme','dark');
-    const btn=document.getElementById('theme-btn');
-    if(btn) btn.textContent='☀️ Light';
-  }
+
+function renderVideoPlayer(m, t, vd) {
+  const info = detectVideoType(vd.url);
+  const isEmbed = ['youtube','vimeo','loom','iframe'].includes(info?.type);
+  const playerHtml = info ? (isEmbed
+    ? `<iframe src="${info.embedUrl}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;fullscreen" allowfullscreen></iframe>`
+    : `<video src="${info.embedUrl}" controls></video>`) : '';
+  return `<div>
+    ${vd.isLocal ? `<div class="recording-warning">⚠️ Local file — visible in this session only. Paste a hosted URL for permanent access.</div>` : ''}
+    <div class="video-info">
+      <div>
+        <div class="video-title">${vd.title||'Training Recording'}</div>
+        ${!vd.isLocal ? `<div class="video-url">${vd.url.length>60?vd.url.slice(0,60)+'…':vd.url}</div>` : ''}
+      </div>
+      <div class="video-actions">
+        <button class="btn" style="background:var(--surface);border:1px solid var(--border);color:var(--muted)" onclick="showReplaceVideo('${m.id}','${t.id}')">Replace</button>
+        <button class="btn" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444" onclick="removeVideo('${m.id}')">Remove</button>
+      </div>
+    </div>
+    <div class="video-player-wrap">${playerHtml}</div>
+    <div class="video-tip">💡 Supported: YouTube, Vimeo, Loom, direct .mp4/.webm links, or upload a local file.</div>
+  </div>`;
+}
+
+function renderVideoUpload(m, t, isReplace) {
+  return `<div>
+    ${isReplace ? `<button class="icon-btn" onclick="setTab('recording')" style="margin-bottom:20px">← Back</button><div class="section-title">Replace Recording</div>` : `<div class="section-title">Add Training Recording</div>`}
+    <div class="url-input-box">
+      <div class="url-box-title">🔗 Paste a video URL</div>
+      <input id="vidTitle_${m.id}" class="title-input" placeholder="Recording title (optional)">
+      <div class="url-row">
+        <input id="vidUrl_${m.id}" class="url-input" placeholder="https://youtube.com/…  or Vimeo, Loom, direct .mp4 link" onkeydown="if(event.key==='Enter')saveVideoUrl('${m.id}')">
+        <button class="btn" style="background:${t.color};color:#fff;border:none;white-space:nowrap" onclick="saveVideoUrl('${m.id}')">Save URL</button>
+      </div>
+      <div class="url-tags">${['YouTube','Vimeo','Loom','Direct .mp4'].map(s=>`<span class="pill" style="background:${hex2alpha(t.color,.12)};color:${t.color};border:1px solid ${hex2alpha(t.color,.2)}">${s}</span>`).join('')}</div>
+    </div>
+    <div class="or-divider"><div class="divider"></div><span>or</span><div class="divider"></div></div>
+    <div class="upload-zone" id="dropZone_${m.id}" onclick="document.getElementById('fileInput_${m.id}').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event,'${m.id}')">
+      <input type="file" id="fileInput_${m.id}" accept="video/*" style="display:none" onchange="handleFileSelect(event,'${m.id}')">
+      <div class="upload-zone-icon">📁</div>
+      <div class="upload-zone-title">Upload a video file</div>
+      <div class="upload-zone-sub">Drag & drop or click to browse · MP4, WebM, MOV supported</div>
+      <div class="upload-warn">⚠️ Local uploads are session-only — use a hosted URL for all users to view</div>
+    </div>
+  </div>`;
+}
+
+function saveVideoUrl(moduleId) {
+  const url = document.getElementById(`vidUrl_${moduleId}`)?.value?.trim();
+  const title = document.getElementById(`vidTitle_${moduleId}`)?.value?.trim();
+  if (!url) return;
+  videos[moduleId] = { url, title: title||url };
+  saveVideos();
+  renderModule(); attachListeners();
+}
+
+function removeVideo(moduleId) {
+  delete videos[moduleId];
+  const nb = {...blobUrls};
+  delete nb[moduleId]; delete nb[moduleId+'_title'];
+  Object.assign(blobUrls, nb);
+  saveVideos();
+  renderModule(); attachListeners();
+}
+
+function showReplaceVideo(moduleId, trackId) {
+  const m = getModule(moduleId), t = getTrack(trackId);
+  document.querySelector('.tab-content').innerHTML = renderVideoUpload(m, t, true);
+}
+
+function handleFileDrop(e, moduleId) {
+  e.preventDefault();
+  document.getElementById(`dropZone_${moduleId}`)?.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processVideoFile(file, moduleId);
+}
+
+function handleFileSelect(e, moduleId) {
+  const file = e.target.files[0];
+  if (file) processVideoFile(file, moduleId);
+}
+
+function processVideoFile(file, moduleId) {
+  if (!file.type.startsWith('video/')) { alert('Please select a valid video file.'); return; }
+  const url = URL.createObjectURL(file);
+  blobUrls[moduleId] = url;
+  blobUrls[moduleId+'_title'] = file.name;
+  renderModule(); attachListeners();
+}
+
+// ── SEARCH ────────────────────────────────────────────────────
+function handleSearchInput(val) {
+  document.getElementById('searchInput').value = val;
+}
+function triggerSearch(q) {
+  const query = q || document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  state.searchQuery = query;
+  navigate('search');
+}
+function renderSearch() {
+  const results = searchModules(state.searchQuery);
+  return `<div class="search-wrap">
+    <button class="icon-btn" onclick="navigate('home')" style="margin-bottom:24px">← Back</button>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px">
+      ${results.length>0 ? `<strong style="color:var(--text)">${results.length} modules</strong> match "<span style="color:var(--orange)">${state.searchQuery}</span>"` : `No modules found for "<span style="color:var(--orange)">${state.searchQuery}</span>"`}
+    </p>
+    ${results.length===0 ? `<div class="search-empty"><div class="search-empty-icon">🔍</div><p>Try searching for a feature, workflow, persona, or video topic</p></div>` : ''}
+    ${results.map(m => {
+      const t = getTrack(m.track), hasVid = !!(videos[m.id]||blobUrls[m.id]);
+      return `<div class="search-result" onclick="navigate('module','${t.id}','${m.id}')" onmouseenter="this.style.borderColor='${t.color}'" onmouseleave="this.style.borderColor=''">
+        <div class="search-icon-wrap" style="background:${hex2alpha(t.color,.18)};border:1px solid ${hex2alpha(t.color,.3)}">${t.icon}</div>
+        <div class="search-result-info">
+          <div class="search-result-title">${m.title}${pill(t.label, t.color)}${pill(m.persona, C.purple)}${hasVid?pill('▶ Recording',C.green):''}</div>
+          <div class="search-result-meta">${videoLabel(m)} · ${m.duration}</div>
+        </div>
+        <span class="search-arrow">→</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ── AI TUTOR ──────────────────────────────────────────────────
+let tutorMessages = [{role:'assistant',content:'Hi! I\'m your Zuper training AI — grounded in all 119 training videos. Ask me about any specific workflow step, configuration detail, or how the pipelines connect.'}];
+let tutorLoading = false;
+
+function buildKB() {
+  return MODULES.map(m=>`[${m.title} — ${videoLabel(m)} | ${m.persona} | ${m.platform}]\n${m.summary}\nKey: ${m.keyPoints.join(' | ')}`).join('\n\n');
+}
+
+function renderTutor() {
+  const suggestions = ["How does the CPQ trigger work?","Walk me through the crew clock-out flow","Stop Timer Only vs Stop Timer & Update Status?","How do I set up HubSpot lead sync?","What are the CSV requirements for Data Import?","How do conditional rules differ from formula IF/ELSE?"];
+  const msgsHtml = tutorMessages.map(msg => `
+    <div class="tutor-msg ${msg.role}">
+      <div class="msg-avatar" style="background:${msg.role==='user'?hex2alpha(C.blue,.3):hex2alpha(C.orange,.3)}">${msg.role==='user'?'👤':'🤖'}</div>
+      <div class="msg-bubble">${msg.content}</div>
+    </div>`).join('');
+  const suggestionsHtml = tutorMessages.length===1 && !tutorLoading ? `
+    <div style="margin-top:8px">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Try asking:</p>
+      <div class="tutor-suggestions">${suggestions.map(s=>`<button class="tutor-sug" onclick="fillTutorInput('${s.replace(/'/g,"\\'")}')">${s}</button>`).join('')}</div>
+    </div>` : '';
+  const loadingHtml = tutorLoading ? `
+    <div class="tutor-msg assistant">
+      <div class="msg-avatar" style="background:${hex2alpha(C.orange,.3)}">🤖</div>
+      <div class="msg-bubble tutor-typing"><div class="dot-pulse"><span></span><span></span><span></span></div></div>
+    </div>` : '';
+
+  return `<div class="tutor-wrap">
+    <button class="icon-btn" onclick="navigate('home')" style="margin-bottom:24px">← Back</button>
+    <div class="tutor-box">
+      <div class="tutor-header">
+        <div class="tutor-avatar">🤖</div>
+        <div>
+          <div class="tutor-name">Zuper Training AI</div>
+          <div class="tutor-sub">Grounded in 119 training videos · 25 modules</div>
+        </div>
+        <div style="margin-left:auto">${pill('119 videos', C.orange)}</div>
+      </div>
+      <div class="tutor-messages" id="tutorMsgs">
+        ${msgsHtml}${loadingHtml}${suggestionsHtml}
+      </div>
+      <div class="tutor-input-row">
+        <input class="tutor-input" id="tutorInput" placeholder="Ask about any video topic, workflow step, or configuration detail…" onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendTutor()">
+        <button class="send-btn" onclick="sendTutor()" ${tutorLoading?'disabled':''}>→</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function fillTutorInput(text) {
+  const inp = document.getElementById('tutorInput');
+  if (inp) { inp.value = text; inp.focus(); }
+}
+
+async function sendTutor() {
+  const inp = document.getElementById('tutorInput');
+  const text = inp?.value?.trim();
+  if (!text || tutorLoading) return;
+  tutorMessages.push({role:'user', content:text});
+  if (inp) inp.value = '';
+  tutorLoading = true;
+  updateTutorMessages();
+  const sysPrompt = `You are the Zuper Roofing Training AI. You have deep knowledge of 119 training videos across 6 pipeline tracks.\n\nPipelines: Lead Intake → Inspection → Production → Revenue.\nTracks: Lead Intake (Videos 1–10), Field Execution (11–19), CPQ (20–48), Proposals & Data (49–86), Production (87–116), Revenue (117–119).\n\nAlways cite video numbers and track. Be specific and operational.\n\nKNOWLEDGE BASE:\n${buildKB()}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:sysPrompt, messages:tutorMessages.map(m=>({role:m.role,content:m.content})) })
+    });
+    const data = await res.json();
+    tutorMessages.push({role:'assistant', content:data.content?.[0]?.text||'Sorry, no response.'});
+  } catch { tutorMessages.push({role:'assistant', content:'Something went wrong. Please try again.'}); }
+  tutorLoading = false;
+  updateTutorMessages();
+}
+
+function updateTutorMessages() {
+  const container = document.getElementById('tutorMsgs');
+  if (!container) return;
+  const msgsHtml = tutorMessages.map(msg=>`
+    <div class="tutor-msg ${msg.role}">
+      <div class="msg-avatar" style="background:${msg.role==='user'?hex2alpha(C.blue,.3):hex2alpha(C.orange,.3)}">${msg.role==='user'?'👤':'🤖'}</div>
+      <div class="msg-bubble">${msg.content}</div>
+    </div>`).join('');
+  const loadingHtml = tutorLoading ? `
+    <div class="tutor-msg assistant">
+      <div class="msg-avatar" style="background:${hex2alpha(C.orange,.3)}">🤖</div>
+      <div class="msg-bubble tutor-typing"><div class="dot-pulse"><span></span><span></span><span></span></div></div>
+    </div>` : '';
+  container.innerHTML = msgsHtml + loadingHtml;
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── THEME ─────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+}
+
+// ── EVENT LISTENERS ───────────────────────────────────────────
+function attachListeners() {
+  const tm = document.getElementById('tutorMsgs');
+  if (tm) tm.scrollTop = tm.scrollHeight;
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+(async () => {
+  await loadVideos();
+  // Bind nav search
+  const si = document.getElementById('searchInput');
+  if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') triggerSearch(); });
+  renderApp();
 })();
-
-// ── PAGINATION ─────────────────────────────────────────────────────────────────
-const PAGE_SIZE = 100;
-let currentPage = 1;
-
-function totalPages(){ return Math.max(1, Math.ceil(filtRecs.length / PAGE_SIZE)); }
-function pageRecs(){ return filtRecs.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE); }
-
-function renderPagination(){
-  const total = totalPages();
-  const el = $('pagination');
-  if(!el) return;
-  if(filtRecs.length <= PAGE_SIZE){ el.style.display='none'; return; }
-  el.style.display='flex';
-  const start = (currentPage-1)*PAGE_SIZE+1;
-  const end   = Math.min(currentPage*PAGE_SIZE, filtRecs.length);
-  el.innerHTML = `
-    <button class="btn btn-o" onclick="goPage(1)" ${currentPage===1?'disabled':''} style="padding:5px 10px;font-size:.78rem">«</button>
-    <button class="btn btn-o" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''} style="padding:5px 10px;font-size:.78rem">‹ Prev</button>
-    <span style="font-size:.78rem;color:var(--text-sub);padding:0 8px;align-self:center">
-      Page <strong style="color:var(--text)">${currentPage}</strong> of <strong style="color:var(--text)">${total}</strong>
-      &nbsp;·&nbsp; ${start}–${end} of ${filtRecs.length}
-    </span>
-    <button class="btn btn-o" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''} style="padding:5px 10px;font-size:.78rem">Next ›</button>
-    <button class="btn btn-o" onclick="goPage(${total})" ${currentPage===total?'disabled':''} style="padding:5px 10px;font-size:.78rem">»</button>`;
-}
-
-function goPage(n){
-  const total = totalPages();
-  currentPage = Math.max(1, Math.min(n, total));
-  renderRows();
-  renderPagination();
-  $('table-card').scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-onModuleChange();
 </script>
 </body>
 </html>
