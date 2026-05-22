@@ -6,89 +6,262 @@
 <title>Zuper Data Manager</title>
 <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 <style>
+/* =========================================================
+   Pastel design tokens — light + dark
+   Brand: dusty peach (primary), sage (success), rose (danger),
+          butter (warning), periwinkle (info), lavender (accent)
+   ========================================================= */
 :root{
-  --bg:#f0f2f5;--card:#fff;--card-shadow:0 2px 8px rgba(0,0,0,.07);
-  --text:#1f2937;--text-sub:#6b7280;--border:#e5e7eb;--border-inp:#ddd;
-  --inp-bg:#fff;--th-bg:#f9fafb;--tr-hover:#fff8f7;--row-sel:#fff5f5;
-  --sec-border:#fce8e3;--lbl:#555;--prog-bg:#f3f4f6;
-  --rs-g-bg:#f0fdf4;--rs-r-bg:#fef2f2;
-  --auth-bg:linear-gradient(135deg,#fff5f3,#fce8e3);--auth-card:#fff;--auth-sub:#888;--otp-border:#ddd;
-  --msg-ok-bg:#f0fdf4;--msg-ok-b:#bbf7d0;--msg-ok-c:#166534;
-  --msg-err-bg:#fef2f2;--msg-err-b:#fecaca;--msg-err-c:#dc2626;
-  --msg-info-bg:#f0f9ff;--msg-info-b:#bae6fd;--msg-info-c:#0369a1;
-  --msg-warn-bg:#fffbeb;--msg-warn-b:#fde68a;--msg-warn-c:#92400e;
+  /* Surfaces */
+  --bg:#f7f3ee;
+  --card:#ffffff;
+  --card-shadow:0 1px 2px rgba(58,52,65,.04), 0 4px 18px rgba(58,52,65,.05);
+  --card-radius:14px;
+  --text:#3a3340;
+  --text-sub:#857d8f;
+  --border:#ece4dc;
+  --border-inp:#dfd5cc;
+  --inp-bg:#fbf9f6;
+  --th-bg:#f6f1ec;
+  --tr-hover:#fbf2ed;
+  --row-sel:#f7e2d5;
+  --sec-border:#f3dccf;
+  --lbl:#6a6275;
+  --prog-bg:#ece4dc;
+
+  /* Pastel brand */
+  --primary:#d97b65;
+  --primary-h:#c66951;
+  --primary-tint:rgba(217,123,101,.10);
+  --primary-soft:#fbeee5;
+  --primary-on:#ffffff;
+
+  /* Pastel status palette */
+  --green:#7fb89c;     --green-d:#4a7a60;
+  --red:#d98a8a;       --red-h:#c47272;   --red-d:#a4585e;
+  --amber:#dfb27a;     --amber-d:#8a6a2a;
+  --orange:#e8a87c;
+  --indigo:#9b95c9;
+  --lavender:#b8a5d4;
+  --neutral:#9c94a5;
+
+  /* Header */
+  --hdr-bg:linear-gradient(135deg,#fbeee5 0%,#f3dccf 55%,#ecd0e0 100%);
+  --hdr-text:#5a3a2f;
+  --hdr-sub:#8a6a5f;
+  --hdr-shadow:0 1px 0 rgba(217,123,101,.10), 0 4px 14px rgba(217,123,101,.08);
+  --hdr-chip-bg:rgba(90,58,47,.06);
+  --hdr-chip-border:rgba(90,58,47,.14);
+  --hdr-chip-hover:rgba(90,58,47,.10);
+
+  /* Run-stat tiles */
+  --rs-g-bg:#eaf3ee;  --rs-g-border:#c5dccd;
+  --rs-r-bg:#faecec;  --rs-r-border:#f0c8c8;
+
+  /* Auth (login) */
+  --auth-bg:linear-gradient(135deg,#fbeee5,#f3dccf 50%,#ecd0e0);
+  --auth-card:#fff;
+  --auth-sub:#857d8f;
+  --otp-border:#dfd5cc;
+
+  /* Messages */
+  --msg-ok-bg:#eaf3ee;  --msg-ok-b:#c5dccd;  --msg-ok-c:#4a7a60;
+  --msg-err-bg:#faecec; --msg-err-b:#f0c8c8; --msg-err-c:#a4585e;
+  --msg-info-bg:#eef1f8;--msg-info-b:#ccd4e6;--msg-info-c:#5a6a8f;
+  --msg-warn-bg:#faf3e3;--msg-warn-b:#ecddb0;--msg-warn-c:#8a6a2a;
+
+  /* Mode pills */
+  --mode-safe-bg:#eaf3ee; --mode-safe-c:#4a7a60;
+  --mode-live-bg:#faecec; --mode-live-c:#a4585e;
+
+  /* Log terminal */
+  --log-bg:#2a2632;
+  --log-text:#ece7f0;
 }
 [data-theme=dark]{
-  --bg:#0f172a;--card:#1e293b;--card-shadow:0 2px 8px rgba(0,0,0,.3);
-  --text:#f1f5f9;--text-sub:#94a3b8;--border:#334155;--border-inp:#475569;
-  --inp-bg:#1e293b;--th-bg:#162032;--tr-hover:#1e3a5f;--row-sel:#3b1f1f;
-  --sec-border:#4b2d27;--lbl:#94a3b8;--prog-bg:#334155;
-  --rs-g-bg:#052e16;--rs-r-bg:#2d0a0a;
-  --auth-bg:linear-gradient(135deg,#0f172a,#1e293b);--auth-card:#1e293b;--auth-sub:#64748b;--otp-border:#475569;
-  --msg-ok-bg:#052e16;--msg-ok-b:#166534;--msg-ok-c:#86efac;
-  --msg-err-bg:#2d0a0a;--msg-err-b:#991b1b;--msg-err-c:#fca5a5;
-  --msg-info-bg:#0c1a2e;--msg-info-b:#1e40af;--msg-info-c:#93c5fd;
-  --msg-warn-bg:#1c1408;--msg-warn-b:#92400e;--msg-warn-c:#fcd34d;
+  --bg:#17151e;
+  --card:#221f2a;
+  --card-shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.25);
+  --text:#ece7f0;
+  --text-sub:#a09aac;
+  --border:#322d3f;
+  --border-inp:#403a52;
+  --inp-bg:#2a2634;
+  --th-bg:#1d1a26;
+  --tr-hover:#2e2939;
+  --row-sel:#3d2c36;
+  --sec-border:#4a3a40;
+  --lbl:#a09aac;
+  --prog-bg:#322d3f;
+
+  --primary:#f0a892;
+  --primary-h:#e8957d;
+  --primary-tint:rgba(240,168,146,.14);
+  --primary-soft:#3a2a30;
+  --primary-on:#1a1822;
+
+  --green:#95c9ad;     --green-d:#7fb89c;
+  --red:#e8a8a8;       --red-h:#df9292;   --red-d:#e8a8a8;
+  --amber:#ecc99a;     --amber-d:#ecc99a;
+  --orange:#f0b89a;
+  --indigo:#b8b0e0;
+  --lavender:#c8b5e0;
+  --neutral:#8b8499;
+
+  --hdr-bg:linear-gradient(135deg,#2a2433 0%,#3a2a35 55%,#33293d 100%);
+  --hdr-text:#f5e8d8;
+  --hdr-sub:#c9b8a8;
+  --hdr-shadow:0 1px 0 rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  --hdr-chip-bg:rgba(245,232,216,.08);
+  --hdr-chip-border:rgba(245,232,216,.18);
+  --hdr-chip-hover:rgba(245,232,216,.14);
+
+  --rs-g-bg:#1f2e26;   --rs-g-border:#3d6452;
+  --rs-r-bg:#2e1f22;   --rs-r-border:#6e3b41;
+
+  --auth-bg:linear-gradient(135deg,#17151e,#2a2433 60%,#33293d);
+  --auth-card:#221f2a;
+  --auth-sub:#a09aac;
+  --otp-border:#403a52;
+
+  --msg-ok-bg:#1f2e26;  --msg-ok-b:#3d6452;  --msg-ok-c:#95c9ad;
+  --msg-err-bg:#2e1f22; --msg-err-b:#6e3b41; --msg-err-c:#e8a8a8;
+  --msg-info-bg:#1f2330;--msg-info-b:#455580;--msg-info-c:#b8c5e0;
+  --msg-warn-bg:#2e2820;--msg-warn-b:#6b552f;--msg-warn-c:#ecc99a;
+
+  --mode-safe-bg:#1f2e26; --mode-safe-c:#95c9ad;
+  --mode-live-bg:#2e1f22; --mode-live-c:#e8a8a8;
+
+  --log-bg:#0e0c14;
+  --log-text:#ece7f0;
 }
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:14px;background:var(--bg);min-height:100vh;color:var(--text);transition:background .2s,color .2s}
-.hdr{background:linear-gradient(135deg,#e8401c,#c0320f);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.22)}
-.hdr h1{color:#fff;font-size:1.2rem;font-weight:800}
-#badge{background:rgba(255,255,255,.18);color:#fff;font-size:.74rem;font-weight:700;padding:4px 14px;border-radius:20px}
-.wrap{max-width:1140px;margin:22px auto;padding:0 16px}
-.card{background:var(--card);border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:var(--card-shadow)}
-.sec-title{font-size:.72rem;font-weight:800;color:#e8401c;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid var(--sec-border);padding-bottom:8px;margin-bottom:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,Arial,sans-serif;font-size:14px;background:var(--bg);min-height:100vh;color:var(--text);transition:background .25s ease,color .25s ease;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+/* Subtle blob backdrop — a soft pastel atmosphere behind everything */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(60ch 50ch at 0% 0%, var(--primary-tint), transparent 60%),
+    radial-gradient(70ch 55ch at 100% 30%, color-mix(in oklab, var(--lavender) 22%, transparent), transparent 65%),
+    radial-gradient(50ch 45ch at 80% 100%, color-mix(in oklab, var(--green) 15%, transparent), transparent 60%);
+}
+.hdr,.wrap{position:relative;z-index:1}
+
+/* Header */
+.hdr{background:var(--hdr-bg);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--hdr-shadow);border-bottom:1px solid var(--border)}
+.hdr h1{color:var(--hdr-text);font-size:1.15rem;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+#badge{background:var(--hdr-chip-bg);color:var(--hdr-text);font-size:.74rem;font-weight:600;padding:5px 14px;border-radius:20px;border:1px solid var(--hdr-chip-border);backdrop-filter:blur(8px)}
+.theme-btn{background:var(--hdr-chip-bg);color:var(--hdr-text);border:1px solid var(--hdr-chip-border);padding:5px 12px;border-radius:20px;font-size:.74rem;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);transition:background .15s}
+.theme-btn:hover{background:var(--hdr-chip-hover)}
+
+.wrap{max-width:1140px;margin:24px auto;padding:0 16px}
+
+/* Cards */
+.card{background:var(--card);border-radius:var(--card-radius);padding:22px;margin-bottom:16px;box-shadow:var(--card-shadow);border:1px solid var(--border)}
+
+.sec-title{font-size:.72rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.9px;border-bottom:1px solid var(--sec-border);padding-bottom:10px;margin-bottom:16px}
+
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.field-lbl{font-size:.73rem;font-weight:700;color:var(--lbl);margin-bottom:5px}
-.inp,select{width:100%;padding:9px 13px;border:1.5px solid var(--border-inp);border-radius:8px;font-size:.84rem;outline:none;background:var(--inp-bg);color:var(--text);box-sizing:border-box;font-family:inherit}
-.inp:focus,select:focus{border-color:#e8401c}
+.field-lbl{font-size:.72rem;font-weight:600;color:var(--lbl);margin-bottom:6px;letter-spacing:.02em}
+
+/* Inputs */
+.inp,select{width:100%;padding:10px 13px;border:1px solid var(--border-inp);border-radius:10px;font-size:.85rem;outline:none;background:var(--inp-bg);color:var(--text);box-sizing:border-box;font-family:inherit;transition:border-color .15s, box-shadow .15s}
+.inp:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint)}
+.inp:disabled,select:disabled{opacity:.7}
 .pw-wrap{position:relative}.pw-wrap .inp{padding-right:36px}
-.pw-eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:.85rem;line-height:1;padding:2px;color:var(--text-sub)}
-.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
-.btn-p{background:#e8401c;color:#fff}.btn-p:hover{background:#c9330f}
-.btn-o{background:transparent;color:#e8401c;border:1.5px solid #e8401c}.btn-o:hover{background:rgba(232,64,28,.08)}
-.btn-d{background:#ef4444;color:#fff}.btn-d:hover{background:#dc2626}
-.btn-w{background:#f59e0b;color:#fff}
-.btn-g{background:#6b7280;color:#fff}
+.pw-eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:.9rem;line-height:1;padding:2px;color:var(--text-sub)}
+
+/* Buttons */
+.btn{padding:9px 16px;border-radius:10px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s, transform .05s, box-shadow .15s;letter-spacing:.005em}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn-p{background:var(--primary);color:var(--primary-on);box-shadow:0 1px 0 rgba(0,0,0,.04), 0 2px 8px var(--primary-tint)}
+.btn-p:hover{background:var(--primary-h)}
+.btn-o{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+.btn-o:hover{background:var(--primary-tint)}
+.btn-d{background:var(--red);color:#fff}
+.btn-d:hover{background:var(--red-h)}
+.btn-w{background:var(--amber);color:#fff}
+.btn-g{background:var(--neutral);color:#fff}
+.btn-g:hover{filter:brightness(.95)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
-.msg{padding:10px 14px;border-radius:8px;font-size:.82rem;margin-top:10px}
+
+/* Messages */
+.msg{padding:11px 14px;border-radius:10px;font-size:.82rem;margin-top:10px;line-height:1.45}
 .msg-ok{background:var(--msg-ok-bg);border:1px solid var(--msg-ok-b);color:var(--msg-ok-c)}
 .msg-err{background:var(--msg-err-bg);border:1px solid var(--msg-err-b);color:var(--msg-err-c)}
 .msg-info{background:var(--msg-info-bg);border:1px solid var(--msg-info-b);color:var(--msg-info-c)}
 .msg-warn{background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b);color:var(--msg-warn-c)}
+
+/* Stat tiles */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat{background:var(--card);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--card-shadow)}
-.stat-val{font-size:1.65rem;font-weight:900}
-.stat-lbl{font-size:.68rem;color:var(--text-sub);margin-top:3px}
-.tbl-wrap{overflow-x:auto}
+.stat{background:var(--card);border-radius:var(--card-radius);padding:16px 14px;text-align:center;box-shadow:var(--card-shadow);border:1px solid var(--border);position:relative;overflow:hidden}
+.stat-val{font-size:1.55rem;font-weight:700;letter-spacing:-.01em}
+.stat-lbl{font-size:.68rem;color:var(--text-sub);margin-top:4px;text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border-radius:10px}
 table{width:100%;border-collapse:collapse}
-thead th{padding:9px 11px;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:800;color:var(--text);background:var(--th-bg);white-space:nowrap}
-tbody td{padding:9px 11px;font-size:.82rem;border-bottom:1px solid var(--border);color:var(--text)}
+thead th{padding:10px 12px;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-sub);background:var(--th-bg);white-space:nowrap;text-align:left}
+tbody td{padding:10px 12px;font-size:.82rem;border-bottom:1px solid var(--border);color:var(--text)}
+tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--tr-hover)}
-.uid-cell{font-family:monospace;font-size:.71rem;color:var(--text-sub);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uid-cell{font-family:'SF Mono','Menlo','Consolas',monospace;font-size:.71rem;color:var(--text-sub);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row-sel td{background:var(--row-sel)!important}
-.prog-bar-wrap{background:var(--prog-bg);border-radius:99px;height:9px;overflow:hidden}
-.prog-bar{height:9px;border-radius:99px;background:linear-gradient(90deg,#ef4444,#f97316);width:0%;transition:width .25s}
-.prog-lbl{font-size:.75rem;color:var(--text-sub);margin-top:5px}
-.log{max-height:230px;overflow-y:auto;background:#0f172a;border-radius:8px;padding:12px;font-family:monospace;font-size:.74rem}
-.log-ok{color:#a3e635}.log-err{color:#f87171}.log-warn{color:#fbbf24}
+
+/* Progress */
+.prog-bar-wrap{background:var(--prog-bg);border-radius:99px;height:8px;overflow:hidden}
+.prog-bar{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--orange));width:0%;transition:width .25s}
+.prog-lbl{font-size:.75rem;color:var(--text-sub);margin-top:6px}
+
+/* Log terminal */
+.log{max-height:230px;overflow-y:auto;background:var(--log-bg);color:var(--log-text);border-radius:10px;padding:12px 14px;font-family:'SF Mono','Menlo','Consolas',monospace;font-size:.74rem;line-height:1.55;border:1px solid var(--border)}
+.log-ok{color:var(--green)}.log-err{color:var(--red)}.log-warn{color:var(--amber)}
+
+/* Run stat chips (small green/red boxes shown during runs) */
 .run-stats{display:flex;gap:10px;flex-wrap:wrap}
-.rs{border-radius:8px;padding:10px 18px;text-align:center;min-width:80px}
-.rs-val{font-size:1.4rem;font-weight:900}
-.rs-lbl{font-size:.67rem;color:var(--text-sub);margin-top:2px}
-.rs-g{background:var(--rs-g-bg);border:1px solid #166534}.rs-g .rs-val{color:#22c55e}
-.rs-r{background:var(--rs-r-bg);border:1px solid #991b1b}.rs-r .rs-val{color:#ef4444}
-.mode-safe{background:#dcfce7;color:#166534;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
-.mode-live{background:#fee2e2;color:#991b1b;font-size:.71rem;font-weight:700;padding:2px 10px;border-radius:20px}
+.rs{border-radius:12px;padding:12px 18px;text-align:center;min-width:84px}
+.rs-val{font-size:1.35rem;font-weight:700;letter-spacing:-.01em}
+.rs-lbl{font-size:.67rem;color:var(--text-sub);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.rs-g{background:var(--rs-g-bg);border:1px solid var(--rs-g-border)}.rs-g .rs-val{color:var(--green-d)}
+.rs-r{background:var(--rs-r-bg);border:1px solid var(--rs-r-border)}.rs-r .rs-val{color:var(--red-d)}
+
+/* Mode pills */
+.mode-safe{background:var(--mode-safe-bg);color:var(--mode-safe-c);font-size:.71rem;font-weight:600;padding:3px 10px;border-radius:20px}
+.mode-live{background:var(--mode-live-bg);color:var(--mode-live-c);font-size:.71rem;font-weight:600;padding:3px 10px;border-radius:20px}
+
 #settings-card{display:none}
-.theme-btn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 12px;border-radius:20px;font-size:.74rem;font-weight:700;cursor:pointer}
-.theme-btn:hover{background:rgba(255,255,255,.28)}
-.badge-green{background:var(--msg-ok-bg);color:var(--msg-ok-c);font-size:.7rem;font-weight:500;padding:2px 10px;border-radius:20px;border:1px solid var(--msg-ok-b)}
-.istep{padding:8px 16px;font-size:.78rem;font-weight:500;color:var(--text-sub);cursor:default;border-bottom:2px solid transparent;margin-bottom:-1.5px}
-.istep.active{color:#e8401c;border-bottom-color:#e8401c}
-.istep.done{color:#166534;border-bottom-color:#166534}
+
+.badge-green{background:var(--msg-ok-bg);color:var(--msg-ok-c);font-size:.7rem;font-weight:500;padding:3px 10px;border-radius:20px;border:1px solid var(--msg-ok-b)}
+
+/* Import steps */
+.istep{padding:8px 16px;font-size:.78rem;font-weight:500;color:var(--text-sub);cursor:default;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:color .15s,border-color .15s}
+.istep.active{color:var(--primary);border-bottom-color:var(--primary)}
+.istep.done{color:var(--green-d);border-bottom-color:var(--green-d)}
+
+/* Checkboxes — soften default */
+input[type=checkbox]{accent-color:var(--primary)}
+
+/* Scrollbar (webkit) */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--border-inp)}
+
+/* Code-style key/value text in inspector */
+#mig-inspector{font-family:'SF Mono','Menlo','Consolas',monospace}
+
+/* Responsive */
+@media (max-width:780px){
+  .grid3{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .hdr{padding:12px 18px}
+  .wrap{padding:0 12px;margin-top:16px}
+}
 </style>
 </head>
 <body>
@@ -158,10 +331,10 @@ tbody tr:hover td{background:var(--tr-hover)}
 
 <!-- STATS -->
 <div class="stats" id="stats-section" style="display:none">
-  <div class="stat" style="border-left:4px solid #e8401c"><div class="stat-val" id="s-total" style="color:#e8401c">—</div><div class="stat-lbl">Total Records</div></div>
-  <div class="stat" style="border-left:4px solid #22c55e"><div class="stat-val" id="s-sel" style="color:#22c55e">0</div><div class="stat-lbl">Selected</div></div>
-  <div class="stat" style="border-left:4px solid #6366f1"><div class="stat-val" id="s-module" style="color:#6366f1;font-size:.85rem;padding-top:6px">—</div><div class="stat-lbl">Module</div></div>
-  <div class="stat" style="border-left:4px solid #f59e0b"><div class="stat-val" id="s-account" style="color:#f59e0b;font-size:.78rem;padding-top:4px">—</div><div class="stat-lbl">Account</div></div>
+  <div class="stat" style="border-left:4px solid var(--primary)"><div class="stat-val" id="s-total" style="color:var(--primary)">—</div><div class="stat-lbl">Total Records</div></div>
+  <div class="stat" style="border-left:4px solid var(--green)"><div class="stat-val" id="s-sel" style="color:var(--green)">0</div><div class="stat-lbl">Selected</div></div>
+  <div class="stat" style="border-left:4px solid var(--indigo)"><div class="stat-val" id="s-module" style="color:var(--indigo);font-size:.85rem;padding-top:6px">—</div><div class="stat-lbl">Module</div></div>
+  <div class="stat" style="border-left:4px solid var(--amber)"><div class="stat-val" id="s-account" style="color:var(--amber);font-size:.78rem;padding-top:4px">—</div><div class="stat-lbl">Account</div></div>
 </div>
 
 <!-- TABLE -->
@@ -256,7 +429,7 @@ tbody tr:hover td{background:var(--tr-hover)}
     <div id="mig-run-section" style="display:none;margin-top:16px">
       <!-- Step 2: Field mapping (shown for modules that need it, e.g. customer_notification) -->
       <div id="mig-mapping-section" style="display:none;margin-bottom:18px">
-        <div style="font-size:.73rem;font-weight:800;color:#e8401c;text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid var(--sec-border);padding-bottom:6px;margin-bottom:12px">Step 2 — Map Job Categories &amp; Statuses</div>
+        <div style="font-size:.73rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid var(--sec-border);padding-bottom:6px;margin-bottom:12px">Step 2 — Map Job Categories &amp; Statuses</div>
         <div style="font-size:.78rem;color:var(--text-sub);margin-bottom:12px">The source account's Job Category and Status UIDs won't match the destination. Map each one below — only values used in your selected notifications are shown.</div>
         <div id="mig-mapping-loading" class="msg msg-info" style="display:none;margin-bottom:10px">🔄 Fetching categories and statuses from both accounts…</div>
         <div id="mig-mapping-body"></div>
@@ -291,9 +464,9 @@ tbody tr:hover td{background:var(--tr-hover)}
       </div>
       <div class="run-stats" id="mig-stats" style="display:none;flex-wrap:wrap;gap:10px;margin-bottom:12px">
         <div class="rs rs-g"><div class="rs-val" id="mig-rs-total">0</div><div class="rs-lbl">Total</div></div>
-        <div class="rs rs-g"><div class="rs-val" id="mig-rs-ok" style="color:#16a34a">0</div><div class="rs-lbl">Migrated</div></div>
-        <div class="rs rs-r"><div class="rs-val" id="mig-rs-fail" style="color:#dc2626">0</div><div class="rs-lbl">Failed</div></div>
-        <div class="rs rs-g"><div class="rs-val" id="mig-rs-skip" style="color:#f59e0b">0</div><div class="rs-lbl">Skipped</div></div>
+        <div class="rs rs-g"><div class="rs-val" id="mig-rs-ok" style="color:var(--green-d)">0</div><div class="rs-lbl">Migrated</div></div>
+        <div class="rs rs-r"><div class="rs-val" id="mig-rs-fail" style="color:var(--red-d)">0</div><div class="rs-lbl">Failed</div></div>
+        <div class="rs rs-g"><div class="rs-val" id="mig-rs-skip" style="color:var(--amber)">0</div><div class="rs-lbl">Skipped</div></div>
       </div>
       <div class="log" id="mig-log" style="display:none"></div>
       <div id="mig-log-actions" style="display:none;margin-top:8px">
@@ -307,10 +480,10 @@ tbody tr:hover td{background:var(--tr-hover)}
 <div class="card" id="del-card" style="display:none">
   <div class="sec-title">🗑 Delete Selected Records</div>
   <div id="del-warn" class="msg msg-warn" style="margin-bottom:14px">⚠ Select records above first.</div>
-  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:14px">
+  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:var(--th-bg);border-radius:8px;border:1px solid var(--border);margin-bottom:14px">
     <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600">
       Concurrency:
-      <select id="concurrency" style="padding:4px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:.82rem;outline:none;background:#fff">
+      <select id="concurrency" style="padding:4px 10px;border:1px solid var(--border-inp);border-radius:6px;font-size:.82rem;outline:none;background:var(--inp-bg);color:var(--text)">
         <option value="1">1 — sequential (safest)</option>
         <option value="3" selected>3 — recommended</option>
         <option value="5">5</option>
@@ -356,7 +529,7 @@ tbody tr:hover td{background:var(--tr-hover)}
   <!-- Step 1: Upload -->
   <div id="istep1">
     <div id="imp-dropzone" onclick="document.getElementById('imp-file').click()"
-      style="border:2px dashed var(--border-inp);border-radius:var(--border-radius-lg);padding:32px;text-align:center;cursor:pointer;margin-bottom:14px">
+      style="border:2px dashed var(--border-inp);border-radius:14px;padding:32px;background:var(--inp-bg);transition:border-color .15s,background .15s;text-align:center;cursor:pointer;margin-bottom:14px">
       <div style="font-size:2rem;margin-bottom:8px">📂</div>
       <p style="font-size:.85rem;color:var(--text-sub)"><strong style="color:var(--text)">Click to upload</strong> or drag &amp; drop</p>
       <p style="font-size:.76rem;color:var(--text-sub);margin-top:4px">CSV or Excel (.xlsx) — up to 5,000 rows</p>
@@ -375,7 +548,7 @@ tbody tr:hover td{background:var(--tr-hover)}
       <span>📄</span><span id="imp-fname" style="font-weight:600"></span>
       <span id="imp-rowcount" class="badge badge-green" style="margin-left:4px"></span>
     </div>
-    <div style="font-size:.75rem;font-weight:500;color:var(--text-sub);margin-bottom:10px">Map each Zuper field to the matching column in your file. <span style="color:#e8401c">★ Required</span></div>
+    <div style="font-size:.75rem;font-weight:500;color:var(--text-sub);margin-bottom:10px">Map each Zuper field to the matching column in your file. <span style="color:var(--primary)">★ Required</span></div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse" id="imp-map-table">
         <thead><tr style="background:var(--th-bg)">
@@ -397,9 +570,9 @@ tbody tr:hover td{background:var(--tr-hover)}
   <div id="istep3" style="display:none">
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
       <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-total">0</div><div class="rs-lbl">Total</div></div>
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-valid" style="color:#16a34a">0</div><div class="rs-lbl">Ready</div></div>
-      <div class="rs" style="min-width:0;background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b)"><div class="rs-val" id="iv-warn" style="color:#d97706">0</div><div class="rs-lbl">Warnings</div></div>
-      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="iv-err" style="color:#dc2626">0</div><div class="rs-lbl">Errors</div></div>
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="iv-valid" style="color:var(--green-d)">0</div><div class="rs-lbl">Ready</div></div>
+      <div class="rs" style="min-width:0;background:var(--msg-warn-bg);border:1px solid var(--msg-warn-b)"><div class="rs-val" id="iv-warn" style="color:var(--amber-d)">0</div><div class="rs-lbl">Warnings</div></div>
+      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="iv-err" style="color:var(--red-d)">0</div><div class="rs-lbl">Errors</div></div>
     </div>
     <div style="overflow-x:auto;margin-bottom:14px">
       <table style="width:100%;border-collapse:collapse;font-size:.78rem" id="iv-preview-table">
@@ -408,6 +581,12 @@ tbody tr:hover td{background:var(--tr-hover)}
       </table>
     </div>
     <div id="imp-msg3" class="msg" style="display:none;margin-bottom:10px"></div>
+    <!-- Category mapping: shown after validation -->
+    <div id="iv-cat-map-section" style="display:none;margin-bottom:14px">
+      <div style="font-size:.73rem;font-weight:800;color:var(--lbl);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Map Product Categories</div>
+      <div style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">Match each category from your CSV to an existing category in this account. Unmatched categories won't be created.</div>
+      <div id="iv-cat-map-body"></div>
+    </div>
     <div class="btn-row">
       <button class="btn btn-p" id="iv-import-btn" onclick="startImport()">📥 Import Valid Rows →</button>
       <button class="btn btn-o" onclick="iGoTo(2)">← Back</button>
@@ -418,9 +597,9 @@ tbody tr:hover td{background:var(--tr-hover)}
   <div id="istep4" style="display:none">
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
       <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-total">0</div><div class="rs-lbl">Total</div></div>
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-ok" style="color:#16a34a">0</div><div class="rs-lbl">Created</div></div>
-      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="ip-fail" style="color:#dc2626">0</div><div class="rs-lbl">Failed</div></div>
-      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-pct" style="color:#e8401c">0%</div><div class="rs-lbl">Progress</div></div>
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-ok" style="color:var(--green-d)">0</div><div class="rs-lbl">Created</div></div>
+      <div class="rs rs-r" style="min-width:0"><div class="rs-val" id="ip-fail" style="color:var(--red-d)">0</div><div class="rs-lbl">Failed</div></div>
+      <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-pct" style="color:var(--primary)">0%</div><div class="rs-lbl">Progress</div></div>
     </div>
     <div class="prog-bar-wrap" style="margin-bottom:5px"><div class="prog-bar" id="ip-bar" style="width:0%"></div></div>
     <div class="prog-lbl" id="ip-lbl" style="margin-bottom:12px">Ready</div>
@@ -479,6 +658,7 @@ let destCategories=[];
 let srcJobCategories=[],srcJobStatuses=[],destJobCategories=[],destJobStatuses=[];
 let notifCatMapping={}, notifStatusMapping={}; // src_uid → dest_uid
 let notifPerRecMapping={}; // notification_uid → {destCatUid, destStatUid}
+let _notifHelpers={}; // shared helpers between renderMappingUI and runAutoMatch/buildManualTable
 const $=id=>document.getElementById(id);
 const apiKey=()=>$('apikey').value.trim();
 const modKey=()=>$('module').value;
@@ -598,19 +778,12 @@ async function doConnect(){
     _baseUrl=dcUrl.replace(/\/$/,'')+'/api/';
 
     // Derive workflow service URL from DC URL and pre-fill if empty
-    // DC URL pattern:  https://us-east-1c.zuperpro.com  → workflow: https://us-east-1-workflow.zuperpro.com/api/
-    // DC URL pattern:  https://us-west-1c.zuperpro.com  → workflow: https://us-west-1-workflow.zuperpro.com/api/
     try{
       const wfInput=$('workflow-url');
       if(wfInput&&!wfInput.value.trim()){
-        const regionMatch=dcUrl.match(/https?:\/\/([\w-]+)\.zuperpro\.com/);
-        if(regionMatch){
-          // strip trailing letter (e.g. us-east-1c → us-east-1)
-          const regionBase=regionMatch[1].replace(/[a-z]$/,'');
-          const derivedWfUrl='https://'+regionBase+'-workflow.zuperpro.com/api/';
-          wfInput.value=derivedWfUrl;
-          console.log('[ZDM] Auto-derived workflow URL:', derivedWfUrl);
-        }
+        const derived=deriveWorkflowUrl(dcUrl);
+        if(derived) wfInput.value=derived;
+        console.log('[ZDM] Auto-derived workflow URL:', derived);
       }
     }catch(e){console.warn('[ZDM] Could not derive workflow URL:',e);}
 
@@ -662,6 +835,12 @@ async function doFetch(){
 
   btn.textContent='⏳ Fetching…';btn.disabled=true;
   allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
+  // Close any open panels from previous fetch
+  $('del-card').style.display='none';
+  hideDedupPanel();
+  // Reset action buttons
+  const dedupBtn=$('dedup-btn');if(dedupBtn) dedupBtn.style.display='none';
+  const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='none';
   $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">Loading…</td></tr>';
   showMsg('fetch-msg','📥 Connecting to '+fetchBase+'…','info');
 
@@ -683,21 +862,19 @@ async function doFetch(){
         throw new Error(res.status+' — '+b.slice(0,300)+'\n\nURL called: '+url);
       }
       const data=await res.json();
-      console.log('[ZDM] Page',page,'response keys:',Object.keys(data));
 
       const recs=extractRecords(data, endpoint);
 
+      // Log to console for debugging, but don't throw — just stop paginating
       if(!recs.length && page===1){
-        const topKeys=Object.keys(data).join(', ');
-        const nestedKeys=typeof data.data==='object'&&!Array.isArray(data.data)?Object.keys(data.data).join(', '):'';
-        throw new Error('Response received but no records found.\n'
-          +'Top-level keys: ['+topKeys+']'
-          +(nestedKeys?' | data keys: ['+nestedKeys+']':'')
-          +'\nCheck browser console (F12) for full response.');
+        console.log('[ZDM] Page 1 empty. Keys:', Object.keys(data).join(', '),
+          '| data type:', Array.isArray(data.data)?'array['+data.data.length+']':typeof data.data);
       }
-      if(!recs.length)break;
+      if(!recs.length) break;
       allRecs.push(...recs);
-      if(recs.length<limit)break;
+      // Stop if fewer records than limit OR if API tells us we're on the last page
+      const totalPages=data.total_pages||data.totalPages||null;
+      if(recs.length<limit || (totalPages&&page>=totalPages)) break;
       page++;
     }
     if(!allRecs.length){showMsg('fetch-msg','⚠ No records returned for this module.','warn');$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">No records found.</td></tr>';return;}
@@ -713,34 +890,54 @@ async function doFetch(){
   }catch(e){
     console.error('[ZDM] Fetch error:',e);
     showMsg('fetch-msg','✗ '+e.message,'err');
-    $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#dc2626">'+esc(e.message)+'</td></tr>';
+    $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:var(--red-d)">'+esc(e.message)+'</td></tr>';
   }
   finally{btn.textContent='📄 Fetch Records';btn.disabled=false;}
 }
 
-// Tries every plausible key pattern to extract an array of records from an API response
+// Derive the workflow service URL from a DC API URL
+// e.g. https://us-east-1c.zuperpro.com → https://us-east-1-workflow.zuperpro.com/api/
+function deriveWorkflowUrl(dcUrl){
+  const m=dcUrl.match(/https?:\/\/([\w-]+)\.zuperpro\.com/);
+  if(!m) return '';
+  const regionBase=m[1].replace(/[a-z]$/,'');
+  return 'https://'+regionBase+'-workflow.zuperpro.com/api/';
+}
 function extractRecords(data, moduleKey){
   if(Array.isArray(data)) return data;
-  // Direct array under common top-level keys
+
+  // Standard Zuper paginated format: {type, data:[...], total_records, current_page, total_pages}
+  // or {type, data:{module:[...]}, ...}
   const topKeys=['data','results','records','items','list',moduleKey,moduleKey+'s'];
+
+  // Check top-level array fields first
+  for(const k of topKeys){
+    if(Array.isArray(data[k])&&data[k].length) return data[k];
+  }
+  // Accept empty array from known keys (module genuinely has 0 records)
   for(const k of topKeys){
     if(Array.isArray(data[k])) return data[k];
   }
-  // One level nested: data.data, data.workflows, data.records, etc.
+
+  // One level nested: data.data is an object containing the array
   if(data.data && typeof data.data==='object' && !Array.isArray(data.data)){
-    const innerKeys=['data','results','records','items','list',moduleKey,moduleKey+'s'];
-    for(const k of innerKeys){
+    for(const k of topKeys){
+      if(Array.isArray(data.data[k])&&data.data[k].length) return data.data[k];
+    }
+    for(const k of topKeys){
       if(Array.isArray(data.data[k])) return data.data[k];
     }
-    // If data.data has any array value, return the first one
+    // Last resort: return first non-empty array value inside data.data
     for(const k of Object.keys(data.data)){
       if(Array.isArray(data.data[k])&&data.data[k].length) return data.data[k];
     }
   }
-  // If any top-level key is a non-empty array, return the first match
+
+  // Any non-empty array anywhere at top level
   for(const k of Object.keys(data)){
     if(Array.isArray(data[k])&&data[k].length) return data[k];
   }
+
   return [];
 }
 
@@ -775,12 +972,46 @@ function renderRows(){
 }
 function toggleRow(uid,checked,row){if(checked)selUids.add(uid);else selUids.delete(uid);if(row)row.className=checked?'row-sel':'';updSel();}
 function selAll(checked){filtRecs.forEach(r=>{const uid=String(r[uidField]||'');if(uid)checked?selUids.add(uid):selUids.delete(uid);});document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=checked);document.querySelectorAll('#tbody tr').forEach(tr=>tr.className=checked?'row-sel':'');$('selall').checked=checked;updSel();}
-function updSel(){$('s-sel').textContent=selUids.size;if(selUids.size>0)$('del-warn').textContent='⚠ '+selUids.size+' '+modCfg().label+' record(s) selected. '+($('dryrun').checked?'Dry Run ON — nothing will be deleted.':'⚠ LIVE MODE — records will be permanently deleted!');}
-function doSearch(){const q=($('search').value||'').toLowerCase().trim();filtRecs=q?allRecs.filter(r=>JSON.stringify(r).toLowerCase().includes(q)):[...allRecs];currentPage=1;renderTable();}
+function updSel(){
+  const n=selUids.size;
+  $('s-sel').textContent=n;
+  // Update migrate button with selection count
+  const migBtn=$('mig-btn');
+  if(migBtn&&migBtn.style.display!=='none') migBtn.textContent='🚀 Migrate Selected'+(n>0?' ('+n+')':'');
+  // Update delete warning
+  const cfg=modCfg();
+  if(n>0&&cfg){
+    const warn=$('del-warn');
+    if(warn) warn.textContent='⚠ '+n+' '+cfg.label+' record(s) selected. '+($('dryrun').checked?'Dry Run ON — nothing will be deleted.':'⚠ LIVE MODE — records will be permanently deleted!');
+  }
+}
+function doSearch(){
+  const q=($('search').value||'').toLowerCase().trim();
+  if(!q){filtRecs=[...allRecs];}
+  else{
+    const cfg=modCfg();
+    const fields=cfg?cfg.cols.map(c=>c.f):[];
+    filtRecs=allRecs.filter(r=>{
+      // Check visible columns first (fast path)
+      for(const f of fields){
+        const v=getF(r,f);
+        if(v&&String(v).toLowerCase().includes(q)) return true;
+      }
+      // Also check UID
+      return uidField&&String(r[uidField]||'').toLowerCase().includes(q);
+    });
+  }
+  currentPage=1;
+  renderRows();
+  $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
+  renderPagination();
+}
 function onModuleChange(){
   const cfg=modCfg();
   $('s-module').textContent=cfg?cfg.label:modKey();
-  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
+  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;currentPage=1;
+  // Clear search box so stale queries don't carry over
+  const searchEl=$('search');if(searchEl) searchEl.value='';
   $('thead').innerHTML='';
   $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Module changed — click Fetch Records.</td></tr>';
   $('s-total').textContent='—';$('s-sel').textContent='0';
@@ -799,11 +1030,9 @@ function onModuleChange(){
   // Show/hide dry run label
   const dryLabel=$('dryrun-label');
   if(dryLabel&&_baseUrl) dryLabel.style.display=(cfg&&cfg.noDelete)?'none':'flex';
-  // Show/hide dedup button (only when records loaded — will be shown in renderTable)
-  const dedupBtn=$('dedup-btn');
-  if(dedupBtn) dedupBtn.style.display='none';
-  const migBtn=$('mig-btn');
-  if(migBtn) migBtn.style.display='none';
+  // Hide action buttons until records are loaded
+  const dedupBtn=$('dedup-btn');if(dedupBtn) dedupBtn.style.display='none';
+  const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='none';
   // Show Import button only for product module when connected
   const isProduct=modKey()==='product';
   const isConn=!!_baseUrl;
@@ -902,7 +1131,7 @@ const IMPORT_FIELD_DEFS = [
   { key:'track_quantity',     label:'Track Quantity',           col:'Track Quantity',             required:false, hint:'YES | NO' },
 ];
 
-let impRows=[], impHeaders=[], impColMap={}, impCategories=[], impLocations=[];
+let impRows=[], impHeaders=[], impColMap={}, impCategories=[], impLocations=[], impCatMapping={};
 let impValid=[], impFailed=[], impLogRows=[];
 let impPaused=false, impCancelled=false, impRunning=false;
 
@@ -920,11 +1149,19 @@ async function fetchImportMeta(){
   if(!apiKey()||!_baseUrl) return;
   try{
     const [catRes, locRes] = await Promise.all([
-      fetch(baseUrl()+'products/category?count=200&page=1',{headers:getHdrs()}),
+      fetch(baseUrl()+'products/category?count=500&page=1',{headers:getHdrs()}),
       fetch(baseUrl()+'products/location?count=50&page=1',{headers:getHdrs()})
     ]);
-    if(catRes.ok){ const d=await catRes.json(); impCategories=d.data||d.categories||[]; }
-    if(locRes.ok){ const d=await locRes.json(); impLocations=d.data||[]; }
+    if(catRes.ok){
+      const d=await catRes.json();
+      // Handle any response shape
+      impCategories=Array.isArray(d)?d:Array.isArray(d.data)?d.data:
+        (d.data&&Array.isArray(d.data.product_categories))?d.data.product_categories:
+        (d.data&&Array.isArray(d.data.categories))?d.data.categories:
+        (d.categories||[]);
+      console.log('[ZDM] impCategories loaded:',impCategories.length, impCategories[0]?Object.keys(impCategories[0]):[]);
+    }
+    if(locRes.ok){ const d=await locRes.json(); impLocations=Array.isArray(d.data)?d.data:Array.isArray(d)?d:[]; }
   }catch(e){ console.warn('Import meta fetch:',e.message); }
 }
 
@@ -1010,7 +1247,7 @@ function buildColumnMapper(){
     const sample = auto && impRows[0] ? esc(String(impRows[0][auto]||'').slice(0,40)) : '<span style="color:var(--text-sub)">—</span>';
     return `<tr style="border-bottom:0.5px solid var(--border)">
       <td style="padding:8px 12px;font-size:.82rem;white-space:nowrap">
-        ${fd.required?'<span style="color:#e8401c;margin-right:3px">★</span>':''}
+        ${fd.required?'<span style="color:var(--primary);margin-right:3px">★</span>':''}
         <strong>${fd.label}</strong>
         ${fd.hint?`<span style="font-size:.72rem;color:var(--text-sub);margin-left:6px">${fd.hint}</span>`:''}
       </td>
@@ -1081,20 +1318,85 @@ function getColMap(){
 }
 
 // ── VALIDATION ────────────────────────────────────────────────────────────────
+// Build the category mapping UI after validation
+function renderCatMapUI(uniqueCatNames){
+  impCatMapping={};
+  const section=$('iv-cat-map-section');
+  const body=$('iv-cat-map-body');
+  if(!uniqueCatNames.length||!impCategories.length){section.style.display='none';return;}
+  section.style.display='block';
+
+  const selS='padding:5px 10px;border:1.5px solid var(--border-inp);border-radius:6px;font-size:.8rem;background:var(--inp-bg);color:var(--text);width:100%;max-width:320px';
+  const catOpts=impCategories.map(c=>{
+    const uid=catObjUid(c);
+    const name=catObjName(c);
+    return uid?`<option value="${esc(uid)}">${esc(name)}</option>`:'';
+  }).filter(Boolean).join('');
+
+  let html='<table style="width:100%;border-collapse:collapse;font-size:.82rem">'
+    +'<thead><tr style="background:var(--th-bg)">'
+    +'<th style="padding:8px 12px;font-weight:700;font-size:.7rem;text-transform:uppercase;color:var(--text-sub);border-bottom:2px solid var(--border);text-align:left">CSV Category</th>'
+    +'<th style="padding:8px 12px;font-weight:700;font-size:.7rem;text-transform:uppercase;color:var(--text-sub);border-bottom:2px solid var(--border);width:28px"></th>'
+    +'<th style="padding:8px 12px;font-weight:700;font-size:.7rem;text-transform:uppercase;color:var(--text-sub);border-bottom:2px solid var(--border);text-align:left">Account Category</th>'
+    +'</tr></thead><tbody>';
+
+  uniqueCatNames.forEach((name,i)=>{
+    const key=name.toLowerCase();
+    // Auto-match by name
+    const match=impCategories.find(c=>catObjName(c).trim().toLowerCase()===key);
+    const matchUid=match?catObjUid(match):'';
+    impCatMapping[key]=matchUid; // store initial value
+    const selId='icat_'+i;
+    html+=`<tr style="border-bottom:0.5px solid var(--border)">
+      <td style="padding:8px 12px;font-weight:600">${esc(name)}</td>
+      <td style="padding:8px 12px;text-align:center;color:var(--text-sub)">→</td>
+      <td style="padding:8px 12px">
+        <select id="${selId}" style="${selS}" data-cat-key="${esc(key)}" onchange="impCatMapping[this.dataset.catKey]=this.value">
+          <option value="">— skip (row will fail) —</option>
+          ${catOpts.replace(`value="${esc(matchUid)}"`,`value="${esc(matchUid)}" selected`)}
+        </select>
+        ${match
+          ?'<div style="font-size:.7rem;color:var(--green-d);margin-top:3px">✓ Auto-matched</div>'
+          :'<div style="font-size:.7rem;color:var(--amber-d);margin-top:3px">⚠ No match — please select</div>'}
+      </td>
+    </tr>`;
+  });
+
+  html+='</tbody></table>';
+  body.innerHTML=html;
+}
+
 function runValidation(){
   impColMap = getColMap();
   const missing = IMPORT_FIELD_DEFS.filter(f=>f.required&&!impColMap[f.key]).map(f=>f.label);
   if(missing.length){showImpMsg(2,'✗ Please map required fields: '+missing.join(', '),'err');return;}
 
   const VALID_TYPES = new Set(['PARTS','SERVICE','BUNDLE']);
+  // Normalize common type variations before validating
+  function normalizeType(val){
+    const v=(val||'').trim().toUpperCase().replace(/[^A-Z]/g,'');
+    if(v==='PARTS'||v==='PART') return 'PARTS';
+    if(v==='SERVICE'||v==='SERV'||v==='SVC'||v==='SERVICES') return 'SERVICE';
+    if(v==='BUNDLE'||v==='BUNDL') return 'BUNDLE';
+    return val.trim().toUpperCase(); // return original uppercase for error message
+  }
   const results = impRows.map((row,i)=>{
     const r = {};
-    IMPORT_FIELD_DEFS.forEach(fd=>{ r[fd.key]=impColMap[fd.key]?String(row[impColMap[fd.key]]||'').trim():''; });
+    IMPORT_FIELD_DEFS.forEach(fd=>{ r[fd.key]=impColMap[fd.key]?String(row[impColMap[fd.key]]??'').trim():''; });
     const errs=[], warns=[];
     if(!r.product_name) errs.push('Name required');
-    if(!r.product_type) errs.push('Type required');
-    else if(!VALID_TYPES.has(r.product_type.toUpperCase())) errs.push('Type must be PARTS, SERVICE, or BUNDLE');
-    else r.product_type = r.product_type.toUpperCase();
+    // Product type: normalize then validate
+    if(!r.product_type){
+      r.product_type='PARTS';
+      warns.push('Type not set — defaulting to PARTS');
+    } else {
+      const normalized=normalizeType(r.product_type);
+      if(!VALID_TYPES.has(normalized)){
+        errs.push('Type "'+r.product_type+'" is invalid — must be PARTS, SERVICE, or BUNDLE');
+      } else {
+        r.product_type=normalized;
+      }
+    }
     if(!r.product_id) errs.push('Product number required');
     if(r.price===''||r.price===undefined) errs.push('Selling price required');
     else if(isNaN(parseFloat(r.price))) errs.push('Price must be a number');
@@ -1134,6 +1436,11 @@ function runValidation(){
   $('iv-import-btn').textContent=`📥 Import ${valid} Valid Row${valid!==1?'s':''} →`;
   if(errs>0) showImpMsg(3,errs+' row(s) have errors and will be skipped. '+valid+' row(s) are ready to import.','warn');
   else showImpMsg(3,'✓ All '+valid+' row(s) are valid and ready to import.','ok');
+
+  // Show category mapping for valid rows
+  const uniqueCatNames=[...new Set(impValid.map(r=>(r.product_category||'').trim()).filter(Boolean))];
+  renderCatMapUI(uniqueCatNames);
+
   iGoTo(3);
 }
 
@@ -1155,16 +1462,18 @@ function startImport(){
 }
 
 function buildProductPayload(r){
-  // Resolve category uid
-  const catInput=(r.product_category||'').trim().toLowerCase();
-  let catUid='UNCATEGORIZED';
-  if(impCategories.length){
-    const match=impCategories.find(c=>
-      (c.product_category_name||c.category_name||'').toLowerCase()===catInput ||
-      (c.product_category_uid||c.category_uid||'')===r.product_category
-    );
-    catUid=match?(match.product_category_uid||match.category_uid||'UNCATEGORIZED'):r.product_category||'UNCATEGORIZED';
+  // Use pre-resolved category UID when available
+  let catUid=r._resolved_cat_uid||'';
+  // Fallback: name-based lookup in impCategories cache
+  if(!catUid){
+    const catInput=(r.product_category||'').trim().toLowerCase();
+    if(catInput&&impCategories.length){
+      const match=impCategories.find(c=>catObjName(c).trim().toLowerCase()===catInput);
+      if(match) catUid=catObjUid(match)||'';
+    }
   }
+  // Last resort: pass category name as-is (API will likely reject, but gives a clear error)
+  if(!catUid) catUid=r.product_category||'';
   // Resolve location uid
   let locUid=null;
   if(r.location&&impLocations.length){
@@ -1226,11 +1535,65 @@ function buildProductPayload(r){
   return {product, vendor:[]};
 }
 
+// Extract UID from a category object — tries every possible field name
+function catObjUid(c){
+  return c.product_category_uid||c.category_uid||c.uid||c._id||'';
+}
+function catObjName(c){
+  return c.product_category_name||c.category_name||c.name||c.label||'';
+}
+
+// Create a product category if it doesn't already exist in impCategories.
+// Returns a valid UID string, or '' if unable to resolve.
+async function ensureCategoryExists(catName){
+  const trimmed=(catName||'').trim();
+  const key=trimmed.toLowerCase();
+  if(!key) return '';
+
+  // Check cache first
+  const existing=impCategories.find(c=>catObjName(c).trim().toLowerCase()===key);
+  if(existing){
+    const uid=catObjUid(existing);
+    if(uid){ return uid; }
+    console.warn('[ZDM] Category found but UID missing. Keys:',Object.keys(existing),'Value:',JSON.stringify(existing).slice(0,200));
+  }
+
+  // Create it via API
+  try{
+    const res=await fetch(baseUrl()+'products/category',{
+      method:'POST', headers:hdrs(),
+      body:JSON.stringify({product_category_name:trimmed})
+    });
+    const data=await res.json().catch(()=>({}));
+    if(res.ok){
+      // Handle {data: {...}} or {data: [{...}]} or flat object
+      const raw=data.data||data;
+      const newCat=Array.isArray(raw)?raw[0]:raw;
+      const newUid=catObjUid(newCat||{});
+      if(newUid){
+        impCategories.push({product_category_uid:newUid, product_category_name:trimmed});
+        impLog('Created category: "'+trimmed+'"','ok');
+        return newUid;
+      }
+      // POST succeeded but can't find UID — re-fetch to get it
+      console.warn('[ZDM] Category created but UID not in response:',JSON.stringify(data).slice(0,200));
+      await fetchImportMeta();
+      const refetch=impCategories.find(c=>catObjName(c).trim().toLowerCase()===key);
+      if(refetch){ const uid=catObjUid(refetch); if(uid) return uid; }
+    }
+    const msg=data.message||data.error||res.status;
+    impLog('⚠ Could not create category "'+trimmed+'" — '+msg+'. Rows with this category will fail.','warn');
+    return '';
+  }catch(e){
+    impLog('⚠ Error resolving category "'+trimmed+'": '+e.message,'warn');
+    return '';
+  }
+}
 function impLog(text, level){
   const el=$('ip-log');
   el.style.display='block';
   const d=document.createElement('div');
-  d.style.color=level==='ok'?'#a3e635':level==='err'?'#f87171':'#fbbf24';
+  d.style.color=level==='ok'?'var(--green)':level==='err'?'var(--red)':'var(--amber)';
   d.textContent=(level==='ok'?'✓ ':level==='err'?'✗ ':'⚠ ')+text;
   el.appendChild(d); el.scrollTop=el.scrollHeight;
   impLogRows.push({status:level,message:text});
@@ -1248,6 +1611,12 @@ async function runImport(){
   let ok=0,fail=0,done=0;
   const rows=[...impValid];
   $('ip-total').textContent=rows.length;
+
+  // Apply category mappings chosen in the Validate step
+  rows.forEach(r=>{
+    const key=(r.product_category||'').trim().toLowerCase();
+    if(key&&impCatMapping[key]) r._resolved_cat_uid=impCatMapping[key];
+  });
 
   for(const row of rows){
     if(impCancelled) break;
@@ -1400,9 +1769,9 @@ function renderMappingUI(){
     return {uid:raw, name:found?found.status_name:raw};
   }
   // Stash helpers so toggle can access them
-  window._notifGetCatInfo=getCatInfo;
-  window._notifGetStatInfo=getStatInfo;
-  window._notifSelected=selected;
+  _notifHelpers.getCatInfo=getCatInfo;
+  _notifHelpers.getStatInfo=getStatInfo;
+  _notifHelpers.selected=selected;
 
   if(!destJobCategories.length){
     $('mig-mapping-body').innerHTML=`<div class="msg msg-warn">\u26a0 Could not load destination job categories.
@@ -1417,7 +1786,7 @@ function renderMappingUI(){
 
   $('mig-mapping-body').innerHTML=`
   <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--th-bg);border:1.5px solid var(--border);border-radius:8px;margin-bottom:14px">
-    <input type="checkbox" id="mig-automap" checked onchange="onAutoMapToggle()" style="margin-top:3px;width:16px;height:16px;cursor:pointer;accent-color:#e8401c">
+    <input type="checkbox" id="mig-automap" checked onchange="onAutoMapToggle()" style="margin-top:3px;width:16px;height:16px;cursor:pointer;accent-color:var(--primary)">
     <div>
       <div style="font-weight:700;font-size:.85rem;color:var(--text)">Auto-match by name <span style="font-size:.72rem;font-weight:500;background:#e8f4fd;color:#1565c0;padding:2px 7px;border-radius:10px;margin-left:4px">Default</span></div>
       <div style="font-size:.77rem;color:var(--text-sub);margin-top:2px">Automatically matches destination Job Category &amp; Status using the same names as the source. Uncheck to map each notification manually.</div>
@@ -1445,7 +1814,7 @@ function renderMappingUI(){
 }
 
 function runAutoMatch(selected,getCatInfo,getStatInfo){
-  if(!selected){selected=window._notifSelected||[];getCatInfo=window._notifGetCatInfo||(r=>({uid:'',name:'(not set)'}));getStatInfo=window._notifGetStatInfo||(r=>({uid:'',name:'(not set)'}));}
+  if(!selected){selected=_notifHelpers.selected||[];getCatInfo=_notifHelpers.getCatInfo||(()=>({uid:'',name:'(not set)'}));getStatInfo=_notifHelpers.getStatInfo||(()=>({uid:'',name:'(not set)'}));}
   let unmatched=0;
   selected.forEach(r=>{
     const recUid=String(r[uidField]||'');
@@ -1477,8 +1846,8 @@ function runAutoMatch(selected,getCatInfo,getStatInfo){
     }
   });
   const badge=unmatched===0
-    ?`<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:10px;font-size:.75rem;font-weight:700">\u2713 All matched</span>`
-    :`<span style="background:#fffbeb;color:#92400e;padding:2px 10px;border-radius:10px;font-size:.75rem;font-weight:700">\u26a0 ${unmatched} unmatched \u2014 will be created without category</span>`;
+    ?`<span style="background:var(--msg-ok-bg);color:var(--green-d);padding:2px 10px;border-radius:10px;font-size:.75rem;font-weight:700">\u2713 All matched</span>`
+    :`<span style="background:var(--msg-warn-bg);color:var(--msg-warn-c);padding:2px 10px;border-radius:10px;font-size:.75rem;font-weight:700">\u26a0 ${unmatched} unmatched \u2014 will be created without category</span>`;
   const thS='padding:8px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sub);border-bottom:2px solid var(--border);text-align:left;background:var(--th-bg)';
   const tdS='padding:8px 12px;font-size:.82rem;border-bottom:0.5px solid var(--border);vertical-align:middle';
   let html=`<div style="margin-bottom:10px">${badge}</div>
@@ -1492,7 +1861,7 @@ function runAutoMatch(selected,getCatInfo,getStatInfo){
     html+=`<tr>
       <td style="${tdS}"><div style="font-weight:600">${esc(c.srcCat)}</div><div style="font-size:.78rem;color:var(--text-sub);margin-top:2px">${esc(c.srcStat)}</div></td>
       <td style="${tdS};text-align:center;font-size:1.1rem;color:var(--text-sub)">\u2192</td>
-      <td style="${tdS}"><div style="font-weight:600;color:${c.catOk?'inherit':'#d97706'}">${esc(c.destCat)}</div><div style="font-size:.78rem;color:${c.statOk?'var(--text-sub)':'#d97706'};margin-top:2px">${esc(c.destStat)}</div></td>
+      <td style="${tdS}"><div style="font-weight:600;color:${c.catOk?'inherit':'var(--amber-d)'}">${esc(c.destCat)}</div><div style="font-size:.78rem;color:${c.statOk?'var(--text-sub)':'var(--amber-d)'};margin-top:2px">${esc(c.destStat)}</div></td>
       <td style="${tdS};text-align:center"><span style="background:var(--th-bg);padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:600">${c.count}</span></td>
     </tr>`;
   });
@@ -1501,7 +1870,7 @@ function runAutoMatch(selected,getCatInfo,getStatInfo){
 }
 
 function buildManualTable(selected,getCatInfo,getStatInfo,thS,tdS,selS){
-  if(!selected){selected=window._notifSelected||[];getCatInfo=window._notifGetCatInfo||(r=>({uid:'',name:'(not set)'}));getStatInfo=window._notifGetStatInfo||(r=>({uid:'',name:'(not set)'}));}
+  if(!selected){selected=_notifHelpers.selected||[];getCatInfo=_notifHelpers.getCatInfo||(()=>({uid:'',name:'(not set)'}));getStatInfo=_notifHelpers.getStatInfo||(()=>({uid:'',name:'(not set)'}));}
   if(!thS) thS='padding:8px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sub);border-bottom:2px solid var(--border);text-align:left;background:var(--th-bg)';
   if(!tdS) tdS='padding:8px 12px;font-size:.82rem;border-bottom:0.5px solid var(--border);vertical-align:middle';
   if(!selS) selS='padding:5px 8px;border:1.5px solid var(--border-inp);border-radius:6px;font-size:.79rem;background:var(--inp-bg);color:var(--text);width:100%';
@@ -1514,7 +1883,7 @@ function buildManualTable(selected,getCatInfo,getStatInfo,thS,tdS,selS){
     const catSelId=`nc_cat_${i}`,stSelId=`nc_st_${i}`;
     const existing=notifPerRecMapping[recUid]||{};
     const preCatUid=existing.destCatUid||'';const preStatUid=existing.destStatUid||'';
-    const typeColor=type==='SMS'?'#1565c0':'#065f46';const typeBg=type==='SMS'?'#e8f4fd':'#d1fae5';
+    const typeColor=type==='SMS'?'#1565c0':'var(--green-d)';const typeBg=type==='SMS'?'#e8f4fd':'var(--msg-ok-bg)';
     rows+=`<tr>
       <td style="${tdS}"><div style="font-weight:600;font-size:.83rem">${esc(r.notification_name||'—')}</div><div style="font-size:.72rem;color:var(--text-sub);margin-top:2px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(body.slice(0,50))}${body.length>50?'…':''}</div></td>
       <td style="${tdS}"><span style="background:${typeBg};color:${typeColor};padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700">${esc(type)}</span></td>
@@ -1674,10 +2043,17 @@ function buildMigrationProductPayload(rec){
     tax = {tax_exempt:false, tax_name:rec.tax_name||'', tax_rate:parseFloat(rec.tax_rate)||0};
   }
 
-  // --- Product type: ensure it's a valid value ---
+  // --- Product type: normalize and validate ---
   const validTypes = ['PARTS','SERVICE','BUNDLE'];
-  const pType = (safeStr(rec.product_type)||'PARTS').toUpperCase();
-  const productType = validTypes.includes(pType) ? pType : 'PARTS';
+  const rawType = safeStr(rec.product_type)||'';
+  const normType = (t=>{
+    const v=t.toUpperCase().replace(/[^A-Z]/g,'');
+    if(v==='PARTS'||v==='PART') return 'PARTS';
+    if(v==='SERVICE'||v==='SERV'||v==='SVC'||v==='SERVICES') return 'SERVICE';
+    if(v==='BUNDLE'||v==='BUNDL') return 'BUNDLE';
+    return v;
+  })(rawType);
+  const productType = validTypes.includes(normType) ? normType : 'PARTS';
 
   // --- Product ID: use any available SKU/code/name as fallback ---
   const productId = safeStr(rec.product_id||rec.product_code||rec.sku||rec.external_id||rec.product_number||rec.product_name||'MIGRATED');
@@ -1810,14 +2186,12 @@ async function connectDestination(){
     if(!dcUrl){showMsg('mig-conn-msg','✗ Config response missing dc_api_url.','err');return;}
     _destBaseUrl=dcUrl.replace(/\/$/,'')+'/api/';
 
-    // Auto-derive workflow service URL for destination
+        // Auto-derive workflow service URL for destination
     try{
       const wfInput=$('mig-workflow-url');
-      const regionMatch=dcUrl.match(/https?:\/\/([\w-]+)\.zuperpro\.com/);
-      if(regionMatch&&wfInput){
-        const regionBase=regionMatch[1].replace(/[a-z]$/,'');
-        const derived='https://'+regionBase+'-workflow.zuperpro.com/api/';
-        if(!wfInput.value.trim()) wfInput.value=derived;
+      if(wfInput){
+        const derived=deriveWorkflowUrl(dcUrl);
+        if(!wfInput.value.trim()&&derived) wfInput.value=derived;
         _destWorkflowBaseUrl=wfInput.value.trim().replace(/\/?$/,'/');
       }
     }catch{}
@@ -2139,7 +2513,7 @@ function runDedup(){
     const darkBg=document.documentElement.getAttribute('data-theme')==='dark';
     return recs.map((r,i)=>{
       const uid=String(r[uidField]||'');
-      const groupCell=i===0?`<td style="padding:7px 10px;font-weight:700;font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" rowspan="${recs.length}">${esc(val)}</td><td style="padding:7px 10px;text-align:center;font-weight:700;color:#e8401c" rowspan="${recs.length}">${recs.length}</td>`:'';
+      const groupCell=i===0?`<td style="padding:7px 10px;font-weight:700;font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" rowspan="${recs.length}">${esc(val)}</td><td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--primary)" rowspan="${recs.length}">${recs.length}</td>`:'';
       return`<tr style="border-bottom:0.5px solid var(--border);background:${bg}">${groupCell}`+
         cfg.cols.map(c=>`<td style="padding:7px 10px;font-size:.79rem">${esc(fmt(getF(r,c.f)))}</td>`).join('')+
         `<td style="padding:7px 10px;font-family:monospace;font-size:.7rem;color:var(--text-sub)">${esc(uid)}</td></tr>`;
