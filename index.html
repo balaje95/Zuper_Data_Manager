@@ -254,6 +254,42 @@ input[type=checkbox]{accent-color:var(--primary)}
 /* Code-style key/value text in inspector */
 #mig-inspector{font-family:'SF Mono','Menlo','Consolas',monospace}
 
+/* 5. Record detail drawer */
+#record-drawer{position:fixed;top:0;right:-520px;width:500px;max-width:95vw;height:100vh;background:var(--card);border-left:1px solid var(--border);box-shadow:-8px 0 32px rgba(0,0,0,.15);z-index:1000;transition:right .25s ease;display:flex;flex-direction:column;overflow:hidden}
+#record-drawer.open{right:0}
+#drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:999;display:none;backdrop-filter:blur(2px)}
+#drawer-overlay.show{display:block}
+#drawer-body{overflow-y:auto;flex:1;padding:16px;font-family:'SF Mono','Menlo','Consolas',monospace;font-size:.75rem;white-space:pre-wrap;word-break:break-all;color:var(--text);line-height:1.6}
+#drawer-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-key{color:var(--primary)}
+.drawer-str{color:var(--green)}
+.drawer-num{color:var(--amber)}
+.drawer-bool{color:var(--indigo)}
+.drawer-null{color:var(--text-sub)}
+
+/* 8. Undo banner */
+#undo-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:998;display:none;align-items:center;gap:14px;min-width:340px;max-width:90vw}
+#undo-banner.show{display:flex}
+#undo-progress{position:absolute;bottom:0;left:0;height:3px;background:var(--primary);border-radius:0 0 12px 12px;transition:width 1s linear}
+
+/* 9. Global search overlay */
+#global-search-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1001;display:none;align-items:flex-start;justify-content:center;padding-top:80px;backdrop-filter:blur(4px)}
+#global-search-overlay.show{display:flex}
+#global-search-box{background:var(--card);border-radius:16px;width:700px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+#gs-input{padding:16px 20px;font-size:1rem;border:none;background:transparent;color:var(--text);outline:none;border-bottom:1px solid var(--border);width:100%}
+#gs-results{overflow-y:auto;flex:1;padding:8px 0}
+.gs-module-group{padding:8px 16px 4px;font-size:.68rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.7px}
+.gs-row{padding:10px 20px;cursor:pointer;transition:background .1s;font-size:.82rem;border-bottom:0.5px solid var(--border)}
+.gs-row:hover{background:var(--th-bg)}
+.gs-uid{font-size:.7rem;color:var(--text-sub);font-family:monospace;margin-top:2px}
+
+/* 6. Saved connections */
+#saved-conns-panel{margin-bottom:14px}
+.saved-conn-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:var(--th-bg);cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text);margin:0 4px 4px 0;transition:border-color .15s}
+.saved-conn-btn:hover{border-color:var(--primary);color:var(--primary)}
+.saved-conn-del{color:var(--text-sub);font-size:.9rem;margin-left:4px;line-height:1}
+.saved-conn-del:hover{color:var(--red)}
+
 /* Responsive */
 @media (max-width:780px){
   .grid3{grid-template-columns:1fr}
@@ -269,16 +305,66 @@ input[type=checkbox]{accent-color:var(--primary)}
 
 <div class="hdr">
   <h1>⚡ Zuper Data Manager</h1>
+  <!-- 9. Global search -->
+  <div style="flex:1;max-width:360px;margin:0 16px">
+    <div style="position:relative">
+      <input id="gs-header-input" class="inp" placeholder="🔍 Global search across all modules…" style="padding:7px 40px 7px 14px;font-size:.82rem" onkeydown="if(event.key==='Enter')runGlobalSearch()" readonly onfocus="openGlobalSearch()">
+      <button onclick="openGlobalSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-sub);font-size:.9rem">⌕</button>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="badge">○ Not connected</span>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
   </div>
 </div>
+
+<!-- 9. Global search overlay -->
+<div id="global-search-overlay" onclick="if(event.target===this)closeGlobalSearch()">
+  <div id="global-search-box">
+    <div style="display:flex;align-items:center;border-bottom:1px solid var(--border)">
+      <span style="padding:0 16px;font-size:1.1rem;color:var(--text-sub)">⌕</span>
+      <input id="gs-input" placeholder="Search by name, UID, or any field…" onkeydown="handleGsKey(event)" autofocus>
+      <button onclick="closeGlobalSearch()" style="padding:0 16px;background:none;border:none;cursor:pointer;color:var(--text-sub);font-size:1.1rem">✕</button>
+    </div>
+    <div id="gs-status" style="padding:10px 20px;font-size:.8rem;color:var(--text-sub);border-bottom:1px solid var(--border);display:none"></div>
+    <div id="gs-results"></div>
+  </div>
+</div>
+
+<!-- 5. Record detail drawer -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="record-drawer">
+  <div id="drawer-header">
+    <div>
+      <div style="font-weight:700;font-size:.9rem" id="drawer-title">Record Detail</div>
+      <div style="font-size:.72rem;color:var(--text-sub);margin-top:2px" id="drawer-subtitle"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="font-size:.75rem;padding:4px 10px" onclick="copyDrawerJson()">📋 Copy JSON</button>
+      <button class="btn btn-o" style="font-size:.75rem;padding:4px 10px" onclick="closeDrawer()">✕</button>
+    </div>
+  </div>
+  <div id="drawer-body"></div>
+</div>
+
+<!-- 8. Undo buffer banner -->
+<div id="undo-banner">
+  <div style="position:absolute;bottom:0;left:0;height:3px;background:var(--primary);border-radius:0 0 12px 12px;transition:width 1s linear" id="undo-progress"></div>
+  <span id="undo-msg" style="font-size:.83rem;font-weight:600;flex:1"></span>
+  <button class="btn btn-p" style="font-size:.78rem;padding:5px 14px" onclick="doUndelete()">↩ Undo</button>
+  <button class="btn btn-o" style="font-size:.78rem;padding:5px 10px" onclick="clearUndoBuffer()">✕</button>
+</div>
+
 <div class="wrap">
 
 <!-- CONNECTION -->
 <div class="card" id="conn-card">
   <div class="sec-title">🔗 Connection Setup</div>
+  <!-- 6. Saved connections -->
+  <div id="saved-conns-panel" style="display:none;margin-bottom:14px">
+    <div style="font-size:.72rem;font-weight:700;color:var(--lbl);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Saved Connections</div>
+    <div id="saved-conns-list"></div>
+  </div>
   <div class="grid3">
     <div>
       <div class="field-lbl">Company Login Name</div>
@@ -307,6 +393,13 @@ input[type=checkbox]{accent-color:var(--primary)}
         <option value="team">Teams</option>
         <option value="workflow">Workflows</option>
         <option value="customer_notification">Customer Notifications</option>
+        <option value="job_status">Job Statuses</option>
+        <option value="job_category">Job Categories</option>
+        <option value="asset_form">Asset Inspection Forms</option>
+        <option value="service_task">Service Tasks</option>
+        <option value="checklist">Checklists</option>
+        <option value="custom_fields">Custom Fields</option>
+        <option value="formula">Formulas (CPQ)</option>
       </select>
     </div>
   </div>
@@ -316,8 +409,39 @@ input[type=checkbox]{accent-color:var(--primary)}
     <input class="inp" id="workflow-url" placeholder="https://us-east-1-workflow.zuperpro.com/api/" style="max-width:480px">
     <div style="font-size:.72rem;color:var(--text-sub);margin-top:4px">Find this URL in your browser network tab when opening the Workflows section in Zuper.</div>
   </div>
+  <!-- Checklist params: category → status chain -->
+  <div id="checklist-params-row" style="display:none;margin-bottom:14px">
+    <div style="font-size:.72rem;color:var(--text-sub);margin-bottom:10px">Select a Job Category and Status to fetch its checklist fields.</div>
+    <div class="grid2" style="max-width:600px">
+      <div>
+        <div class="field-lbl">Job Category</div>
+        <select id="cl-cat" class="inp" onchange="onChecklistCatChange()" style="font-size:.82rem"><option value="">— connect account first —</option>
+      </div>
+      <div>
+        <div class="field-lbl">Job Status</div>
+        <select id="cl-status" class="inp" style="font-size:.82rem">
+          <option value="">— pick a category first —</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <!-- Custom Fields params: module_name selector -->
+  <div id="custom-fields-params-row" style="display:none;margin-bottom:14px">
+    <div class="field-lbl">Module</div>
+    <select id="cf-module" class="inp" style="max-width:280px;font-size:.82rem">
+      <option value="JOB">Job</option>
+      <option value="CUSTOMER">Customer</option>
+      <option value="ASSET">Asset</option>
+      <option value="CONTACT">Contact</option>
+      <option value="PROPERTY">Property</option>
+      <option value="PURCHASE_ORDER">Purchase Order</option>
+      <option value="INVOICE">Invoice</option>
+      <option value="ESTIMATE">Quote / Estimate</option>
+    </select>
+  </div>
   <div class="btn-row">
     <button class="btn btn-o" id="connect-btn" onclick="doConnect()">🔌 Connect</button>
+    <button class="btn btn-o" id="save-conn-btn" onclick="saveCurrentConnection()" style="display:none" title="Save this connection">🔖 Save</button>
     <button class="btn btn-g" id="disconnect-btn" onclick="doDisconnect()" style="display:none">⏏ Disconnect</button>
     <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" style="display:none">📄 Fetch Records</button>
     <button class="btn btn-p" id="import-btn" onclick="showImportCard()" style="display:none">📥 Import Products</button>
@@ -342,19 +466,26 @@ input[type=checkbox]{accent-color:var(--primary)}
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
     <div class="sec-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0">📊 Fetched Records</div>
     <div class="btn-row">
-      <button class="btn btn-o" onclick="doExport('csv')">📊 Export CSV</button>
-      <button class="btn btn-o" onclick="doExport('json')">📄 Export JSON</button>
+      <button class="btn btn-o" id="export-csv-btn" onclick="doExport('csv')">📊 Export CSV</button>
+      <button class="btn btn-o" id="export-json-btn" onclick="doExport('json')">📄 Export JSON</button>
+      <button class="btn btn-o" id="compare-btn" onclick="showCompareCard()" style="display:none">⚖️ Compare</button>
       <button class="btn btn-o" id="dedup-btn" onclick="showDedupPanel()" style="display:none">🔍 Find Duplicates</button>
       <button class="btn btn-p" id="mig-btn" onclick="showMigratePanel()" style="display:none">🚀 Migrate Selected</button>
       <button class="btn btn-d" id="del-sel-btn" onclick="showDelete()">🗑 Delete Selected</button>
     </div>
   </div>
-  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+  <div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
     <input class="inp" id="search" type="text" placeholder="🔍 Search…" style="max-width:240px" oninput="doSearch()">
     <span id="rec-count" style="font-size:.75rem;color:#777">No records loaded</span>
     <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;cursor:pointer">
       <input type="checkbox" id="selall" onchange="selAll(this.checked)"> Select All
     </label>
+  </div>
+  <!-- Cross-page select all banner -->
+  <div id="sel-all-banner" style="display:none;background:var(--msg-info-bg,#eff6ff);border:1px solid var(--msg-info-b,#bfdbfe);border-radius:6px;padding:8px 14px;margin-bottom:8px;font-size:.81rem;align-items:center;gap:10px;flex-wrap:wrap">
+    <span id="sel-all-msg" style="flex:1"></span>
+    <button class="btn btn-o" style="font-size:.75rem;padding:3px 10px" onclick="selectAllAcrossPages()">Select all <strong id="sel-all-total">0</strong> records</button>
+    <button class="btn btn-o" style="font-size:.75rem;padding:3px 10px" onclick="clearAllSelection()">✕ Clear</button>
   </div>
   <div id="fetch-msg" style="display:none" class="msg msg-info"></div>
   <div class="tbl-wrap">
@@ -394,9 +525,47 @@ input[type=checkbox]{accent-color:var(--primary)}
   </div>
 </div>
 
+<!-- COMPARE ACCOUNTS (Feature 2) -->
+<div class="card" id="compare-card" style="display:none">
+  <div class="sec-title">⚖️ Compare Accounts</div>
+  <div style="font-size:.8rem;color:var(--text-sub);margin-bottom:14px">Fetch the same module from a second account and see what's missing or different.</div>
+  <div class="grid2" style="margin-bottom:12px;max-width:600px">
+    <div>
+      <div class="field-lbl">Second Account — Company Login</div>
+      <input class="inp" id="cmp-company" placeholder="company-login-name">
+    </div>
+    <div>
+      <div class="field-lbl">API Key</div>
+      <div class="pw-wrap">
+        <input class="inp" id="cmp-apikey" type="password" placeholder="Second account API key">
+        <button class="pw-eye" onclick="toggleCmpPw()">👁</button>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-bottom:12px">
+    <button class="btn btn-p" onclick="runCompare()">⚖️ Compare Now</button>
+    <button class="btn btn-o" onclick="$('compare-card').style.display='none'">✕ Close</button>
+    <button class="btn btn-o" id="cmp-export-btn" onclick="exportCompareCsv()" style="display:none">⬇ Export Diff CSV</button>
+  </div>
+  <div id="cmp-msg" class="msg" style="display:none;margin-bottom:10px"></div>
+  <div id="cmp-results" style="display:none">
+    <div class="run-stats" style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <div class="rs rs-g"><div class="rs-val" id="cmp-src-count" style="color:var(--primary)">0</div><div class="rs-lbl">In Source</div></div>
+      <div class="rs rs-g"><div class="rs-val" id="cmp-dest-count" style="color:var(--primary)">0</div><div class="rs-lbl">In Destination</div></div>
+      <div class="rs rs-r"><div class="rs-val" id="cmp-only-src" style="color:var(--red)">0</div><div class="rs-lbl">Only in Source</div></div>
+      <div class="rs rs-r"><div class="rs-val" id="cmp-only-dest" style="color:var(--amber)">0</div><div class="rs-lbl">Only in Dest</div></div>
+      <div class="rs rs-g"><div class="rs-val" id="cmp-both" style="color:var(--green)">0</div><div class="rs-lbl">In Both</div></div>
+    </div>
+    <div class="tbl-wrap"><table style="width:100%;border-collapse:collapse;font-size:.8rem" id="cmp-table">
+      <thead id="cmp-thead"></thead><tbody id="cmp-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
 <!-- MIGRATE -->
 <div class="card" id="mig-card" style="display:none">
   <div class="sec-title">🚀 Migrate Records</div>
+  <div id="mig-last-run" style="display:none;margin-bottom:10px;padding:7px 12px;background:var(--th-bg);border:1px solid var(--border);border-radius:6px"></div>
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
     <div id="mig-summary" class="msg msg-info" style="flex:1;margin-bottom:0">Select records above then open this panel.</div>
     <button class="btn btn-o" onclick="inspectSelectedRecord()" style="white-space:nowrap;font-size:.78rem">🔬 Inspect Record</button>
@@ -427,6 +596,19 @@ input[type=checkbox]{accent-color:var(--primary)}
     </div>
     <div id="mig-conn-msg" class="msg" style="display:none"></div>
     <div id="mig-run-section" style="display:none;margin-top:16px">
+      <!-- 4. Relationship mapping upload -->
+      <div style="padding:10px 14px;background:var(--th-bg);border:1px solid var(--border);border-radius:8px;margin-bottom:14px">
+        <div style="font-weight:700;font-size:.8rem;margin-bottom:6px">4. Relationship Mapping <span style="font-weight:400;color:var(--text-sub);font-size:.75rem">(optional — for migrating related UIDs like customer_uid, assigned_user_uid)</span></div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:.79rem;cursor:pointer">
+            <input type="file" id="rel-map-file" accept=".csv" onchange="loadRelMap(this)" style="display:none">
+            <span class="btn btn-o" style="font-size:.77rem;padding:5px 12px" onclick="$('rel-map-file').click()">📎 Upload Mapping CSV</span>
+          </label>
+          <div style="font-size:.75rem;color:var(--text-sub)">Two-column CSV: <code>source_uid,destination_uid</code></div>
+          <div id="rel-map-status" style="font-size:.75rem;color:var(--green-d);display:none"></div>
+          <button class="btn btn-o" id="rel-map-clear" onclick="clearRelMap()" style="display:none;font-size:.75rem;padding:4px 10px">✕ Clear</button>
+        </div>
+      </div>
       <!-- Step 2: Field mapping (shown for modules that need it, e.g. customer_notification) -->
       <div id="mig-mapping-section" style="display:none;margin-bottom:18px">
         <div style="font-size:.73rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid var(--sec-border);padding-bottom:6px;margin-bottom:12px">Step 2 — Map Job Categories &amp; Statuses</div>
@@ -595,6 +777,18 @@ input[type=checkbox]{accent-color:var(--primary)}
 
   <!-- Step 4: Import -->
   <div id="istep4" style="display:none">
+    <!-- 3. Rate limit control -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 14px;background:var(--th-bg);border-radius:8px;border:1px solid var(--border)">
+      <label style="font-size:.82rem;font-weight:600">⏱ Rate Limit:</label>
+      <select id="ip-rate-limit" style="width:auto;padding:4px 10px;font-size:.82rem;border:1px solid var(--border-inp);border-radius:6px;background:var(--inp-bg);color:var(--text)">
+        <option value="0">Unlimited (fastest)</option>
+        <option value="2000">30/min (2s delay)</option>
+        <option value="3000" selected>20/min (3s delay)</option>
+        <option value="6000">10/min (6s delay)</option>
+        <option value="12000">5/min (12s delay)</option>
+      </select>
+      <span style="font-size:.75rem;color:var(--text-sub)">Add delay between requests to avoid API rate limits</span>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
       <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-total">0</div><div class="rs-lbl">Total</div></div>
       <div class="rs rs-g" style="min-width:0"><div class="rs-val" id="ip-ok" style="color:var(--green-d)">0</div><div class="rs-lbl">Created</div></div>
@@ -612,6 +806,15 @@ input[type=checkbox]{accent-color:var(--primary)}
       <button class="btn btn-o" id="ip-dl-btn" onclick="downloadImportLog()" style="display:none">⬇ Download Log</button>
     </div>
   </div>
+</div>
+
+<!-- 7. Import History -->
+<div class="card" id="import-history-card" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="sec-title" style="margin-bottom:0">📋 Import History</div>
+    <button class="btn btn-o" style="font-size:.75rem" onclick="clearImportHistory()">🗑 Clear All</button>
+  </div>
+  <div id="import-history-body"></div>
 </div>
 
 <!-- SETTINGS Ctrl+Shift+A -->
@@ -645,10 +848,33 @@ const MODULES={
   user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',cols:[{h:'Name',f:['user_first_name','user_last_name']},{h:'Email',f:'user_email'},{h:'Role',f:'user_role'},{h:'Status',f:'user_status'},{h:'Created',f:'created_at'}]},
   team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',cols:[{h:'Name',f:'team_name'},{h:'Members',f:'members_count'},{h:'Created',f:'created_at'}]},
   workflow:{label:'Workflows',uid:['workflow_uid','uid','_id'],del:null,noDelete:true,endpoint:'workflows',customBaseUrl:'_workflowBaseUrl',paginationParam:'limit',fetchParams:'sort=ASC&sort_by=created_at',cols:[{h:'Name',f:'workflow_name'},{h:'Trigger Module',f:'trigger_module'},{h:'Trigger Event',f:'trigger_event_name'},{h:'Access',f:'workflow_access'},{h:'Active',f:'allow_workflow_to_trigger'},{h:'Created',f:'created_at'}]},
-  customer_notification:{label:'Customer Notifications',uid:['customer_notification_uid','notification_uid','uid','_id'],del:'customer_notification',dryRunSkipGet:true,cols:[{h:'Name',f:'notification_name'},{h:'Type',f:'notification_type'},{h:'Job Category',f:'job_category'},{h:'Job Status',f:'job_status_uid'},{h:'SMS/Email Body',f:'sms_body'}]}
+  customer_notification:{label:'Customer Notifications',uid:['customer_notification_uid','notification_uid','uid','_id'],del:'customer_notification',dryRunSkipGet:true,cols:[{h:'Name',f:'notification_name'},{h:'Type',f:'notification_type'},{h:'Job Category',f:'job_category'},{h:'Job Status',f:'job_status_uid'},{h:'SMS/Email Body',f:'sms_body'}]},
+  // Job Statuses: fetched from /jobs/category endpoint, statuses nested inside — transform flattens them
+  job_status:{label:'Job Statuses',uid:['status_uid','_id'],del:'job_status',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,transform:(recs)=>recs.flatMap(cat=>(cat.job_statuses||[]).map(s=>({...s,_category:cat.category_name,_category_uid:cat.category_uid}))),cols:[{h:'Name',f:'status_name'},{h:'Type',f:'status_type'},{h:'Color',f:'status_color'},{h:'Category',f:'_category'},{h:'Track Time',f:'track_time_in_status'}]},
+  // Job Categories: same endpoint, categories are the top-level records
+  job_category:{label:'Job Categories',uid:['category_uid','uid','_id'],del:'job_category',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,cols:[{h:'Name',f:'category_name'},{h:'Color',f:'category_color'},{h:'Statuses',f:'_status_count'},{h:'Display Order',f:'display_order'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(c=>({...c,_status_count:(c.job_statuses||[]).length}))},
+  // Asset Inspection Forms
+  asset_form:{label:'Asset Inspection Forms',uid:['asset_form_uid','uid','_id'],del:'assets/inspection_form/master',endpoint:'assets/inspection_form/master',fetchParams:'sort=DESC&sort_by=created_at&filter.keyword=',cols:[{h:'Name',f:'asset_form_name'},{h:'Description',f:'asset_form_description'},{h:'Fields',f:'_field_count'},{h:'Active',f:'is_active'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_field_count:(r.asset_form_fields||[]).length}))},
+  // Service Tasks (placeholder — UID field TBC once user shares response)
+  service_task:{label:'Service Tasks',uid:['service_task_uid','uid','_id'],del:'service_tasks/master',endpoint:'service_tasks/master',fetchParams:'filter.keyword=',cols:[{h:'Name',f:'service_task_name'},{h:'Type',f:'service_task_type'},{h:'Status',f:'status'},{h:'Created',f:'created_at'}]},
+  // Checklist: special module — needs category_uid + job_status_uid params
+  checklist:{label:'Checklists',uid:['checklist_uid','_id'],del:null,noDelete:true,endpoint:'settings/checklist',customParams:true,cols:[{h:'Field Name',f:'field_name'},{h:'Type',f:'field_type'},{h:'Required',f:'is_required'},{h:'Display Order',f:'display_order'},{h:'Internal Key',f:'internal_key'}]},
+  // Custom Fields: special module — needs module_name param
+  custom_fields:{label:'Custom Fields',uid:['custom_field_uid','_id'],del:null,noDelete:true,endpoint:'settings/custom_fields',customParams:true,cols:[{h:'Field Name',f:'field_name'},{h:'Type',f:'field_type'},{h:'Required',f:'is_required'},{h:'Options',f:'_option_count'},{h:'Display Order',f:'display_order'}],transform:(recs)=>recs.map(r=>({...r,_option_count:(r.field_options||[]).length}))},
+  // Formulas (CPQ)
+  formula:{label:'Formulas (CPQ)',uid:['formula_uid','uid','_id'],del:'invoice_estimate/cpq/formulas',dryRunSkipGet:true,endpoint:'invoice_estimate/cpq/formulas',canDelete:(rec)=>rec.is_custom?null:'System formula — cannot be deleted',cols:[{h:'Name',f:'formula_name'},{h:'Key',f:'formula_key'},{h:'Category',f:'_category_name'},{h:'Expression',f:'_expression'},{h:'Active',f:'is_active'},{h:'Custom',f:'is_custom'}],transform:(recs)=>recs.map(r=>({...r,_category_name:(r.formula_category?.category_name||'—'),_expression:(r.formula?.formatted_expression||'')}))}
 };
 let allRecs=[],filtRecs=[],selUids=new Set(),uidField=null,running=false,paused=false,cancelled=false,dryCtx=null,failUids=[],logRows=[];
 let currentPage=1;
+let sortCol=null,sortDir=1; // column sorting state
+let _lastMigrationSummary=null; // migration log persistence
+let _selectAllMode=false; // cross-page select all state
+// Feature state variables
+let _savedConns=[];try{_savedConns=JSON.parse(localStorage.getItem('zdm_conns')||'[]');}catch{}
+let _importHistory=[];try{_importHistory=JSON.parse(localStorage.getItem('zdm_import_hist')||'[]');}catch{}
+let _undoBuffer=[],_undoTimer=null,_undoCountdown=0,_undoModule=null;
+let _relMap={}; // relationship mapping: source_uid → dest_uid
+let _cmpDestUrl='',_cmpDestKey=''; // compare accounts
 let _baseUrl=''; // set after config lookup
 let _workflowBaseUrl=''; // set from workflow-url input
 let _destBaseUrl='', _destWorkflowBaseUrl=''; // destination account
@@ -672,8 +898,9 @@ const destGetHdrs=()=>({'x-api-key':destApiKey()});
 
 // Migration module config: which modules can be migrated and how
 const MIGRATE_MODULES={
-  customers:  {supported:true, createEndpoint:'customers', ownUidField:'customer_uid'},
+  customers:  {supported:true, createEndpoint:'customers', ownUidField:'customer_uid', buildPayload:(rec)=>buildCustomerPayload(rec)},
   assets:     {supported:true, createEndpoint:'assets',    ownUidField:'asset_uid'},
+  job_status: {supported:true, createEndpoint:'job_status', ownUidField:'status_uid', buildPayload:(rec)=>buildJobStatusPayload(rec)},
   product:    {
     supported:true, createEndpoint:'product', ownUidField:'product_uid',
     buildPayload:(rec)=>buildMigrationProductPayload(rec)
@@ -719,6 +946,10 @@ function showConnected(accountName, region){
   $('table-card').style.display='block';
   $('s-account').textContent=accountName;
   $('s-module').textContent=cfg?cfg.label:'—';
+  // Show save button
+  const saveBtn=$('save-conn-btn');if(saveBtn) saveBtn.style.display='inline-flex';
+  // Load checklist categories if that module is already selected
+  if(modKey()==='checklist') loadChecklistCategories();
 }
 
 function doDisconnect(){
@@ -740,12 +971,18 @@ function doDisconnect(){
   $('del-sel-btn').style.display='inline-flex'; // reset to default visible state
   $('dedup-btn').style.display='none';
   $('mig-btn').style.display='none';
+  const _cmpBtnD=$('compare-btn');if(_cmpBtnD) _cmpBtnD.style.display='none';
+  const _saveBtnD=$('save-conn-btn');if(_saveBtnD) _saveBtnD.style.display='none';
+  clearUndoBuffer();
   // Reset form fields
   $('company').disabled=false; $('company').value='';
   $('apikey').disabled=false; $('apikey').value='';
   $('module-field').style.display='none';
   $('workflow-url-row').style.display='none';
   $('workflow-url').value='';
+  const clRow=$('checklist-params-row');if(clRow) clRow.style.display='none';
+  const cfRow=$('custom-fields-params-row');if(cfRow) cfRow.style.display='none';
+  _checklistCats=[];
   // Reset stats and table
   $('stats-section').style.display='none';
   $('table-card').style.display='none';
@@ -835,6 +1072,7 @@ async function doFetch(){
 
   btn.textContent='⏳ Fetching…';btn.disabled=true;
   allRecs=[];filtRecs=[];selUids=new Set();uidField=null;
+  sortCol=null;sortDir=1;_selectAllMode=false;hideSellAllBanner();
   // Close any open panels from previous fetch
   $('del-card').style.display='none';
   hideDedupPanel();
@@ -849,35 +1087,77 @@ async function doFetch(){
   const limitParam=cfg.paginationParam||'count';
   const limit=150;
 
+  // Build custom params for checklist and custom_fields modules
+  let customParamStr='';
+  if(cfg.customParams){
+    if(modKey()==='checklist'){
+      const catUid=($('cl-cat').value||'').trim();
+      const stUid=($('cl-status').value||'').trim();
+      if(!catUid||!stUid){showMsg('fetch-msg','✗ Please select a Job Category and Job Status first.','err');btn.textContent='📄 Fetch Records';btn.disabled=false;return;}
+      customParamStr='?category_uid='+encodeURIComponent(catUid)+'&job_status_uid='+encodeURIComponent(stUid);
+    } else if(modKey()==='custom_fields'){
+      const mod=($('cf-module').value||'JOB').trim();
+      customParamStr='?module_name='+encodeURIComponent(mod)+'&sort=ASC&sort_by=display_order';
+    }
+  }
+
   try{
     let page=1,maxPages=100;
     const extraParams=cfg.fetchParams?'&'+cfg.fetchParams:'';
-    while(page<=maxPages){
-      showMsg('fetch-msg','📥 Fetching page '+page+'… ('+allRecs.length+' records so far)','info');
-      const url=fetchBase+endpoint+'?'+pageParam+'='+page+'&'+limitParam+'='+limit+extraParams;
+
+    // Modules with customParams use a fixed URL (no pagination)
+    if(cfg.customParams){
+      showMsg('fetch-msg','📥 Fetching…','info');
+      const url=fetchBase+endpoint+customParamStr;
       console.log('[ZDM] Fetching:', url);
       const res=await fetch(url,{method:'GET',headers:getHdrs()});
-      if(!res.ok){
-        const b=await res.text().catch(()=>'');
-        throw new Error(res.status+' — '+b.slice(0,300)+'\n\nURL called: '+url);
-      }
+      if(!res.ok){const b=await res.text().catch(()=>'');throw new Error(res.status+' — '+b.slice(0,300)+'\n\nURL: '+url);}
       const data=await res.json();
-
-      const recs=extractRecords(data, endpoint);
-
-      // Log to console for debugging, but don't throw — just stop paginating
-      if(!recs.length && page===1){
-        console.log('[ZDM] Page 1 empty. Keys:', Object.keys(data).join(', '),
-          '| data type:', Array.isArray(data.data)?'array['+data.data.length+']':typeof data.data);
-      }
-      if(!recs.length) break;
+      const recs=extractRecords(data,endpoint);
       allRecs.push(...recs);
-      // Stop if fewer records than limit OR if API tells us we're on the last page
-      const totalPages=data.total_pages||data.totalPages||null;
-      if(recs.length<limit || (totalPages&&page>=totalPages)) break;
-      page++;
     }
-    if(!allRecs.length){showMsg('fetch-msg','⚠ No records returned for this module.','warn');$('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">No records found.</td></tr>';return;}
+    // Modules with noPageLimit fetch once without pagination params
+    else if(cfg.noPageLimit){
+      showMsg('fetch-msg','📥 Fetching…','info');
+      const url=fetchBase+endpoint+'?'+(cfg.fetchParams||'');
+      console.log('[ZDM] Fetching (no-page):', url);
+      const res=await fetch(url,{method:'GET',headers:getHdrs()});
+      if(!res.ok){const b=await res.text().catch(()=>'');throw new Error(res.status+' — '+b.slice(0,300)+'\n\nURL: '+url);}
+      const data=await res.json();
+      const recs=extractRecords(data,endpoint);
+      allRecs.push(...recs);
+    }
+    // Standard paginated fetch
+    else{
+      while(page<=maxPages){
+        showMsg('fetch-msg','📥 Fetching page '+page+'… ('+allRecs.length+' records so far)','info');
+        const url=fetchBase+endpoint+'?'+pageParam+'='+page+'&'+limitParam+'='+limit+extraParams;
+        console.log('[ZDM] Fetching:', url);
+        const res=await fetch(url,{method:'GET',headers:getHdrs()});
+        if(!res.ok){const b=await res.text().catch(()=>'');throw new Error(res.status+' — '+b.slice(0,300)+'\n\nURL called: '+url);}
+        const data=await res.json();
+        const recs=extractRecords(data, endpoint);
+        if(!recs.length && page===1){console.log('[ZDM] Page 1 empty. Keys:', Object.keys(data).join(', '),'| data type:', Array.isArray(data.data)?'array['+data.data.length+']':typeof data.data);}
+        if(!recs.length) break;
+        allRecs.push(...recs);
+        const totalPages=data.total_pages||data.totalPages||null;
+        if(recs.length<limit || (totalPages&&page>=totalPages)) break;
+        page++;
+      }
+    }
+
+    // Apply transform if defined (e.g. flatten nested statuses, add computed fields)
+    if(cfg.transform && typeof cfg.transform==='function') allRecs=cfg.transform(allRecs);
+
+    if(!allRecs.length){
+      showMsg('fetch-msg','⚠ No records returned for this module.','warn');
+      $('thead').innerHTML='';
+      $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#aaa">No records found.</td></tr>';
+      $('rec-count').textContent='0 records';
+      $('s-total').textContent='0';
+      const pg=$('pagination');if(pg) pg.style.display='none';
+      return;
+    }
     uidField=findUid(allRecs[0],cfg.uid);
     if(!uidField){
       const keys=Object.keys(allRecs[0]).slice(0,12).join(', ');
@@ -942,24 +1222,43 @@ function extractRecords(data, moduleKey){
 }
 
 function renderTable(){
-  const cfg=modCfg();if(!cfg||!filtRecs.length||!uidField)return;
-  currentPage=1;
-  // Show/hide checkboxes and delete button based on module
+  const cfg=modCfg();if(!cfg||!uidField)return;
+  if(!filtRecs.length){
+    $('tbody').innerHTML='<tr><td colspan="10" style="padding:28px;text-align:center;color:#aaa">No records found.</td></tr>';
+    $('rec-count').textContent='0 of '+allRecs.length+' records';
+    const pg=$('pagination');if(pg) pg.style.display='none';
+    return;
+  }
+  currentPage=1;sortCol=null;sortDir=1;
   const noDelete=cfg.noDelete||false;
-  const chkCol=noDelete?'':'<th><input type="checkbox" onchange="selAll(this.checked)"></th>';
-  $('thead').innerHTML='<tr>'+chkCol+'<th>UID</th>'+cfg.cols.map(c=>'<th>'+c.h+'</th>').join('')+'</tr>';
-  // Show dedup button now that records are loaded
-  const dedupBtn=$('dedup-btn');
-  if(dedupBtn) dedupBtn.style.display='inline-flex';
-  // Show migrate button now that records are loaded
-  const migBtn=$('mig-btn');
-  if(migBtn) migBtn.style.display='inline-flex';
-  // Populate dedup field selector
+  const chkCol=noDelete?'':'<th style="width:36px"><input type="checkbox" id="selall" onchange="selAll(this.checked)"></th>';
+  $('thead').innerHTML='<tr>'+chkCol+'<th>UID</th>'+cfg.cols.map(c=>'<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="toggleSort(\''+c.f+'\')">'+c.h+'</th>').join('')+'</tr>';
+  const dedupBtn=$('dedup-btn');if(dedupBtn) dedupBtn.style.display='inline-flex';
+  const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='inline-flex';
+  const cmpBtn=$('compare-btn');if(cmpBtn) cmpBtn.style.display='inline-flex';
   buildDedupFieldOptions(cfg);
   renderRows();
   $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
   renderPagination();
   updSel();
+}
+function renderHeaders(){
+  const cfg=modCfg();if(!cfg) return;
+  const noDelete=cfg.noDelete||false;
+  const chkCol=noDelete?'':'<th style="width:36px"><input type="checkbox" id="selall" onchange="selAll(this.checked)"></th>';
+  $('thead').innerHTML='<tr>'+chkCol+'<th>UID</th>'+cfg.cols.map(c=>'<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="toggleSort(\''+c.f+'\')">'+c.h+(sortCol===c.f?(sortDir===1?' ▲':' ▼'):'')+'</th>').join('')+'</tr>';
+  const sa=$('selall');if(sa) sa.checked=filtRecs.length>0&&filtRecs.every(r=>selUids.has(String(r[uidField]||'')));
+}
+function toggleSort(field){
+  if(sortCol===field) sortDir=-sortDir; else{sortCol=field;sortDir=1;}
+  filtRecs.sort((a,b)=>{
+    const av=String(getF(a,field)||'').toLowerCase();
+    const bv=String(getF(b,field)||'').toLowerCase();
+    const an=parseFloat(av),bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn)) return sortDir*(an-bn);
+    return sortDir*av.localeCompare(bv);
+  });
+  currentPage=1;renderHeaders();renderRows();renderPagination();
 }
 function renderRows(){
   const cfg=modCfg();if(!cfg||!uidField)return;
@@ -967,85 +1266,65 @@ function renderRows(){
   $('tbody').innerHTML=pageRecs().map(r=>{
     const uid=String(r[uidField]||''),sel=selUids.has(uid);
     const chkCell=noDelete?'':'<td><input type="checkbox" '+(sel?'checked':'')+' onchange="toggleRow(\''+esc(uid)+'\',this.checked,this.closest(\'tr\'))"></td>';
-    return'<tr class="'+(sel?'row-sel':'')+'" data-uid="'+esc(uid)+'">'+chkCell+'<td class="uid-cell" title="'+esc(uid)+'">'+esc(uid)+'</td>'+cfg.cols.map(c=>'<td>'+esc(fmt(getF(r,c.f)))+'</td>').join('')+'</tr>';
+    return'<tr class="'+(sel?'row-sel':'')+'" data-uid="'+esc(uid)+'" ondblclick="openDrawer(allRecs.find(r=>String(r[uidField]||\'\')==\''+esc(uid)+'\'))" style="cursor:pointer">'+chkCell+'<td class="uid-cell" title="'+esc(uid)+'">'+esc(uid)+'</td>'+cfg.cols.map(c=>'<td>'+esc(fmt(getF(r,c.f)))+'</td>').join('')+'</tr>';
   }).join('')||'<tr><td colspan="10" style="padding:28px;text-align:center;color:#aaa">No matching records.</td></tr>';
 }
-function toggleRow(uid,checked,row){if(checked)selUids.add(uid);else selUids.delete(uid);if(row)row.className=checked?'row-sel':'';updSel();}
-function selAll(checked){filtRecs.forEach(r=>{const uid=String(r[uidField]||'');if(uid)checked?selUids.add(uid):selUids.delete(uid);});document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=checked);document.querySelectorAll('#tbody tr').forEach(tr=>tr.className=checked?'row-sel':'');$('selall').checked=checked;updSel();}
+function toggleRow(uid,checked,row){
+  if(checked)selUids.add(uid);else selUids.delete(uid);
+  if(row)row.className=checked?'row-sel':'';
+  _selectAllMode=false;hideSellAllBanner();updSel();
+}
+function selAll(checked){
+  filtRecs.forEach(r=>{const uid=String(r[uidField]||'');if(uid)checked?selUids.add(uid):selUids.delete(uid);});
+  document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=checked);
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.className=checked?'row-sel':'');
+  const sa=$('selall');if(sa) sa.checked=checked;
+  _selectAllMode=false;
+  if(checked&&filtRecs.length<allRecs.length){
+    const banner=$('sel-all-banner');
+    if(banner){banner.style.display='flex';$('sel-all-msg').textContent=selUids.size+' filtered record(s) selected.';$('sel-all-total').textContent=allRecs.length;}
+  }else{hideSellAllBanner();}
+  updSel();
+}
+function selectAllAcrossPages(){
+  allRecs.forEach(r=>{const uid=String(r[uidField]||'');if(uid)selUids.add(uid);});
+  _selectAllMode=true;
+  $('sel-all-msg').textContent='All '+allRecs.length+' records selected across all pages.';
+  const banner=$('sel-all-banner');
+  if(banner){const btns=banner.querySelectorAll('button');if(btns[0])btns[0].style.display='none';}
+  document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=true);
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.className='row-sel');
+  const sa=$('selall');if(sa) sa.checked=true;
+  updSel();
+}
+function clearAllSelection(){
+  selUids=new Set();_selectAllMode=false;
+  document.querySelectorAll('#tbody input[type=checkbox]').forEach(cb=>cb.checked=false);
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.className='');
+  const sa=$('selall');if(sa) sa.checked=false;
+  hideSellAllBanner();updSel();
+}
+function hideSellAllBanner(){
+  const b=$('sel-all-banner');
+  if(b){b.style.display='none';const btns=b.querySelectorAll('button');if(btns[0])btns[0].style.display='';}
+}
 function updSel(){
   const n=selUids.size;
   $('s-sel').textContent=n;
-  // Update migrate button with selection count
+  const exportCsv=$('export-csv-btn'),exportJson=$('export-json-btn');
+  if(exportCsv) exportCsv.textContent=n>0?`📊 Export CSV (${n})`:'📊 Export CSV';
+  if(exportJson) exportJson.textContent=n>0?`📄 Export JSON (${n})`:'📄 Export JSON';
   const migBtn=$('mig-btn');
   if(migBtn&&migBtn.style.display!=='none') migBtn.textContent='🚀 Migrate Selected'+(n>0?' ('+n+')':'');
-  // Update delete warning
   const cfg=modCfg();
-  if(n>0&&cfg){
-    const warn=$('del-warn');
-    if(warn) warn.textContent='⚠ '+n+' '+cfg.label+' record(s) selected. '+($('dryrun').checked?'Dry Run ON — nothing will be deleted.':'⚠ LIVE MODE — records will be permanently deleted!');
-  }
+  if(n>0&&cfg){const warn=$('del-warn');if(warn) warn.textContent='⚠ '+n+' '+cfg.label+' record(s) selected. '+($('dryrun').checked?'Dry Run ON — nothing will be deleted.':'⚠ LIVE MODE — records will be permanently deleted!');}
 }
-function doSearch(){
-  const q=($('search').value||'').toLowerCase().trim();
-  if(!q){filtRecs=[...allRecs];}
-  else{
-    const cfg=modCfg();
-    const fields=cfg?cfg.cols.map(c=>c.f):[];
-    filtRecs=allRecs.filter(r=>{
-      // Check visible columns first (fast path)
-      for(const f of fields){
-        const v=getF(r,f);
-        if(v&&String(v).toLowerCase().includes(q)) return true;
-      }
-      // Also check UID
-      return uidField&&String(r[uidField]||'').toLowerCase().includes(q);
-    });
-  }
-  currentPage=1;
-  renderRows();
-  $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
-  renderPagination();
-}
-function onModuleChange(){
-  const cfg=modCfg();
-  $('s-module').textContent=cfg?cfg.label:modKey();
-  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;currentPage=1;
-  // Clear search box so stale queries don't carry over
-  const searchEl=$('search');if(searchEl) searchEl.value='';
-  $('thead').innerHTML='';
-  $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Module changed — click Fetch Records.</td></tr>';
-  $('s-total').textContent='—';$('s-sel').textContent='0';
-  $('rec-count').textContent='No records loaded';
-  hideMsg('fetch-msg');
-  // Show/hide workflow URL field
-  const wfRow=$('workflow-url-row');
-  if(wfRow) wfRow.style.display=(modKey()==='workflow')?'block':'none';
-  // Hide dedup panel on module change
-  hideDedupPanel();
-  // Hide migrate panel on module change
-  hideMigratePanel();
-  // Show/hide delete button based on module capability
-  const delBtn=$('del-sel-btn');
-  if(delBtn) delBtn.style.display=(cfg&&cfg.noDelete)?'none':'inline-flex';
-  // Show/hide dry run label
-  const dryLabel=$('dryrun-label');
-  if(dryLabel&&_baseUrl) dryLabel.style.display=(cfg&&cfg.noDelete)?'none':'flex';
-  // Hide action buttons until records are loaded
-  const dedupBtn=$('dedup-btn');if(dedupBtn) dedupBtn.style.display='none';
-  const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='none';
-  // Show Import button only for product module when connected
-  const isProduct=modKey()==='product';
-  const isConn=!!_baseUrl;
-  const ibtn=$('import-btn');
-  if(ibtn) ibtn.style.display=(isProduct&&isConn)?'inline-flex':'none';
-  if(!isProduct&&typeof hideImportCard==='function') hideImportCard();
-}
-
 function doExport(f){
   if(!allRecs.length){alert('No records to export.');return;}
-  const ts=Date.now(),mod=modKey();
-  if(f==='json'){dlFile(JSON.stringify(allRecs,null,2),mod+'-'+ts+'.json','application/json');}
-  else{const keys=[...new Set(allRecs.flatMap(r=>Object.keys(r)))];const q=v=>{if(v==null)return'';if(typeof v==='object')v=JSON.stringify(v);const s=String(v).replace(/"/g,'""');return/[",\n\r]/.test(s)?'"'+s+'"':s;};dlFile([keys.join(','),...allRecs.map(r=>keys.map(k=>q(r[k])).join(','))].join('\n'),mod+'-'+ts+'.csv','text/csv');}
+  const records=selUids.size>0?allRecs.filter(r=>selUids.has(String(r[uidField]||''))):allRecs;
+  const ts=Date.now(),mod=modKey(),suffix=selUids.size>0?'-selected':'';
+  if(f==='json'){dlFile(JSON.stringify(records,null,2),mod+suffix+'-'+ts+'.json','application/json');}
+  else{const keys=[...new Set(records.flatMap(r=>Object.keys(r)))];const q=v=>{if(v==null)return'';if(typeof v==='object')v=JSON.stringify(v);const s=String(v).replace(/"/g,'""');return/[",\n\r]/.test(s)?'"'+s+'"':s;};dlFile([keys.join(','),...records.map(r=>keys.map(k=>q(r[k])).join(','))].join('\n'),mod+suffix+'-'+ts+'.csv','text/csv');}
 }
 function dlFile(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
 
@@ -1078,14 +1357,28 @@ async function runEngine(uids,dry){
   $('run-btn').disabled=true;$('proceed-btn').style.display='none';$('retry-btn').style.display='none';
   $('pause-btn').style.display='inline-flex';$('pause-btn').textContent='⏸ Pause';$('cancel-btn').style.display='inline-flex';
   running=true;paused=false;cancelled=false;
+  const cfg=modCfg(); // needed for canDelete guard and undo buffer
   const conc=parseInt($('concurrency').value)||3;
   let ok=0,fail=0,done=0,idx=0;const okUids=[],failUids_=[];
-  async function worker(){while(true){if(cancelled)return;await waitUnpause();const i=idx++;if(i>=uids.length)return;const uid=uids[i];const r=await hitOne(uid,dry);if(r.ok){ok++;okUids.push(uid);$('rs-ok').textContent=ok;logLine(uid,'ok',r.msg);}else{fail++;failUids_.push(uid);$('rs-fail').textContent=fail;logLine(uid,'err',r.msg);}done++;$('prog-bar').style.width=(done/uids.length*100).toFixed(1)+'%';$('prog-lbl').textContent=done+' / '+uids.length+' processed';}}
+  async function worker(){while(true){if(cancelled)return;await waitUnpause();const i=idx++;if(i>=uids.length)return;const uid=uids[i];
+      // Check canDelete guard before hitting API
+      let r;
+      const rec=allRecs.find(r=>String(r[uidField]||'')===uid);
+      if(rec&&typeof cfg.canDelete==='function'){
+        const reason=cfg.canDelete(rec);
+        if(reason){r={ok:false,msg:'Skipped — '+reason};}
+      }
+      if(!r) r=await hitOne(uid,dry);
+      if(r.ok){ok++;okUids.push(uid);$('rs-ok').textContent=ok;logLine(uid,'ok',r.msg);}else{fail++;failUids_.push(uid);$('rs-fail').textContent=fail;logLine(uid,'err',r.msg);}done++;$('prog-bar').style.width=(done/uids.length*100).toFixed(1)+'%';$('prog-lbl').textContent=done+' / '+uids.length+' processed';}}
   await Promise.all(Array.from({length:Math.min(conc,uids.length)},worker));
   running=false;$('run-btn').disabled=false;$('pause-btn').style.display='none';$('cancel-btn').style.display='none';$('log-actions').style.display='block';
   $('prog-lbl').textContent=cancelled?'⚠ Cancelled at '+done+'/'+uids.length+' — '+ok+' OK, '+fail+' failed':'✓ Complete — '+ok+' OK, '+fail+' failed';
   if(dry&&okUids.length&&!cancelled){dryCtx={uids:okUids};$('proceed-btn').textContent='→ DELETE '+okUids.length+' found record(s) — REAL DELETE';$('proceed-btn').style.display='inline-flex';}
-  if(!dry){const deleted=new Set(okUids);allRecs=allRecs.filter(r=>!deleted.has(String(r[uidField]||'')));filtRecs=[...allRecs];deleted.forEach(u=>selUids.delete(u));$('s-total').textContent=allRecs.length;updSel();renderTable();}
+  if(!dry){const deleted=new Set(okUids);const deletedRecs=allRecs.filter(r=>deleted.has(String(r[uidField]||'')));allRecs=allRecs.filter(r=>!deleted.has(String(r[uidField]||'')));filtRecs=[...allRecs];deleted.forEach(u=>selUids.delete(u));$('s-total').textContent=allRecs.length;updSel();renderTable();
+    // 8. Start undo buffer
+    if(ok>0&&!cancelled) startUndoBuffer(deletedRecs,cfg||{});
+    if(ok>0&&!cancelled){const d=document.createElement('div');d.style='margin-top:10px';d.innerHTML='<button class="btn btn-o" onclick="doFetch();hideDelete()">🔄 Re-fetch Records</button>';$('log').appendChild(d);}
+  }
   if(failUids_.length&&!cancelled){failUids=[...failUids_];$('retry-btn').textContent='↩ Retry '+failUids.length+' failed';$('retry-btn').style.display='inline-flex';}
   slackAudit({mode:dry?'dry-run':'delete',total:uids.length,ok,fail,cancelled});
 }
@@ -1649,6 +1942,9 @@ async function runImport(){
     $('ip-bar').style.width=pct+'%';
     $('ip-pct').textContent=pct+'%';
     $('ip-lbl').textContent=done+' / '+rows.length+' processed';
+    // 3. Rate limit delay
+    const delay=parseInt($('ip-rate-limit')?.value||'0');
+    if(delay>0&&done<rows.length) await new Promise(r=>setTimeout(r,delay));
   }
 
   impRunning=false;
@@ -1660,6 +1956,8 @@ async function runImport(){
     $('ip-retry-btn').style.display='inline-flex';
   }
   $('ip-lbl').textContent=(impCancelled?'⚠ Cancelled — ':'✓ Complete — ')+ok+' created, '+fail+' failed';
+  // 7. Save to import history
+  if(!impCancelled) addImportHistoryEntry({module:'Parts & Services',account:$('company').value||'—',total:rows.length,ok,failed:fail});
   // Refresh the fetched records table if on product module
   if(modKey()==='product') doFetch();
 }
@@ -1702,6 +2000,60 @@ function showImpMsg(step,text,type){
   el.className='msg msg-'+type; el.textContent=text; el.style.display='block';
 }
 
+
+// ── JOB STATUS PAYLOAD BUILDER ────────────────────────────────────────────────
+function buildJobStatusPayload(rec){
+  return {
+    status_name:rec.status_name||'',status_type:rec.status_type||'OTHER',
+    status_color:rec.status_color||'#34495e',status_description:rec.status_description||null,
+    require_customer_signature:!!rec.require_customer_signature,require_preview:!!rec.require_preview,
+    require_customer_feedback:!!rec.require_customer_feedback,
+    require_facial_authentication:!!rec.require_facial_authentication,
+    require_geo_fencing:!!rec.require_geo_fencing,geo_fencing_radius:rec.geo_fencing_radius||null,
+    enabled_for_field_executive:rec.enabled_for_field_executive!==false,
+    enabled_for_manager:rec.enabled_for_manager!==false,
+    allow_remarks:!!rec.allow_remarks,remarks_type:rec.remarks_type||'FREE_TEXT',
+    remarks_values:Array.isArray(rec.remarks_values)?rec.remarks_values:[],
+    capture_geo_cords:!!rec.capture_geo_cords,restrict_to_access_role:!!rec.restrict_to_access_role,
+    enabled_to_access_role:[],auto_generate_job_template:!!rec.auto_generate_job_template,
+    track_time_in_status:!!rec.track_time_in_status,estimated_duration:rec.estimated_duration||null,
+    checklist_view_type:rec.checklist_view_type||'',prefill_checklist:!!rec.prefill_checklist,
+    // parent_status omitted — UIDs are account-specific
+  };
+}
+
+// ── CUSTOMER PAYLOAD BUILDER ──────────────────────────────────────────────────
+function cleanAddress(addr){
+  if(!addr||typeof addr!=='object') return null;
+  const out={};
+  ['street','city','state','country','zip','zipcode','postal_code','latitude','longitude','formatted_address','geo_cords'].forEach(k=>{if(addr[k]!=null) out[k]=addr[k];});
+  return Object.keys(out).length?out:null;
+}
+function buildCustomerPayload(rec){
+  const payload={
+    first_name:rec.first_name||rec.customer_first_name||'',
+    last_name:rec.last_name||rec.customer_last_name||'',
+    email:rec.email||rec.customer_email||'',
+    phone:safeStr(rec.phone||rec.customer_phone||rec.contact_phone||''),
+    mobile:safeStr(rec.mobile||rec.customer_mobile||''),
+    customer_type:rec.customer_type||'RESIDENTIAL',
+    notes:rec.notes||rec.customer_notes||'',
+  };
+  const billing=cleanAddress(rec.billing_address||rec.customer_billing_address);
+  if(billing) payload.billing_address=billing;
+  const shipping=cleanAddress(rec.shipping_address||rec.customer_shipping_address);
+  if(shipping) payload.shipping_address=shipping;
+  if(Array.isArray(rec.contact_persons)&&rec.contact_persons.length){
+    payload.contact_persons=rec.contact_persons.map(cp=>{
+      const r={...cp};delete r.contact_uid;delete r.uid;delete r._id;return r;
+    });
+  }
+  if(Array.isArray(rec.custom_field_values)&&rec.custom_field_values.length){
+    payload.custom_field_values=rec.custom_field_values.map(f=>({field_uid:f.field_uid||f.uid||'',value:f.value??''})).filter(f=>f.field_uid);
+  }
+  ['company_name','website','tags','source','customer_id'].forEach(k=>{if(rec[k]!=null&&rec[k]!=='') payload[k]=rec[k];});
+  return payload;
+}
 
 // ── CUSTOMER NOTIFICATION MAPPING ────────────────────────────────────────────
 
@@ -2144,6 +2496,13 @@ function showMigratePanel(){
 
   $('mig-card').style.display='block';
   $('mig-card').scrollIntoView({behavior:'smooth',block:'start'});
+  // 5. Show last migration summary if available
+  const sumBanner=$('mig-last-run');
+  if(sumBanner&&_lastMigrationSummary){
+    const s=_lastMigrationSummary;
+    sumBanner.style.display='block';
+    sumBanner.innerHTML='<span style="font-size:.75rem;color:var(--text-sub)">Last run: <strong>'+esc(s.module)+'</strong> → <strong>'+esc(s.account)+'</strong> on '+esc(s.date)+' — '+(s.dry?'Dry run: ':'')+'<span style="color:var(--green-d)">✓ '+s.ok+' migrated</span>'+(s.failed?' <span style="color:var(--red-d)">✗ '+s.failed+' failed</span>':'')+'</span>';
+  } else if(sumBanner){ sumBanner.style.display='none'; }
 }
 
 function hideMigratePanel(){
@@ -2279,6 +2638,8 @@ async function migrateOneRecord(rec,migCfg,dry){
     payload=cleanRecord(rec,migCfg.ownUidField);
     if(typeof migCfg.transformPayload==='function') payload=migCfg.transformPayload(payload);
   }
+  // Apply relationship mapping if loaded
+  if(Object.keys(_relMap).length) payload=applyRelMap(typeof payload==='object'&&payload.product?{...payload,product:applyRelMap(payload.product)}:payload);
   if(dry){
     // Validate required fields in dry run
     const missing=[];
@@ -2385,6 +2746,9 @@ async function runMigEngine(records,dry){
   $('mig-prog-lbl').textContent=migCancelled
     ?'⚠ Cancelled — '+ok+' OK, '+fail+' failed out of '+done
     :'✓ Complete — '+ok+' '+(dry?'would migrate':'migrated')+', '+fail+' failed out of '+records.length;
+  // 5. Persist migration summary
+  _lastMigrationSummary={module:modCfg()?.label||modKey(),account:$('mig-company').value||'—',date:new Date().toLocaleString(),total:records.length,ok,failed:fail,dry};
+  if(!dry) addImportHistoryEntry({module:modCfg()?.label||modKey(),account:$('mig-company').value||'—',total:records.length,ok,failed:fail});
   if(dry&&ok>0&&!migCancelled){
     migDryCtx={records};
     $('mig-proceed-btn').textContent='→ Proceed: Create '+ok+' record(s) in destination — REAL';
@@ -2581,7 +2945,453 @@ function goPage(n){
   $('table-card').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 5: RECORD DETAIL DRAWER
+// ════════════════════════════════════════════════════════════════════════
+function openDrawer(rec){
+  const cfg=modCfg();
+  const title=cfg?cfg.label:'Record';
+  const uid=uidField?String(rec[uidField]||''):'';
+  $('drawer-title').textContent=title+' Detail';
+  $('drawer-subtitle').textContent='UID: '+uid;
+  $('drawer-body').innerHTML=syntaxHighlightJson(rec);
+  $('record-drawer').classList.add('open');
+  $('drawer-overlay').classList.add('show');
+  document.addEventListener('keydown',drawerEscHandler);
+}
+function closeDrawer(){
+  $('record-drawer').classList.remove('open');
+  $('drawer-overlay').classList.remove('show');
+  document.removeEventListener('keydown',drawerEscHandler);
+}
+function drawerEscHandler(e){if(e.key==='Escape')closeDrawer();}
+function copyDrawerJson(){
+  const rec=allRecs.find(r=>String(r[uidField]||'')===$('drawer-subtitle').textContent.replace('UID: ',''));
+  if(rec) navigator.clipboard.writeText(JSON.stringify(rec,null,2)).then(()=>{const b=$('drawer-body').previousElementSibling?.querySelector('.btn');if(b){const t=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=t,1500);}});
+}
+function syntaxHighlightJson(obj){
+  const s=JSON.stringify(obj,null,2);
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
+      let cls='drawer-num';
+      if(/^"/.test(m)){if(/:$/.test(m)){cls='drawer-key';m=m.replace(/:$/,'<span style="color:var(--text)">:</span>');}else cls='drawer-str';}
+      else if(/true|false/.test(m)) cls='drawer-bool';
+      else if(/null/.test(m)) cls='drawer-null';
+      return`<span class="${cls}">${m}</span>`;
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 6: SAVED CONNECTIONS
+// ════════════════════════════════════════════════════════════════════════
+function renderSavedConns(){
+  const list=$('saved-conns-list');
+  const panel=$('saved-conns-panel');
+  if(!_savedConns.length){if(panel) panel.style.display='none';return;}
+  if(panel) panel.style.display='block';
+  list.innerHTML=_savedConns.map((c,i)=>`
+    <button class="saved-conn-btn" onclick="loadSavedConn(${i})" title="${esc(c.company)} — click to load">
+      ${c.label?'<span>'+esc(c.label)+'</span> <span style="color:var(--text-sub);font-weight:400">('+esc(c.company)+')</span>':esc(c.company)}
+      <span class="saved-conn-del" onclick="event.stopPropagation();deleteSavedConn(${i})" title="Remove">×</span>
+    </button>`).join('');
+}
+function loadSavedConn(i){
+  const c=_savedConns[i];if(!c) return;
+  $('company').value=c.company;
+  $('apikey').value=atob(c.key||'');
+  if(c.workflowUrl) $('workflow-url').value=c.workflowUrl;
+}
+function saveCurrentConnection(){
+  const company=($('company').value||'').trim();
+  const key=apiKey();
+  if(!company||!key){alert('Connect first before saving.');return;}
+  const label=prompt('Give this connection a label (e.g. "Prod" or "Client A"):',company);
+  if(label===null) return; // cancelled
+  // Don't duplicate
+  const exists=_savedConns.findIndex(c=>c.company===company);
+  const entry={company,key:btoa(key),label:label||company,workflowUrl:($('workflow-url').value||'').trim()};
+  if(exists>=0) _savedConns[exists]=entry; else _savedConns.push(entry);
+  if(_savedConns.length>5) _savedConns.shift();
+  try{localStorage.setItem('zdm_conns',JSON.stringify(_savedConns));}catch{}
+  renderSavedConns();
+}
+function deleteSavedConn(i){
+  _savedConns.splice(i,1);
+  try{localStorage.setItem('zdm_conns',JSON.stringify(_savedConns));}catch{}
+  renderSavedConns();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 7: IMPORT HISTORY
+// ════════════════════════════════════════════════════════════════════════
+function addImportHistoryEntry(entry){
+  _importHistory.unshift({...entry,date:new Date().toLocaleString()});
+  if(_importHistory.length>20) _importHistory.pop();
+  try{localStorage.setItem('zdm_import_hist',JSON.stringify(_importHistory));}catch{}
+  renderImportHistory();
+}
+function renderImportHistory(){
+  const card=$('import-history-card');
+  const body=$('import-history-body');
+  if(!_importHistory.length){if(card) card.style.display='none';return;}
+  if(card) card.style.display='block';
+  const thS='padding:7px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-sub);border-bottom:2px solid var(--border);text-align:left;background:var(--th-bg)';
+  const tdS='padding:7px 12px;font-size:.8rem;border-bottom:0.5px solid var(--border)';
+  body.innerHTML=`<table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="${thS}">Date</th><th style="${thS}">Module</th><th style="${thS}">Account</th>
+      <th style="${thS}">Total</th><th style="${thS}">Created</th><th style="${thS}">Failed</th>
+    </tr></thead><tbody>`+
+    _importHistory.map(h=>`<tr>
+      <td style="${tdS}">${esc(h.date)}</td>
+      <td style="${tdS}">${esc(h.module||'Products')}</td>
+      <td style="${tdS}">${esc(h.account||'—')}</td>
+      <td style="${tdS}">${h.total||0}</td>
+      <td style="${tdS}" style="color:var(--green-d)">${h.ok||0}</td>
+      <td style="${tdS}" style="color:var(--red-d)">${h.failed||0}</td>
+    </tr>`).join('')+
+    '</tbody></table>';
+}
+function clearImportHistory(){
+  if(!confirm('Clear all import history?')) return;
+  _importHistory=[];
+  try{localStorage.removeItem('zdm_import_hist');}catch{}
+  renderImportHistory();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 8: UNDO BUFFER FOR DELETES
+// ════════════════════════════════════════════════════════════════════════
+const UNDO_MODULES=new Set(['customers','assets','product','customer_notification','job_status']);
+function startUndoBuffer(deletedRecs,moduleCfg){
+  if(!UNDO_MODULES.has(modKey())) return;
+  _undoBuffer=[...deletedRecs];
+  _undoModule=modKey();
+  _undoCountdown=60;
+  const banner=$('undo-banner');if(!banner) return;
+  banner.classList.add('show');
+  $('undo-msg').textContent=`Deleted ${_undoBuffer.length} ${moduleCfg.label||'record(s)'}. Undo within 60s.`;
+  const bar=$('undo-progress');if(bar){bar.style.width='100%';bar.style.transition='none';requestAnimationFrame(()=>{bar.style.transition='width 60s linear';bar.style.width='0%';});}
+  if(_undoTimer) clearInterval(_undoTimer);
+  _undoTimer=setInterval(()=>{
+    _undoCountdown--;
+    $('undo-msg').textContent=`Deleted ${_undoBuffer.length} record(s). Undo within ${_undoCountdown}s.`;
+    if(_undoCountdown<=0) clearUndoBuffer();
+  },1000);
+}
+function clearUndoBuffer(){
+  _undoBuffer=[];_undoModule=null;
+  if(_undoTimer){clearInterval(_undoTimer);_undoTimer=null;}
+  const banner=$('undo-banner');if(banner) banner.classList.remove('show');
+}
+async function doUndelete(){
+  if(!_undoBuffer.length) return;
+  const cfg=MODULES[_undoModule||modKey()];
+  if(!cfg) return;
+  const btn=$('undo-banner').querySelector('.btn-p');
+  if(btn){btn.disabled=true;btn.textContent='↩ Restoring…';}
+  let ok=0;
+  for(const rec of _undoBuffer){
+    try{
+      const payload=typeof MIGRATE_MODULES[_undoModule]?.buildPayload==='function'
+        ?MIGRATE_MODULES[_undoModule].buildPayload(rec)
+        :cleanRecord(rec,cfg.uid[0]);
+      const ep=MIGRATE_MODULES[_undoModule]?.createEndpoint||_undoModule||'';
+      const res=await fetch(baseUrl()+ep,{method:'POST',headers:hdrs(),body:JSON.stringify(payload)});
+      if(res.ok) ok++;
+    }catch{}
+  }
+  clearUndoBuffer();
+  showMsg('fetch-msg','↩ Restored '+ok+' of '+_undoBuffer.length+' record(s). Re-fetching…','ok');
+  await doFetch();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 4: RELATIONSHIP MAPPING
+// ════════════════════════════════════════════════════════════════════════
+function loadRelMap(input){
+  const file=input.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _relMap={};
+    const lines=(e.target.result||'').split('\n');
+    let count=0;
+    lines.forEach(line=>{
+      const parts=line.trim().split(',');
+      if(parts.length>=2){
+        const src=(parts[0]||'').trim().replace(/^"|"$/g,'');
+        const dst=(parts[1]||'').trim().replace(/^"|"$/g,'');
+        if(src&&dst&&src!=='source_uid'){_relMap[src]=dst;count++;}
+      }
+    });
+    const st=$('rel-map-status');const cl=$('rel-map-clear');
+    if(st){st.style.display='block';st.textContent='✓ '+count+' mappings loaded from '+file.name;}
+    if(cl) cl.style.display='inline-flex';
+  };
+  reader.readAsText(file);
+}
+function clearRelMap(){
+  _relMap={};
+  const st=$('rel-map-status');const cl=$('rel-map-clear');
+  if(st) st.style.display='none';
+  if(cl) cl.style.display='none';
+  const fi=$('rel-map-file');if(fi) fi.value='';
+}
+// Apply relationship mapping to any object — replaces matching UIDs
+function applyRelMap(obj){
+  if(!Object.keys(_relMap).length) return obj;
+  const result={};
+  for(const[k,v] of Object.entries(obj)){
+    if(typeof v==='string'&&_relMap[v]) result[k]=_relMap[v];
+    else if(Array.isArray(v)) result[k]=v.map(i=>typeof i==='string'&&_relMap[i]?_relMap[i]:i);
+    else result[k]=v;
+  }
+  return result;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 2: CROSS-ACCOUNT COMPARISON
+// ════════════════════════════════════════════════════════════════════════
+function showCompareCard(){
+  const card=$('compare-card');if(!card) return;
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function toggleCmpPw(){const i=$('cmp-apikey');i.type=i.type==='password'?'text':'password';}
+async function runCompare(){
+  if(!allRecs.length){alert('Fetch records from source account first.');return;}
+  const company=($('cmp-company').value||'').trim();
+  const key=($('cmp-apikey').value||'').trim();
+  if(!company||!key){showMsg('cmp-msg','✗ Enter second account credentials.','err');return;}
+  showMsg('cmp-msg','🔍 Connecting to second account…','info');
+  $('cmp-results').style.display='none';
+  $('cmp-export-btn').style.display='none';
+  try{
+    // Resolve second account URL
+    const cfgRes=await fetch('https://accounts.zuperpro.com/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company_name:company})});
+    if(!cfgRes.ok) throw new Error('Company "'+company+'" not found.');
+    const cfgData=await cfgRes.json();
+    const dcUrl=cfgData?.config?.dc_api_url;
+    if(!dcUrl) throw new Error('Could not resolve DC URL for "'+company+'".');
+    const destBase=dcUrl.replace(/\/$/,'')+'/api/';
+    const destHdrsObj={'x-api-key':key};
+    // Fetch same module from destination
+    const cfg=modCfg();
+    const endpoint=cfg.endpoint||modKey();
+    const extraParams=cfg.fetchParams?'&'+cfg.fetchParams:'';
+    let destRecs=[];
+    let page=1;
+    showMsg('cmp-msg','📥 Fetching records from second account…','info');
+    while(page<=50){
+      let url;
+      if(cfg.noPageLimit) url=destBase+endpoint+'?'+(cfg.fetchParams||'');
+      else url=destBase+endpoint+'?page='+page+'&count=150'+extraParams;
+      const res=await fetch(url,{method:'GET',headers:destHdrsObj});
+      if(!res.ok) break;
+      const data=await res.json();
+      let recs=extractRecords(data,endpoint);
+      if(cfg.transform) recs=cfg.transform(recs);
+      if(!recs.length) break;
+      destRecs.push(...recs);
+      if(cfg.noPageLimit||recs.length<150) break;
+      page++;
+    }
+    renderCompareResults(allRecs,destRecs,cfg);
+    showMsg('cmp-msg','✓ Comparison complete.','ok');
+  }catch(e){showMsg('cmp-msg','✗ '+e.message,'err');}
+}
+function renderCompareResults(srcRecs,destRecs,cfg){
+  if(!uidField) return;
+  // Name field for matching (first col or UID)
+  const nameField=cfg&&cfg.cols[0]?cfg.cols[0].f:null;
+  const getName=r=>nameField?String(getF(r,nameField)||'').toLowerCase():String(r[uidField]||'').toLowerCase();
+  const srcMap=new Map(srcRecs.map(r=>[getName(r),r]));
+  const destMap=new Map(destRecs.map(r=>[getName(r),r]));
+  const onlySrc=[...srcMap.keys()].filter(k=>!destMap.has(k));
+  const onlyDest=[...destMap.keys()].filter(k=>!srcMap.has(k));
+  const inBoth=[...srcMap.keys()].filter(k=>destMap.has(k));
+  $('cmp-src-count').textContent=srcRecs.length;
+  $('cmp-dest-count').textContent=destRecs.length;
+  $('cmp-only-src').textContent=onlySrc.length;
+  $('cmp-only-dest').textContent=onlyDest.length;
+  $('cmp-both').textContent=inBoth.length;
+  const thS='padding:7px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-sub);border-bottom:2px solid var(--border);text-align:left;background:var(--th-bg)';
+  const tdS='padding:7px 12px;font-size:.8rem;border-bottom:0.5px solid var(--border)';
+  $('cmp-thead').innerHTML=`<tr><th style="${thS}">Status</th><th style="${thS}">${nameField||'UID'}</th><th style="${thS}">Source UID</th><th style="${thS}">Dest UID</th></tr>`;
+  const rows=[
+    ...onlySrc.map(k=>({status:'Only in Source',color:'var(--red)',rec:srcMap.get(k),destRec:null,key:k})),
+    ...onlyDest.map(k=>({status:'Only in Dest',color:'var(--amber)',rec:null,destRec:destMap.get(k),key:k})),
+    ...inBoth.map(k=>({status:'In Both',color:'var(--green)',rec:srcMap.get(k),destRec:destMap.get(k),key:k})),
+  ];
+  // Store for CSV export
+  window._cmpRows=rows;window._cmpNameField=nameField;
+  $('cmp-tbody').innerHTML=rows.map(r=>`<tr>
+    <td style="${tdS}"><span style="color:${r.color};font-weight:600">${r.status}</span></td>
+    <td style="${tdS}">${esc(r.key)}</td>
+    <td style="${tdS}" style="font-family:monospace;font-size:.72rem">${esc(String(r.rec?r.rec[uidField]||'':''))}</td>
+    <td style="${tdS}" style="font-family:monospace;font-size:.72rem">${esc(String(r.destRec?r.destRec[uidField]||'':''))}</td>
+  </tr>`).join('');
+  $('cmp-results').style.display='block';
+  $('cmp-export-btn').style.display='inline-flex';
+}
+function exportCompareCsv(){
+  const rows=window._cmpRows||[];
+  if(!rows.length) return;
+  const csv='status,name,source_uid,dest_uid\n'+rows.map(r=>[r.status,r.key,r.rec?r.rec[uidField]||'':'',r.destRec?r.destRec[uidField]||'':''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  dlFile(csv,'compare-'+modKey()+'-'+Date.now()+'.csv','text/csv');
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FEATURE 9: GLOBAL SEARCH
+// ════════════════════════════════════════════════════════════════════════
+const SEARCHABLE_MODULES=['customers','assets','product','jobs','invoice','estimate','user','team','customer_notification','job_status','job_category','asset_form','service_task'];
+let _gsRunning=false;
+
+function openGlobalSearch(){
+  if(!_baseUrl){alert('Connect to an account first.');return;}
+  const overlay=$('global-search-overlay');if(overlay) overlay.classList.add('show');
+  setTimeout(()=>{const inp=$('gs-input');if(inp) inp.focus();},50);
+}
+function closeGlobalSearch(){
+  const overlay=$('global-search-overlay');if(overlay) overlay.classList.remove('show');
+  $('gs-results').innerHTML='';
+  const st=$('gs-status');if(st) st.style.display='none';
+}
+function handleGsKey(e){
+  if(e.key==='Escape') closeGlobalSearch();
+  else if(e.key==='Enter') runGlobalSearch();
+}
+async function runGlobalSearch(){
+  const q=($('gs-input').value||'').trim().toLowerCase();
+  if(!q||q.length<2){$('gs-results').innerHTML='<div style="padding:20px;text-align:center;color:var(--text-sub)">Type at least 2 characters</div>';return;}
+  if(_gsRunning) return;
+  _gsRunning=true;
+  const st=$('gs-status');
+  if(st){st.style.display='block';st.textContent='🔍 Searching across '+SEARCHABLE_MODULES.length+' modules…';}
+  $('gs-results').innerHTML='<div style="padding:20px;text-align:center;color:var(--text-sub)">Searching…</div>';
+  const allResults=[];
+  await Promise.allSettled(SEARCHABLE_MODULES.map(async mod=>{
+    const cfg=MODULES[mod];if(!cfg) return;
+    const endpoint=cfg.endpoint||mod;
+    const extraParams=cfg.fetchParams?'&'+cfg.fetchParams:'';
+    try{
+      let url;
+      if(cfg.noPageLimit) url=baseUrl()+endpoint+'?'+(cfg.fetchParams||'');
+      else url=baseUrl()+endpoint+'?page=1&count=50'+extraParams;
+      const res=await fetch(url,{method:'GET',headers:getHdrs()});
+      if(!res.ok) return;
+      const data=await res.json();
+      let recs=extractRecords(data,endpoint);
+      if(cfg.transform) recs=cfg.transform(recs);
+      const uidF=cfg.uid[0];
+      const matchingRecs=recs.filter(r=>{
+        return cfg.cols.some(c=>{
+          const v=getF(r,c.f);
+          return v&&String(v).toLowerCase().includes(q);
+        })||String(r[uidF]||'').toLowerCase().includes(q);
+      });
+      if(matchingRecs.length) allResults.push({mod,cfg,recs:matchingRecs,uidF});
+    }catch{}
+  }));
+  _gsRunning=false;
+  if(!allResults.length){
+    $('gs-results').innerHTML='<div style="padding:30px;text-align:center;color:var(--text-sub)">No results found for "'+esc(q)+'"</div>';
+    if(st) st.textContent='No results found.';
+    return;
+  }
+  if(st) st.textContent='Found results in '+allResults.length+' module(s)';
+  const html=allResults.map(({mod,cfg,recs,uidF})=>`
+    <div class="gs-module-group">${esc(cfg.label)} (${recs.length})</div>
+    ${recs.slice(0,10).map(r=>{
+      const name=cfg.cols[0]?String(getF(r,cfg.cols[0].f)||''):'';
+      const uid=String(r[uidF]||'');
+      const extra=cfg.cols.slice(1,3).map(c=>String(getF(r,c.f)||'')).filter(Boolean).join(' · ');
+      return`<div class="gs-row" onclick="gotoResult('${esc(mod)}','${esc(uid)}')">
+        <div style="font-weight:600">${esc(name)||esc(uid)}</div>
+        ${extra?`<div style="color:var(--text-sub);font-size:.78rem">${esc(extra)}</div>`:''}
+        <div class="gs-uid">${esc(uid)}</div>
+      </div>`;
+    }).join('')}
+    ${recs.length>10?`<div style="padding:6px 20px;font-size:.75rem;color:var(--text-sub)">${recs.length-10} more…</div>`:''}`).join('');
+  $('gs-results').innerHTML=html;
+}
+async function gotoResult(mod,uid){
+  closeGlobalSearch();
+  // Switch module and fetch
+  const sel=$('module');if(sel){sel.value=mod;onModuleChange();}
+  await doFetch();
+  // Highlight the record
+  setTimeout(()=>{
+    const row=document.querySelector(`[data-uid="${uid}"]`);
+    if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.style.outline='3px solid var(--primary)';setTimeout(()=>row.style.outline='',2000);}
+  },500);
+}
+
+// ── CHECKLIST CATEGORY/STATUS LOADERS ────────────────────────────────────────
+let _checklistCats=[]; // cache loaded categories for the cascade
+
+async function loadChecklistCategories(){
+  const sel=$('cl-cat');if(!sel||!_baseUrl) return;
+  sel.innerHTML='<option value="">⏳ Loading…</option>';
+  try{
+    const res=await fetch(baseUrl()+'jobs/category?populate_statuses=true',{headers:getHdrs()});
+    if(!res.ok){sel.innerHTML='<option value="">— failed to load —</option>';return;}
+    const data=await res.json();
+    _checklistCats=extractRecords(data,'jobs/category');
+    sel.innerHTML='<option value="">— pick a category —</option>'+
+      _checklistCats.map(c=>`<option value="${esc(c.category_uid||'')}"> ${esc(c.category_name||'')}</option>`).join('');
+    $('cl-status').innerHTML='<option value="">— pick a category first —</option>';
+  }catch(e){sel.innerHTML='<option value="">— error: '+esc(e.message)+' —</option>';}
+}
+
+function onChecklistCatChange(){
+  const catUid=($('cl-cat').value||'').trim();
+  const stSel=$('cl-status');if(!stSel) return;
+  if(!catUid){stSel.innerHTML='<option value="">— pick a category first —</option>';return;}
+  const cat=_checklistCats.find(c=>c.category_uid===catUid);
+  const statuses=cat?(cat.job_statuses||[]):[];
+  stSel.innerHTML='<option value="">— pick a status —</option>'+
+    statuses.map(s=>`<option value="${esc(s.status_uid||'')}"> ${esc(s.status_name||'')}</option>`).join('');
+}
+
+function onModuleChange(){
+  const cfg=modCfg();
+  $('s-module').textContent=cfg?cfg.label:modKey();
+  allRecs=[];filtRecs=[];selUids=new Set();uidField=null;currentPage=1;
+  sortCol=null;sortDir=1;_selectAllMode=false;hideSellAllBanner();
+  // Clear search
+  const searchEl=$('search');if(searchEl) searchEl.value='';
+  $('thead').innerHTML='';
+  $('tbody').innerHTML='<tr><td colspan="10" style="padding:36px;text-align:center;color:#bbb">Module changed — click Fetch Records.</td></tr>';
+  $('s-total').textContent='—';$('s-sel').textContent='0';
+  $('rec-count').textContent='No records loaded';
+  hideMsg('fetch-msg');
+  // Show/hide module-specific param rows
+  const wfRow=$('workflow-url-row');if(wfRow) wfRow.style.display=(modKey()==='workflow')?'block':'none';
+  const clRow=$('checklist-params-row');
+  if(clRow){clRow.style.display=(modKey()==='checklist')?'block':'none';if(modKey()==='checklist'&&_baseUrl) loadChecklistCategories();}
+  const cfRow=$('custom-fields-params-row');if(cfRow) cfRow.style.display=(modKey()==='custom_fields')?'block':'none';
+  // Hide panels
+  hideDedupPanel();
+  hideMigratePanel();
+  // Show/hide delete button and dry-run toggle
+  const delBtn=$('del-sel-btn');if(delBtn) delBtn.style.display=(cfg&&cfg.noDelete)?'none':'inline-flex';
+  const dryLabel=$('dryrun-label');if(dryLabel&&_baseUrl) dryLabel.style.display=(cfg&&cfg.noDelete)?'none':'flex';
+  // Hide action buttons until records loaded
+  const dedupBtn=$('dedup-btn');if(dedupBtn) dedupBtn.style.display='none';
+  const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='none';
+  const cmpBtn=$('compare-btn');if(cmpBtn) cmpBtn.style.display='none';
+  clearUndoBuffer();
+  // Import button only for product module
+  const isProduct=modKey()==='product';const isConn=!!_baseUrl;
+  const ibtn=$('import-btn');if(ibtn) ibtn.style.display=(isProduct&&isConn)?'inline-flex':'none';
+  if(!isProduct&&typeof hideImportCard==='function') hideImportCard();
+}
+
 onModuleChange();
+// Initialise persisted features on page load
+renderSavedConns();
+renderImportHistory();
 </script>
 </body>
 </html>
