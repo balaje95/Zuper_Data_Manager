@@ -367,13 +367,9 @@ input[type=checkbox]{accent-color:var(--primary)}
   </div>
   <div class="grid3">
     <div>
-      <div class="field-lbl">Company Login Name</div>
-      <input class="inp" id="company" placeholder="e.g. bestroofs" onkeydown="if(event.key==='Enter')doConnect()">
-    </div>
-    <div>
       <div class="field-lbl">API Key</div>
       <div class="pw-wrap">
-        <input class="inp" id="apikey" type="password" placeholder="Paste your API key" onkeydown="if(event.key==='Enter')doConnect()">
+        <input class="inp" id="apikey" type="password" placeholder="Paste your Zuper API key" onkeydown="if(event.key==='Enter')doConnect()">
         <button class="pw-eye" onclick="togglePw()" title="Show/hide">👁</button>
       </div>
     </div>
@@ -400,6 +396,9 @@ input[type=checkbox]{accent-color:var(--primary)}
         <option value="checklist">Checklists</option>
         <option value="custom_fields">Custom Fields</option>
         <option value="formula">Formulas (CPQ)</option>
+        <option value="product_category">Product Categories</option>
+        <option value="email_template">Email / SMS Templates</option>
+        <option value="package">Service Packages</option>
       </select>
     </div>
   </div>
@@ -529,17 +528,11 @@ input[type=checkbox]{accent-color:var(--primary)}
 <div class="card" id="compare-card" style="display:none">
   <div class="sec-title">⚖️ Compare Accounts</div>
   <div style="font-size:.8rem;color:var(--text-sub);margin-bottom:14px">Fetch the same module from a second account and see what's missing or different.</div>
-  <div class="grid2" style="margin-bottom:12px;max-width:600px">
-    <div>
-      <div class="field-lbl">Second Account — Company Login</div>
-      <input class="inp" id="cmp-company" placeholder="company-login-name">
-    </div>
-    <div>
-      <div class="field-lbl">API Key</div>
-      <div class="pw-wrap">
-        <input class="inp" id="cmp-apikey" type="password" placeholder="Second account API key">
-        <button class="pw-eye" onclick="toggleCmpPw()">👁</button>
-      </div>
+  <div style="max-width:400px;margin-bottom:12px">
+    <div class="field-lbl">Second Account — API Key</div>
+    <div class="pw-wrap">
+      <input class="inp" id="cmp-apikey" type="password" placeholder="Second account API key">
+      <button class="pw-eye" onclick="toggleCmpPw()">👁</button>
     </div>
   </div>
   <div class="btn-row" style="margin-bottom:12px">
@@ -574,19 +567,15 @@ input[type=checkbox]{accent-color:var(--primary)}
   <div id="mig-unsupported" class="msg msg-warn" style="display:none;margin-bottom:14px"></div>
   <div id="mig-dest-section">
     <div style="font-size:.73rem;font-weight:800;color:var(--lbl);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Destination Account</div>
-    <div class="grid3" style="margin-bottom:12px">
-      <div>
-        <div class="field-lbl">Company Login Name</div>
-        <input class="inp" id="mig-company" placeholder="company-login-name">
-      </div>
-      <div>
+    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:200px">
         <div class="field-lbl">API Key</div>
         <div class="pw-wrap">
-          <input class="inp" id="mig-apikey" type="password" placeholder="Destination API key">
+          <input class="inp" id="mig-apikey" type="password" placeholder="Destination account API key">
           <button class="pw-eye" onclick="toggleMigPw()">👁</button>
         </div>
       </div>
-      <div style="display:flex;align-items:flex-end">
+      <div>
         <button class="btn btn-o" id="mig-connect-btn" onclick="connectDestination()">🔌 Connect Destination</button>
       </div>
     </div>
@@ -609,11 +598,11 @@ input[type=checkbox]{accent-color:var(--primary)}
           <button class="btn btn-o" id="rel-map-clear" onclick="clearRelMap()" style="display:none;font-size:.75rem;padding:4px 10px">✕ Clear</button>
         </div>
       </div>
-      <!-- Step 2: Field mapping (shown for modules that need it, e.g. customer_notification) -->
+      <!-- Step 2: Field mapping (shown for modules that need it) -->
       <div id="mig-mapping-section" style="display:none;margin-bottom:18px">
-        <div style="font-size:.73rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid var(--sec-border);padding-bottom:6px;margin-bottom:12px">Step 2 — Map Job Categories &amp; Statuses</div>
-        <div style="font-size:.78rem;color:var(--text-sub);margin-bottom:12px">The source account's Job Category and Status UIDs won't match the destination. Map each one below — only values used in your selected notifications are shown.</div>
-        <div id="mig-mapping-loading" class="msg msg-info" style="display:none;margin-bottom:10px">🔄 Fetching categories and statuses from both accounts…</div>
+        <div id="mig-mapping-title" style="font-size:.73rem;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid var(--sec-border);padding-bottom:6px;margin-bottom:12px">Step 2 — Mapping</div>
+        <div id="mig-mapping-desc" style="font-size:.78rem;color:var(--text-sub);margin-bottom:12px"></div>
+        <div id="mig-mapping-loading" class="msg msg-info" style="display:none;margin-bottom:10px">🔄 Fetching data from both accounts…</div>
         <div id="mig-mapping-body"></div>
       </div>
       <!-- Step 3: Run controls -->
@@ -850,7 +839,7 @@ const MODULES={
   workflow:{label:'Workflows',uid:['workflow_uid','uid','_id'],del:null,noDelete:true,endpoint:'workflows',customBaseUrl:'_workflowBaseUrl',paginationParam:'limit',fetchParams:'sort=ASC&sort_by=created_at',cols:[{h:'Name',f:'workflow_name'},{h:'Trigger Module',f:'trigger_module'},{h:'Trigger Event',f:'trigger_event_name'},{h:'Access',f:'workflow_access'},{h:'Active',f:'allow_workflow_to_trigger'},{h:'Created',f:'created_at'}]},
   customer_notification:{label:'Customer Notifications',uid:['customer_notification_uid','notification_uid','uid','_id'],del:'customer_notification',dryRunSkipGet:true,cols:[{h:'Name',f:'notification_name'},{h:'Type',f:'notification_type'},{h:'Job Category',f:'job_category'},{h:'Job Status',f:'job_status_uid'},{h:'SMS/Email Body',f:'sms_body'}]},
   // Job Statuses: fetched from /jobs/category endpoint, statuses nested inside — transform flattens them
-  job_status:{label:'Job Statuses',uid:['status_uid','_id'],del:'job_status',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,transform:(recs)=>recs.flatMap(cat=>(cat.job_statuses||[]).map(s=>({...s,_category:cat.category_name,_category_uid:cat.category_uid}))),cols:[{h:'Name',f:'status_name'},{h:'Type',f:'status_type'},{h:'Color',f:'status_color'},{h:'Category',f:'_category'},{h:'Track Time',f:'track_time_in_status'}]},
+  job_status:{label:'Job Statuses',uid:['status_uid','_id'],del:'job_status',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,transform:(recs)=>recs.flatMap(cat=>(cat.job_statuses||[]).map(s=>({...s,_category:cat.category_name,_category_uid:cat.category_uid,_category_color:cat.category_color||'#6366F1'}))),cols:[{h:'Name',f:'status_name'},{h:'Type',f:'status_type'},{h:'Color',f:'status_color'},{h:'Category',f:'_category'},{h:'Track Time',f:'track_time_in_status'}]},
   // Job Categories: same endpoint, categories are the top-level records
   job_category:{label:'Job Categories',uid:['category_uid','uid','_id'],del:'job_category',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,cols:[{h:'Name',f:'category_name'},{h:'Color',f:'category_color'},{h:'Statuses',f:'_status_count'},{h:'Display Order',f:'display_order'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(c=>({...c,_status_count:(c.job_statuses||[]).length}))},
   // Asset Inspection Forms
@@ -861,8 +850,12 @@ const MODULES={
   checklist:{label:'Checklists',uid:['checklist_uid','_id'],del:null,noDelete:true,endpoint:'settings/checklist',customParams:true,cols:[{h:'Field Name',f:'field_name'},{h:'Type',f:'field_type'},{h:'Required',f:'is_required'},{h:'Display Order',f:'display_order'},{h:'Internal Key',f:'internal_key'}]},
   // Custom Fields: special module — needs module_name param
   custom_fields:{label:'Custom Fields',uid:['custom_field_uid','_id'],del:null,noDelete:true,endpoint:'settings/custom_fields',customParams:true,cols:[{h:'Field Name',f:'field_name'},{h:'Type',f:'field_type'},{h:'Required',f:'is_required'},{h:'Options',f:'_option_count'},{h:'Display Order',f:'display_order'}],transform:(recs)=>recs.map(r=>({...r,_option_count:(r.field_options||[]).length}))},
+  // Email / SMS Templates
+  email_template:{label:'Email / SMS Templates',uid:['template_uid','uid','_id'],del:'misc/email_template',endpoint:'misc/email_template',fetchParams:'sort=DESC&sort_by=created_at&filter.keyword=',cols:[{h:'Name',f:'template_name'},{h:'Type',f:'type'},{h:'Module',f:'template_module'},{h:'Subject',f:'_subject'},{h:'Description',f:'template_description'}],transform:(recs)=>recs.map(r=>({...r,_subject:r.template_subject||r.template?.template_subject||'—'}))},
   // Formulas (CPQ)
-  formula:{label:'Formulas (CPQ)',uid:['formula_uid','uid','_id'],del:'invoice_estimate/cpq/formulas',dryRunSkipGet:true,endpoint:'invoice_estimate/cpq/formulas',canDelete:(rec)=>rec.is_custom?null:'System formula — cannot be deleted',cols:[{h:'Name',f:'formula_name'},{h:'Key',f:'formula_key'},{h:'Category',f:'_category_name'},{h:'Expression',f:'_expression'},{h:'Active',f:'is_active'},{h:'Custom',f:'is_custom'}],transform:(recs)=>recs.map(r=>({...r,_category_name:(r.formula_category?.category_name||'—'),_expression:(r.formula?.formatted_expression||'')}))}
+  formula:{label:'Formulas (CPQ)',uid:['formula_uid','uid','_id'],del:'invoice_estimate/cpq/formulas',dryRunSkipGet:true,endpoint:'invoice_estimate/cpq/formulas',canDelete:(rec)=>rec.is_custom?null:'System formula — cannot be deleted',cols:[{h:'Name',f:'formula_name'},{h:'Key',f:'formula_key'},{h:'Category',f:'_category_name'},{h:'Expression',f:'_expression'},{h:'Active',f:'is_active'},{h:'Custom',f:'is_custom'}],transform:(recs)=>recs.map(r=>({...r,_category_name:(r.formula_category?.category_name||'—'),_expression:(r.formula?.formatted_expression||'')}))},
+  product_category:{label:'Product Categories',uid:['category_uid','product_category_uid','uid'],del:'products/category',endpoint:'products/category',fetchParams:'count=100&filter.keyword=',cols:[{h:'Name',f:'category_name'},{h:'Description',f:'category_description'},{h:'Business Units',f:'_bu_names'},{h:'Order',f:'display_order'}],transform:(recs)=>recs.map(r=>({...r,_bu_names:(r.business_unit||[]).map(b=>b.bu_name).join(', ')||'—'}))},
+  package:{label:'Service Packages',uid:['package_uid','uid','_id'],del:'invoice_estimate/package',endpoint:'invoice_estimate/package',noPageLimit:true,fetchParams:'count=1000',cols:[{h:'Name',f:'package_name'},{h:'Price',f:'package_price'},{h:'Active',f:'is_active'},{h:'Items',f:'_item_count'},{h:'Description',f:'package_description'}],transform:(recs)=>recs.map(r=>({...r,_item_count:(r.line_items||[]).length}))}
 };
 let allRecs=[],filtRecs=[],selUids=new Set(),uidField=null,running=false,paused=false,cancelled=false,dryCtx=null,failUids=[],logRows=[];
 let currentPage=1;
@@ -878,6 +871,9 @@ let _cmpDestUrl='',_cmpDestKey=''; // compare accounts
 let _baseUrl=''; // set after config lookup
 let _workflowBaseUrl=''; // set from workflow-url input
 let _destBaseUrl='', _destWorkflowBaseUrl=''; // destination account
+let _destJobCategories=[];    // [{category_uid, category_name, category_color}] from destination
+let _statusCatMapping={};     // source_category_uid → dest_category_uid (populated before migration)
+let _formulaUidMap={};        // source_formula_uid → dest_formula_uid
 let migRunning=false,migPaused=false,migCancelled=false,migDryCtx=null,migFailedItems=[],migLogRows=[];
 let destCategories=[];
 // Notification mapping state
@@ -890,22 +886,28 @@ const apiKey=()=>$('apikey').value.trim();
 const modKey=()=>$('module').value;
 const modCfg=()=>MODULES[modKey()];
 const baseUrl=()=>_baseUrl;
-const hdrs=()=>({'x-api-key':apiKey(),'Content-Type':'application/json'});
-const getHdrs=()=>({'x-api-key':apiKey()});
+const ZUPER_CLIENT_HDRS={'x-zuper-client':'WEB_APP','x-zuper-client-version':'3.0'};
+const hdrs=()=>({...ZUPER_CLIENT_HDRS,'x-api-key':apiKey(),'Content-Type':'application/json'});
+const getHdrs=()=>({...ZUPER_CLIENT_HDRS,'x-api-key':apiKey()});
 const destApiKey=()=>($('mig-apikey').value||'').trim();
-const destHdrs=()=>({'x-api-key':destApiKey(),'Content-Type':'application/json'});
-const destGetHdrs=()=>({'x-api-key':destApiKey()});
+const destHdrs=()=>({...ZUPER_CLIENT_HDRS,'x-api-key':destApiKey(),'Content-Type':'application/json'});
+const destGetHdrs=()=>({...ZUPER_CLIENT_HDRS,'x-api-key':destApiKey()});
 
 // Migration module config: which modules can be migrated and how
 const MIGRATE_MODULES={
   customers:  {supported:true, createEndpoint:'customers', ownUidField:'customer_uid', buildPayload:(rec)=>buildCustomerPayload(rec)},
   assets:     {supported:true, createEndpoint:'assets',    ownUidField:'asset_uid'},
-  job_status: {supported:true, createEndpoint:'job_status', ownUidField:'status_uid', buildPayload:(rec)=>buildJobStatusPayload(rec)},
+  job_status: {supported:true, createEndpoint:(rec)=>'jobs/status_new/'+(_statusCatMapping[rec._category_uid]||''), ownUidField:'status_uid', buildPayload:(rec)=>buildJobStatusPayload(rec,_statusCatMapping[rec._category_uid]||'')},
+  workflow:   {supported:true, native:true},
+  email_template:{supported:true, ownUidField:'template_uid', fetchFullRecord:(rec)=>`misc/email_template/${rec.template_uid}`, buildPayload:(rec)=>buildTemplatePayload(rec), putAfterCreate:(newUid,rec)=>({endpoint:'misc/email_template/'+newUid,payload:buildTemplateFullPayload(rec,newUid)})},
+  formula:    {supported:true, ownUidField:'formula_uid', migrateNative:(rec,dry)=>migrateFormulaRecord(rec,dry)},
+  product_category:{supported:true, createEndpoint:'products/category', ownUidField:'category_uid', buildPayload:(rec)=>({product_category_name:rec.category_name||rec.product_category_name||''})},
+  package:    {supported:true, ownUidField:'package_uid', migrateNative:(rec,dry)=>migratePackageFull(rec,dry)},
   product:    {
     supported:true, createEndpoint:'product', ownUidField:'product_uid',
     buildPayload:(rec)=>buildMigrationProductPayload(rec)
   },
-  workflow:   {supported:true, native:true},
+  job_category:{supported:true, ownUidField:'category_uid', migrateNative:(rec,dry)=>migrateJobCategoryFull(rec,dry)},
   customer_notification:{supported:true, createEndpoint:'customer_notification', ownUidField:'customer_notification_uid', needsMapping:true, buildPayload:(rec)=>buildNotificationPayload(rec)},
   jobs:       {supported:false, reason:'Jobs have relational dependencies (customers, assigned technicians, locations) that cannot be automatically mapped across accounts.'},
   invoice:    {supported:false, reason:'Invoices depend on related Jobs and customer records that may not exist in the destination account.'},
@@ -939,7 +941,7 @@ function showConnected(accountName, region){
   if(delBtn) delBtn.style.display=noDelete?'none':'inline-flex';
   const dryLabel=$('dryrun-label');
   if(dryLabel) dryLabel.style.display=noDelete?'none':'flex';
-  $('company').disabled=true;
+  
   $('apikey').disabled=true;
   $('module-field').style.display='block';
   $('stats-section').style.display='grid';
@@ -975,7 +977,7 @@ function doDisconnect(){
   const _saveBtnD=$('save-conn-btn');if(_saveBtnD) _saveBtnD.style.display='none';
   clearUndoBuffer();
   // Reset form fields
-  $('company').disabled=false; $('company').value='';
+  
   $('apikey').disabled=false; $('apikey').value='';
   $('module-field').style.display='none';
   $('workflow-url-row').style.display='none';
@@ -995,61 +997,17 @@ function doDisconnect(){
 }
 
 async function doConnect(){
-  const company=($('company').value||'').trim();
-  if(!company){showMsg('conn-msg','✗ Please enter your company login name.','err');return;}
   if(!apiKey()){showMsg('conn-msg','✗ Please enter your API key.','err');return;}
   const btn=$('connect-btn');btn.textContent='⏳ Connecting…';btn.disabled=true;hideMsg('conn-msg');
   try{
-    // Step 1 — resolve company → region/base URL
-    showMsg('conn-msg','🔍 Looking up region for "'+company+'"…','info');
-    const cfgRes=await fetch('https://accounts.zuperpro.com/api/config',{
-      method:'POST',
-      headers:{'Content-Type':'application/json;charset=UTF-8'},
-      body:JSON.stringify({company_name:company})
-    });
-    if(!cfgRes.ok){showMsg('conn-msg','✗ Could not find company "'+company+'". Check the login name and try again.','err');return;}
-    const cfgData=await cfgRes.json();
-    const dcUrl=cfgData?.config?.dc_api_url;
-    const dcName=cfgData?.config?.dc_name||'unknown';
-    if(!dcUrl){showMsg('conn-msg','✗ Config response missing dc_api_url.','err');return;}
-    _baseUrl=dcUrl.replace(/\/$/,'')+'/api/';
-
-    // Derive workflow service URL from DC URL and pre-fill if empty
-    try{
-      const wfInput=$('workflow-url');
-      if(wfInput&&!wfInput.value.trim()){
-        const derived=deriveWorkflowUrl(dcUrl);
-        if(derived) wfInput.value=derived;
-        console.log('[ZDM] Auto-derived workflow URL:', derived);
-      }
-    }catch(e){console.warn('[ZDM] Could not derive workflow URL:',e);}
-
-    // Step 2 — verify API key against that region (try multiple endpoints)
-    showMsg('conn-msg','🔌 Verifying API key on '+dcName+'…','info');
-    // GET requests should not send Content-Type — some regions reject it
-    const getHdrs={'x-api-key':apiKey()};
-    const verifyEndpoints=['user/company','company','users/me','user/me'];
-    let authRes=null, authOk=false, authBody='';
-    for(const ep of verifyEndpoints){
-      try{
-        authRes=await fetch(_baseUrl+ep,{method:'GET',headers:getHdrs});
-        authBody=await authRes.clone().text().catch(()=>'');
-        if(authRes.ok||(authRes.status!==401&&authRes.status!==403)){authOk=authRes.ok;break;}
-      }catch{}
-    }
-    if(authOk){
-      const data=await authRes.json().catch(()=>({}));
-      const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||company;
-      showMsg('conn-msg','✓ Connected to "'+name+'" on '+dcName,'ok');
-      showConnected(name, dcName);
-    }else{
-      const status=authRes?authRes.status:'—';
-      _baseUrl='';
-      let hint='';
-      if(status===401) hint=' — Check that your API key is correct and has not expired. You can regenerate it in Zuper → Settings → API Keys.';
-      else if(status===403) hint=' — API key found but access denied. Check key permissions in Zuper settings.';
-      showMsg('conn-msg','✗ '+status+' Unauthorized'+hint+(authBody?' ('+authBody.slice(0,100)+')':''),'err');
-    }
+    showMsg('conn-msg','🔍 Looking up your account…','info');
+    const {dcUrl,baseUrl:base,accountName}=await resolveByApiKey(apiKey());
+    _baseUrl=base;
+    // Derive and pre-fill workflow URL
+    try{const wfInput=$('workflow-url');if(wfInput&&!wfInput.value.trim()){const d=deriveWorkflowUrl(dcUrl);if(d)wfInput.value=d;}}catch{}
+    const region=dcUrl.replace('https://','').replace('.zuperpro.com','');
+    showMsg('conn-msg','✓ Connected to "'+accountName+'" on '+region,'ok');
+    showConnected(accountName,region);
   }catch(e){_baseUrl='';showMsg('conn-msg','✗ '+e.message,'err');}
   finally{btn.textContent='🔌 Connect';btn.disabled=false;}
 }
@@ -1125,6 +1083,8 @@ async function doFetch(){
       if(!res.ok){const b=await res.text().catch(()=>'');throw new Error(res.status+' — '+b.slice(0,300)+'\n\nURL: '+url);}
       const data=await res.json();
       const recs=extractRecords(data,endpoint);
+      console.log('[ZDM] no-page result: '+recs.length+' records. Top-level keys: '+Object.keys(data).join(', '));
+      if(!recs.length) console.log('[ZDM] Raw response sample:', JSON.stringify(data).slice(0,400));
       allRecs.push(...recs);
     }
     // Standard paginated fetch
@@ -1177,6 +1137,42 @@ async function doFetch(){
 
 // Derive the workflow service URL from a DC API URL
 // e.g. https://us-east-1c.zuperpro.com → https://us-east-1-workflow.zuperpro.com/api/
+// ── DC RESOLUTION: probe known DCs in parallel using API key only ────────────
+const ZUPER_DCS=[
+  'us-east-1','us-east-1a','us-east-1b','us-east-1c',
+  'us-west-1','us-west-2',
+  'eu-west-1','eu-west-2','eu-central-1',
+  'ap-south-1','ap-south-2','ap-southeast-1','ap-southeast-2',
+  'ca-central-1','sa-east-1'
+].map(r=>`https://${r}.zuperpro.com`);
+
+async function resolveByApiKey(key){
+  let resolved=null;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),12000);
+  const eps=['user/company','company','users/me','user/me'];
+  try{
+    await Promise.any(ZUPER_DCS.map(dc=>
+      (async()=>{
+        for(const ep of eps){
+          if(controller.signal.aborted) throw new Error('aborted');
+          const res=await fetch(dc+'/api/'+ep,{headers:{...ZUPER_CLIENT_HDRS,'x-api-key':key},signal:controller.signal}).catch(()=>null);
+          if(res&&res.ok){
+            const data=await res.json().catch(()=>({}));
+            const name=data?.company_name||data?.data?.company_name||data?.name||data?.data?.name||data?.company?.company_name||'';
+            if(!resolved) resolved={dcUrl:dc,baseUrl:dc+'/api/',accountName:name};
+            controller.abort();
+            return resolved;
+          }
+        }
+        throw new Error('no match');
+      })()
+    )).catch(()=>{});
+  }finally{clearTimeout(timer);}
+  if(!resolved) throw new Error('API key not recognised on any known Zuper server. Please check the key and try again.');
+  return resolved;
+}
+
 function deriveWorkflowUrl(dcUrl){
   const m=dcUrl.match(/https?:\/\/([\w-]+)\.zuperpro\.com/);
   if(!m) return '';
@@ -1248,6 +1244,25 @@ function renderHeaders(){
   const chkCol=noDelete?'':'<th style="width:36px"><input type="checkbox" id="selall" onchange="selAll(this.checked)"></th>';
   $('thead').innerHTML='<tr>'+chkCol+'<th>UID</th>'+cfg.cols.map(c=>'<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="toggleSort(\''+c.f+'\')">'+c.h+(sortCol===c.f?(sortDir===1?' ▲':' ▼'):'')+'</th>').join('')+'</tr>';
   const sa=$('selall');if(sa) sa.checked=filtRecs.length>0&&filtRecs.every(r=>selUids.has(String(r[uidField]||'')));
+}
+function doSearch(){
+  const q=($('search').value||'').toLowerCase().trim();
+  if(!q){filtRecs=[...allRecs];}
+  else{
+    const cfg=modCfg();
+    const fields=(cfg?cfg.cols.map(c=>c.f):[]).flat();
+    filtRecs=allRecs.filter(r=>{
+      for(const f of fields){
+        const v=getF(r,f);
+        if(v&&String(v).toLowerCase().includes(q)) return true;
+      }
+      return uidField&&String(r[uidField]||'').toLowerCase().includes(q);
+    });
+  }
+  currentPage=1;
+  renderRows();
+  $('rec-count').textContent=filtRecs.length+' of '+allRecs.length+' records';
+  renderPagination();
 }
 function toggleSort(field){
   if(sortCol===field) sortDir=-sortDir; else{sortCol=field;sortDir=1;}
@@ -1957,7 +1972,7 @@ async function runImport(){
   }
   $('ip-lbl').textContent=(impCancelled?'⚠ Cancelled — ':'✓ Complete — ')+ok+' created, '+fail+' failed';
   // 7. Save to import history
-  if(!impCancelled) addImportHistoryEntry({module:'Parts & Services',account:$('company').value||'—',total:rows.length,ok,failed:fail});
+  if(!impCancelled) addImportHistoryEntry({module:'Parts & Services',account:$('s-account').textContent||'—',total:rows.length,ok,failed:fail});
   // Refresh the fetched records table if on product module
   if(modKey()==='product') doFetch();
 }
@@ -2001,24 +2016,316 @@ function showImpMsg(step,text,type){
 }
 
 
-// ── JOB STATUS PAYLOAD BUILDER ────────────────────────────────────────────────
-function buildJobStatusPayload(rec){
+// ── FORMULA MIGRATION HELPERS ─────────────────────────────────────────────────
+
+// Fetch all formulas from destination (returns array)
+async function fetchDestFormulas(){
+  try{
+    const r=await fetch(_destBaseUrl+'invoice_estimate/cpq/formulas?count=500&page=1',{headers:destGetHdrs()});
+    if(!r.ok) return [];
+    const d=await r.json().catch(()=>({}));
+    return extractRecords(d,'formula')||[];
+  }catch{return [];}
+}
+
+// Ensure a list of source formulas exist in destination.
+// Populates _formulaUidMap[src_uid] = dest_uid for each.
+async function ensureFormulasExist(srcFormulas){
+  if(!srcFormulas||!srcFormulas.length) return;
+  const destFormulas=await fetchDestFormulas();
+  const destByKey={};
+  const destByName={};
+  for(const f of destFormulas){
+    if(f.formula_key)  destByKey[f.formula_key]  =f;
+    if(f.formula_name) destByName[(f.formula_name||'').toLowerCase().trim()]=f;
+  }
+  let created=0,matched=0;
+  for(const sf of srcFormulas){
+    const srcUid=sf.formula_uid||'';
+    if(!srcUid||_formulaUidMap[srcUid]) continue;
+    // Match by key (most reliable), then by name
+    const destF=destByKey[sf.formula_key]||destByName[(sf.formula_name||'').toLowerCase().trim()];
+    if(destF){
+      _formulaUidMap[srcUid]=destF.formula_uid||'';
+      matched++;
+      continue;
+    }
+    // Only custom formulas can be created (system formulas should exist by key)
+    if(!sf.is_custom){
+      console.warn('[ZDM] System formula not found in dest by key:',sf.formula_key,'—',sf.formula_name);
+      continue;
+    }
+    // Create custom formula in destination
+    const payload={
+      formula_name:        sf.formula_name||'',
+      formula_key:         sf.formula_key||'',
+      formula_description: sf.formula_description||'',
+      formula:             sf.formula||{},
+    };
+    try{
+      const r=await fetch(_destBaseUrl+'invoice_estimate/cpq/formulas',{method:'POST',headers:destHdrs(),body:JSON.stringify(payload)});
+      if(r.ok){
+        const d=await r.json().catch(()=>({}));
+        const newUid=d?.data?.formula_uid||d?.formula_uid||'';
+        if(newUid){_formulaUidMap[srcUid]=newUid;created++;destByKey[sf.formula_key]={formula_uid:newUid};}
+      }else{console.warn('[ZDM] formula create HTTP',r.status,'—',sf.formula_name);}
+    }catch(e){console.warn('[ZDM] formula create error:',e.message);}
+  }
+  console.log('[ZDM] Formulas: matched='+matched+' created='+created+' total_map='+Object.keys(_formulaUidMap).length);
+}
+
+// Migrate a single formula record (used by MIGRATE_MODULES.formula)
+async function migrateFormulaRecord(rec,dry){
+  const uid=rec.formula_uid||'';
+  if(dry){
+    const warn=rec.is_custom?'custom formula':'system formula — will be matched by key in destination';
+    return{ok:true,status:'dry-run',uid,warn};
+  }
+  await ensureFormulasExist([rec]);
+  const destUid=_formulaUidMap[uid]||'';
+  if(!destUid) return{ok:false,status:'err',uid,error:rec.is_custom?'Failed to create formula in destination':'System formula "'+rec.formula_key+'" not found in destination'};
+  return{ok:true,status:201,uid,warn:(rec.is_custom?'created':'matched')+' → dest uid: '+destUid.slice(0,8)+'…'};
+}
+
+// Collect formula UIDs from a product record (checks all known field names)
+function getProductFormulaUid(rec){
+  return rec.formula_uid||rec.cpq_formula_uid||rec.pricing_formula_uid||
+    (rec.formula&&typeof rec.formula==='string'?rec.formula:'')||'';
+}
+
+// ── SERVICE PACKAGE FULL MIGRATION (pre-creates products in Parts & Services) ─
+async function migratePackageFull(pkg,dry){
+  const pkgUid=pkg.package_uid||'';
+  const items=pkg.line_items||[];
+  const productItems=items.filter(i=>i.product_uid);
+
+  if(dry){
+    const names=items.map(i=>i.product_name||'?').join(', ');
+    const formulaCount=items.filter(i=>i.formula_uid||i.cpq_formula_uid).length;
+    return{ok:true,status:'dry-run',uid:pkgUid,
+      warn:items.length+' line item(s)'+(formulaCount?' ('+formulaCount+' with formulas)':'')+
+           (names?' — '+names.slice(0,100):'')};
+  }
+
+  // ── Step 0: Collect and ensure all referenced formulas exist in destination ──
+  const lineItemFormulas=[];
+  for(const item of items){
+    const fUid=item.formula_uid||item.cpq_formula_uid||'';
+    if(fUid&&!_formulaUidMap[fUid]){
+      // Fetch formula from source
+      try{
+        const r=await fetch(_baseUrl+'invoice_estimate/cpq/formulas/'+fUid,{headers:getHdrs()});
+        if(r.ok){const d=await r.json().catch(()=>({}));const f=d?.data||d;if(f?.formula_uid) lineItemFormulas.push(f);}
+      }catch{}
+    }
+  }
+  if(lineItemFormulas.length) await ensureFormulasExist(lineItemFormulas);
+
+  // ── Step 1: load destination products + categories (with timeout guard) ──────
+  const destProdsByName={};
+  const _fetchT=(url,opts,ms=8000)=>{
+    const ctl=new AbortController();
+    const t=setTimeout(()=>ctl.abort(),ms);
+    return fetch(url,{...opts,signal:ctl.signal}).finally(()=>clearTimeout(t));
+  };
+  try{
+    // Only load first 2 pages — enough for name-matching; avoids hanging on large accounts
+    for(let pg=1;pg<=2;pg++){
+      const r=await _fetchT(_destBaseUrl+'product?page='+pg+'&count=150',{headers:destGetHdrs()});
+      if(!r.ok) break;
+      const d=await r.json().catch(()=>({}));
+      const recs=extractRecords(d,'product')||[];
+      for(const p of recs) destProdsByName[(p.product_name||'').toLowerCase().trim()]=p;
+      if(recs.length<150) break;
+    }
+    console.log('[ZDM] Dest products loaded:',Object.keys(destProdsByName).length);
+  }catch(e){console.warn('[ZDM] dest products load:',e.message);}
+
+  const destCatsByName={};
+  // Seed from already-loaded destCategories (populated when connecting destination)
+  for(const c of destCategories) destCatsByName[(catObjName(c)||'').toLowerCase().trim()]=catObjUid(c);
+  // Also fetch fresh if empty
+  if(!Object.keys(destCatsByName).length){
+    try{
+      const r=await _fetchT(_destBaseUrl+'products/category?count=100&page=1&filter.keyword=',{headers:destGetHdrs()});
+      if(r.ok){
+        const d=await r.json().catch(()=>({}));
+        for(const c of (extractRecords(d,'product_category')||[])){
+          const n=(catObjName(c)||'').toLowerCase().trim();
+          if(n) destCatsByName[n]=catObjUid(c);
+        }
+      }
+    }catch{}
+  }
+
+  // ── Step 2: fetch & create missing products in destination ──────────────────
+  const productUidMap={}; // src_uid → dest_uid
+  let prodCreated=0,prodMatched=0,prodFailed=0;
+
+  for(const item of productItems){
+    const nameKey=(item.product_name||'').toLowerCase().trim();
+    console.log('[ZDM] Processing line item:',item.product_name,'uid:',item.product_uid);
+    // Already exists by name in destination?
+    if(nameKey&&destProdsByName[nameKey]){
+      productUidMap[item.product_uid]=destProdsByName[nameKey].product_uid||'';
+      prodMatched++;
+      continue;
+    }
+    // Fetch full product from source — try /product/{uid} then /product?page=1&filter.keyword=name
+    let srcProduct=null;
+    try{
+      const r=await _fetchT(_baseUrl+'product/'+item.product_uid,{headers:getHdrs()});
+      if(r.ok){const d=await r.json().catch(()=>({}));srcProduct=d?.data||d;}
+    }catch(e){console.warn('[ZDM] src product fetch failed:',e.message);}
+    // Fallback: use line item data directly if fetch failed
+    if(!srcProduct||!srcProduct.product_name){
+      srcProduct={
+        product_name:item.product_name||'',
+        product_type:(item.product_type||'PARTS').toUpperCase(),
+        price:parseFloat(item.unit_price||item.price)||0,
+        product_description:item.description||'',
+        product_category:'',
+      };
+    }
+    if(!srcProduct.product_name){productUidMap[item.product_uid]='';prodFailed++;continue;}
+
+    // Resolve category — product_category may be an object or a string
+    const catRaw=srcProduct.product_category||item.product_category||'';
+    const catName=(typeof catRaw==='string'?catRaw:catRaw?.product_category_name||catRaw?.category_name||'').toLowerCase().trim();
+    const srcCatUid=typeof catRaw==='object'?(catRaw?.product_category_uid||catRaw?.category_uid||''):'';
+    let destCatUid=destCatsByName[catName]||'';
+    if(catName&&!destCatUid){
+      try{
+        const cr=await _fetchT(_destBaseUrl+'products/category',{method:'POST',headers:destHdrs(),
+          body:JSON.stringify({product_category_name:typeof catRaw==='string'?catRaw:catRaw?.product_category_name||catName})});
+        if(cr.ok){const cd=await cr.json().catch(()=>({}));destCatUid=cd?.data?.product_category_uid||cd?.product_category_uid||'';}
+      }catch{}
+    }
+
+    // Build clean product payload
+    const p=JSON.parse(JSON.stringify(srcProduct));
+    ['product_uid','created_at','updated_at','created_by','_id','__v','company_uid',
+     'product_ref_id','is_deleted','stock_alert'].forEach(k=>delete p[k]);
+    p.product_category=destCatUid||srcCatUid||'';
+    p.quantity=p.available_qty||0;
+    delete p.available_qty;
+
+    try{
+      const cr=await _fetchT(_destBaseUrl+'product',{method:'POST',headers:destHdrs(),
+        body:JSON.stringify({product:p,vendor:[]})});
+      if(cr.ok){
+        const cd=await cr.json().catch(()=>({}));
+        const newUid=cd?.data?.product_uid||cd?.product_uid||'';
+        productUidMap[item.product_uid]=newUid;
+        if(newUid){destProdsByName[nameKey]={product_uid:newUid};prodCreated++;}
+        else prodFailed++;
+      }else{
+        const e=await cr.text().catch(()=>'');
+        console.warn('[ZDM] product create failed HTTP',cr.status,e.slice(0,150));
+        productUidMap[item.product_uid]='';prodFailed++;
+      }
+    }catch(e){productUidMap[item.product_uid]='';prodFailed++;console.warn('[ZDM] product create:',e.message);}
+    await new Promise(r=>setTimeout(r,100));
+  }
+
+  // ── Step 3: Build + POST package with correct product UIDs ───────────────────
+  const payload=buildPackagePayload(pkg,productUidMap);
+  const pkgRes=await fetch(_destBaseUrl+'invoice_estimate/package',{method:'POST',headers:destHdrs(),body:JSON.stringify(payload)});
+  if(!pkgRes.ok){
+    const e=await pkgRes.text().catch(()=>'');
+    return{ok:false,status:pkgRes.status,error:'HTTP '+pkgRes.status+': '+e.slice(0,200),uid:pkgUid};
+  }
+  const pkgData=await pkgRes.json().catch(()=>({}));
+  const newPkgUid=pkgData?.data?.package_uid||pkgData?.package_uid||'';
+
+  // ── Step 4: Deactivate if needed ─────────────────────────────────────────────
+  if(pkg.is_active===false&&newPkgUid){
+    await fetch(_destBaseUrl+'invoice_estimate/package/'+newPkgUid+'/activate',{method:'PUT',headers:destHdrs(),
+      body:JSON.stringify({package_uid:newPkgUid,type:'DEACTIVATE'})}).catch(()=>{});
+  }
+
+  const parts=[];
+  if(prodCreated) parts.push(prodCreated+' product(s) created in Parts & Services');
+  if(prodMatched) parts.push(prodMatched+' matched by name');
+  if(prodFailed)  parts.push(prodFailed+' product(s) failed — line item left empty');
+  return{ok:true,status:201,uid:pkgUid,warn:parts.join(' | ')||'package created'};
+}
+function buildPackagePayload(rec, productUidMap){
+  const pkg=JSON.parse(JSON.stringify(rec));
+  delete pkg.package_uid; delete pkg.addons; delete pkg.created_by;
+  delete pkg.created_at;  delete pkg.updated_at; delete pkg.company_uid;
+  delete pkg.__v;         delete pkg._id;        delete pkg.is_deleted;
+  if(Array.isArray(pkg.line_items)&&pkg.line_items.length>0){
+    for(const item of pkg.line_items){
+      delete item.product_ref_id;
+      item.product_uid=(productUidMap&&productUidMap[item.product_uid])||_relMap[item.product_uid]||'';
+      item.location_uid='';
+      if(item.formula_uid)     item.formula_uid    =_formulaUidMap[item.formula_uid]    ||'';
+      if(item.cpq_formula_uid) item.cpq_formula_uid=_formulaUidMap[item.cpq_formula_uid]||'';
+    }
+  }else{
+    pkg.line_items=[];
+  }
+  return {invoice_estimate_package: pkg};
+}
+// Single POST creates the template shell, then PUT sets body/subject
+function resolveTemplateType(rec){
+  const t=(rec.type||'').toUpperCase().trim();
+  return t==='SMS'?'SMS':'EMAIL';
+}
+// Step 1 — POST: create template (basic fields)
+function buildTemplatePayload(rec){
+  const type=resolveTemplateType(rec);
+  const template={template_name:rec.template_name||'',type,template_module:rec.template_module||'',template_description:rec.template_description||''};
+  if(type==='EMAIL'){if(rec.template_subject) template.template_subject=rec.template_subject;if(rec.icon) template.icon=rec.icon;}
+  if(type==='SMS'&&rec.template_body) template.template_body=rec.template_body;
+  return {template};
+}
+// Step 2 — PUT: full payload with template_uid + body/subject (matches Zuper UI pattern)
+function buildTemplateFullPayload(rec,newUid){
+  const type=resolveTemplateType(rec);
+  const template={
+    template_uid:         newUid,
+    template_name:        rec.template_name||'',
+    type,
+    template_module:      rec.template_module||'',
+    template_description: rec.template_description||'',
+    template_body:        rec.template_body||'',
+  };
+  if(type==='EMAIL'){
+    if(rec.template_subject) template.template_subject=rec.template_subject;
+    if(rec.icon)             template.icon=rec.icon;
+  }
+  return {template};
+}
+
+
+function buildJobStatusPayload(rec, catUid){
+  // POST /api/jobs/status_new/{category_uid}
+  // Zuper requires category_uid in the body too, not just the URL
   return {
-    status_name:rec.status_name||'',status_type:rec.status_type||'OTHER',
-    status_color:rec.status_color||'#34495e',status_description:rec.status_description||null,
-    require_customer_signature:!!rec.require_customer_signature,require_preview:!!rec.require_preview,
-    require_customer_feedback:!!rec.require_customer_feedback,
-    require_facial_authentication:!!rec.require_facial_authentication,
-    require_geo_fencing:!!rec.require_geo_fencing,geo_fencing_radius:rec.geo_fencing_radius||null,
-    enabled_for_field_executive:rec.enabled_for_field_executive!==false,
-    enabled_for_manager:rec.enabled_for_manager!==false,
-    allow_remarks:!!rec.allow_remarks,remarks_type:rec.remarks_type||'FREE_TEXT',
-    remarks_values:Array.isArray(rec.remarks_values)?rec.remarks_values:[],
-    capture_geo_cords:!!rec.capture_geo_cords,restrict_to_access_role:!!rec.restrict_to_access_role,
-    enabled_to_access_role:[],auto_generate_job_template:!!rec.auto_generate_job_template,
-    track_time_in_status:!!rec.track_time_in_status,estimated_duration:rec.estimated_duration||null,
-    checklist_view_type:rec.checklist_view_type||'',prefill_checklist:!!rec.prefill_checklist,
-    // parent_status omitted — UIDs are account-specific
+    category_uid:                 catUid||rec._category_uid||'',
+    status_name:                  rec.status_name||'',
+    status_type:                  rec.status_type||'OTHER',
+    status_color:                 rec.status_color||'#34495e',
+    require_customer_signature:   rec.require_customer_signature===true,
+    require_preview:              rec.require_preview===true,
+    require_customer_feedback:    rec.require_customer_feedback===true,
+    require_facial_authentication:rec.require_facial_authentication===true,
+    require_geo_fencing:          rec.require_geo_fencing===true,
+    parent_status:                [],
+    enabled_for_field_executive:  rec.enabled_for_field_executive===true,
+    enabled_for_manager:          rec.enabled_for_manager!==false,
+    allow_remarks:                rec.allow_remarks===true,
+    capture_geo_cords:            rec.capture_geo_cords===true,
+    has_parent:                   false,
+    remarks_values:               Array.isArray(rec.remarks_values)?rec.remarks_values:[],
+    restrict_to_access_role:      rec.restrict_to_access_role===true,
+    auto_generate_job_template:   rec.auto_generate_job_template===true,
+    track_time_in_status:         rec.track_time_in_status===true,
+    enabled_to_access_role:       [],
+    checklist_view_type:          rec.checklist_view_type||'',
+    prefill_checklist:            rec.prefill_checklist===true,
   };
 }
 
@@ -2074,6 +2381,209 @@ async function fetchListSafe(url, hdrsObj){
     console.warn('[ZDM] fetchListSafe: unrecognised shape for',url,'keys:',Object.keys(d));
     return [];
   }catch(e){console.warn('[ZDM] fetchListSafe error',url,e);return [];}
+}
+
+// ── JOB STATUS CATEGORY MAPPING ───────────────────────────────────────────────
+
+// Fetch all job categories from destination account (raw list, not flattened)
+async function fetchDestJobCategories(){
+  _destJobCategories=[];
+  if(!_destBaseUrl) return;
+  try{
+    const res=await fetch(_destBaseUrl+'jobs/category?populate_statuses=true',{headers:destGetHdrs()});
+    if(!res.ok) return;
+    const data=await res.json();
+    const raw=Array.isArray(data?.data)?data.data:Array.isArray(data)?data:[];
+    _destJobCategories=raw.map(c=>({
+      category_uid:c.category_uid||'',
+      category_name:c.category_name||'',
+      category_color:c.category_color||'#6366F1',
+      category_description:c.category_description||'',
+      estimated_duration:c.estimated_duration||{hours:0,minutes:0,days:1},
+      job_timelog:c.job_timelog||{job_timer:true,travel_timer:true,meal_break_timer:true},
+    })).filter(c=>c.category_uid);
+  }catch(e){console.warn('[ZDM] fetchDestJobCategories:',e.message);}
+}
+
+// Get unique source categories from currently loaded statuses
+function getSourceCategoriesFromRecs(recs){
+  recs=recs||allRecs;
+  const seen=new Set(); const cats=[];
+  for(const r of recs){
+    if(r._category_uid&&!seen.has(r._category_uid)){
+      seen.add(r._category_uid);
+      cats.push({uid:r._category_uid,name:r._category||'(unnamed)',color:r._category_color||'#6366F1'});
+    }
+  }
+  return cats;
+}
+
+// Build POST payload for creating a job category in destination
+function buildJobCategoryPayload(cat){
+  return {category:{
+    category_name:        cat.name||cat.category_name||'',
+    category_color:       cat.color||cat.category_color||'#6366F1',
+    bu_uids:              null,
+    category_description: cat.category_description||'',
+    estimated_duration:   cat.estimated_duration||{hours:0,minutes:0,days:1},
+    job_timelog:          cat.job_timelog||{job_timer:true,travel_timer:true,meal_break_timer:true},
+    auto_create_status:   false,
+  }};
+}
+
+// Render the job status category mapping UI
+async function renderJobStatusMappingUI(){
+  const body=$('mig-mapping-body');
+  $('mig-mapping-title').textContent='Step 2 — Map Job Categories';
+  $('mig-mapping-desc').textContent='Source category UIDs differ from destination. Auto-matched by name — review and adjust if needed. Missing categories will be created automatically.';
+  $('mig-mapping-loading').style.display='block';
+  body.innerHTML='';
+  _statusCatMapping={};
+  await fetchDestJobCategories();
+  $('mig-mapping-loading').style.display='none';
+
+  const srcCats=getSourceCategoriesFromRecs();
+  if(!srcCats.length){body.innerHTML='<div class="msg msg-warn">No categories found in source records.</div>';return;}
+
+  // Auto-match by name (case-insensitive)
+  const destByName={};
+  for(const dc of _destJobCategories) destByName[(dc.category_name||'').toLowerCase().trim()]=dc;
+
+  // Build mapping table HTML
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:10px">
+    <button class="btn btn-o" style="font-size:.75rem" onclick="runJobStatusAutoMatch()">🔄 Re-run Auto-match</button>
+    <span style="font-size:.78rem;color:var(--text-sub)">${srcCats.length} source categor${srcCats.length===1?'y':'ies'} · ${_destJobCategories.length} in destination</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+    <thead><tr style="background:var(--th-bg)">
+      <th style="padding:8px 10px;text-align:left;border:1px solid var(--border);font-weight:700;width:35%">Source Category</th>
+      <th style="padding:8px 10px;text-align:left;border:1px solid var(--border);font-weight:700;width:15%">Statuses</th>
+      <th style="padding:8px 10px;text-align:left;border:1px solid var(--border);font-weight:700;width:50%">Destination Category</th>
+    </tr></thead><tbody>`;
+
+  for(const sc of srcCats){
+    const statusCount=allRecs.filter(r=>r._category_uid===sc.uid).length;
+    const autoMatch=destByName[(sc.name||'').toLowerCase().trim()];
+    if(autoMatch) _statusCatMapping[sc.uid]=autoMatch.category_uid;
+
+    const dot=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${sc.color};margin-right:6px;vertical-align:middle"></span>`;
+    const opts=_destJobCategories.map(dc=>
+      `<option value="${dc.category_uid}" ${autoMatch&&dc.category_uid===autoMatch.category_uid?'selected':''}>${dc.category_name}</option>`
+    ).join('');
+
+    html+=`<tr>
+      <td style="padding:8px 10px;border:1px solid var(--border)">${dot}<strong>${esc(sc.name)}</strong></td>
+      <td style="padding:8px 10px;border:1px solid var(--border);text-align:center">${statusCount}</td>
+      <td style="padding:8px 10px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <select data-src-uid="${sc.uid}" onchange="onJobCatMapChange(this)"
+            style="flex:1;padding:4px 8px;border:1.5px solid ${autoMatch?'var(--green)':'var(--border-inp)'};border-radius:6px;font-size:.8rem;background:var(--inp-bg);color:var(--text)">
+            <option value="" ${autoMatch?'':'selected'}>— pick or create new —</option>
+            ${opts}
+          </select>
+          ${autoMatch
+            ?`<span style="font-size:.75rem;color:var(--green);white-space:nowrap">✓ matched</span>`
+            :`<span style="font-size:.75rem;color:var(--amber-d);white-space:nowrap" id="jcm-badge-${sc.uid}">✦ will create</span>`}
+        </div>
+      </td>
+    </tr>`;
+  }
+  html+=`</tbody></table>
+  <div class="msg msg-info" style="margin-top:10px;font-size:.78rem">
+    Categories marked <strong>✦ will create</strong> don't exist in the destination yet — they'll be created automatically before migration starts.
+  </div>`;
+  body.innerHTML=html;
+}
+
+function onJobCatMapChange(sel){
+  const srcUid=sel.dataset.srcUid;
+  const badge=document.getElementById('jcm-badge-'+srcUid);
+  if(sel.value){
+    _statusCatMapping[srcUid]=sel.value;
+    sel.style.borderColor='var(--green)';
+    if(badge){badge.textContent='✓ mapped';badge.style.color='var(--green)';}
+  }else{
+    delete _statusCatMapping[srcUid]; // will create
+    sel.style.borderColor='var(--border-inp)';
+    if(badge){badge.textContent='✦ will create';badge.style.color='var(--amber-d)';}
+  }
+}
+
+function runJobStatusAutoMatch(){
+  const destByName={};
+  for(const dc of _destJobCategories) destByName[(dc.category_name||'').toLowerCase().trim()]=dc;
+  const srcCats=getSourceCategoriesFromRecs();
+  let matched=0;
+  for(const sc of srcCats){
+    const sel=document.querySelector(`select[data-src-uid="${sc.uid}"]`);
+    if(!sel) continue;
+    const m=destByName[(sc.name||'').toLowerCase().trim()];
+    if(m){
+      sel.value=m.category_uid;
+      _statusCatMapping[sc.uid]=m.category_uid;
+      sel.style.borderColor='var(--green)';
+      const badge=document.getElementById('jcm-badge-'+sc.uid);
+      if(badge){badge.textContent='✓ matched';badge.style.color='var(--green)';}
+      matched++;
+    }
+  }
+  showMsg('mig-conn-msg',`✓ Auto-matched ${matched} of ${srcCats.length} categories by name.`,'ok');
+}
+
+// Before migration: create any categories not yet in destination
+async function ensureDestJobCategoriesExist(toMigrate){
+  const srcCats=getSourceCategoriesFromRecs(toMigrate);
+  const toCreate=srcCats.filter(sc=>!_statusCatMapping[sc.uid]);
+  if(!toCreate.length) return {ok:true,created:0,failed:[]};
+  let created=0; const failed=[];
+  for(const sc of toCreate){
+    try{
+      const res=await fetch(_destBaseUrl+'jobs/category',{
+        method:'POST',headers:destHdrs(),
+        body:JSON.stringify(buildJobCategoryPayload(sc))
+      });
+      const rawBody=await res.text().catch(()=>'');
+      console.log('[ZDM] Create category "'+sc.name+'" → HTTP',res.status,'body:',rawBody.slice(0,200));
+      if(res.ok){
+        let data={};
+        try{data=JSON.parse(rawBody);}catch{}
+        // Try every known response path Zuper uses
+        const newUid=data?.data?.category_uid
+          ||data?.data?.data?.category_uid
+          ||data?.category_uid
+          ||data?.data?.uid
+          ||data?.uid
+          ||'';
+        if(newUid){
+          _statusCatMapping[sc.uid]=newUid;
+          created++;
+          // Small delay to let Zuper finish processing before we add statuses
+          await new Promise(r=>setTimeout(r,400));
+        }else{
+          console.warn('[ZDM] Category created but no UID found in response:',rawBody.slice(0,300));
+          // Try to find it by name from a fresh category list
+          const listRes=await fetch(_destBaseUrl+'jobs/category?populate_statuses=false',{headers:destGetHdrs()});
+          if(listRes.ok){
+            const listData=await listRes.json();
+            const cats=Array.isArray(listData?.data)?listData.data:[];
+            const match=cats.find(c=>(c.category_name||'').trim().toLowerCase()===(sc.name||'').trim().toLowerCase());
+            if(match?.category_uid){
+              _statusCatMapping[sc.uid]=match.category_uid;
+              created++;
+              console.log('[ZDM] Found new category by name lookup:',match.category_uid);
+            }else{
+              failed.push(sc.name+' (created OK but UID not found in response or list)');
+            }
+          }else{
+            failed.push(sc.name+' (created OK but UID missing from response)');
+          }
+        }
+      }else{
+        failed.push(sc.name+' (HTTP '+res.status+': '+rawBody.slice(0,120)+')');
+      }
+    }catch(e){failed.push(sc.name+' (network: '+e.message+')');}
+  }
+  return {ok:failed.length===0, created, failed};
 }
 
 async function fetchMappingData(){
@@ -2336,12 +2846,19 @@ async function fetchDestCategories(){
   destCategories=[];
   if(!_destBaseUrl||!destApiKey()) return;
   try{
-    const res=await fetch(_destBaseUrl+'products/category?count=500&page=1',{headers:destGetHdrs()});
-    if(!res.ok) return;
-    const data=await res.json().catch(()=>({}));
-    const cats=Array.isArray(data.data)?data.data:Array.isArray(data)?data:[];
-    destCategories=cats;
-    console.log('[ZDM] Dest product categories loaded:',cats.length);
+    let page=1;
+    while(page<=20){
+      // Use confirmed URL format: count + page + filter.keyword (empty = all)
+      const res=await fetch(_destBaseUrl+'products/category?count=100&page='+page+'&filter.keyword=',{headers:destGetHdrs()});
+      if(!res.ok) break;
+      const data=await res.json().catch(()=>({}));
+      const cats=extractRecords(data,'product_category');
+      if(!cats.length) break;
+      destCategories.push(...cats);
+      if(cats.length<100) break;
+      page++;
+    }
+    console.log('[ZDM] Dest product categories loaded:',destCategories.length);
   }catch(e){console.warn('[ZDM] Could not fetch dest product categories:',e);}
 }
 
@@ -2357,23 +2874,25 @@ function safeStr(v){
 // Build the exact payload structure the Zuper product POST API expects
 function buildMigrationProductPayload(rec){
   // --- Category resolution ---
-  // category field in fetched record can be: string name, UID string, or object
+  // category field can be: string name, UID string, or object {product_category_name, product_category_uid}
   const rawCat = rec.category ?? rec.product_category ?? rec.product_category_name ?? '';
-  const srcCatName = safeStr(rawCat).trim().toLowerCase();
-  // Also try if rawCat itself looks like a UID (long hex string)
-  const srcCatUid = typeof rawCat === 'string' && rawCat.length > 20 ? rawCat : '';
+  let srcCatName='', srcCatUid='';
+  if(rawCat && typeof rawCat==='object'){
+    srcCatName=(rawCat.product_category_name||rawCat.category_name||'').trim().toLowerCase();
+    srcCatUid =rawCat.product_category_uid||rawCat.category_uid||'';
+  }else{
+    const s=safeStr(rawCat).trim();
+    srcCatName=s.toLowerCase();
+    srcCatUid =s.length>20?s:'';
+  }
 
-  let catUid = 'UNCATEGORIZED';
-  if(destCategories.length && srcCatName){
-    const byName = destCategories.find(c=>
-      (c.product_category_name||c.category_name||'').trim().toLowerCase() === srcCatName
-    );
-    const byUid = srcCatUid && destCategories.find(c=>
-      (c.product_category_uid||c.category_uid||'') === srcCatUid
-    );
-    const match = byName || byUid;
-    if(match) catUid = match.product_category_uid||match.category_uid||'UNCATEGORIZED';
-    else console.log('[ZDM] No dest category match for:',srcCatName,'— using UNCATEGORIZED');
+  let catUid='UNCATEGORIZED';
+  if(destCategories.length&&(srcCatName||srcCatUid)){
+    const byName=srcCatName&&destCategories.find(c=>(c.product_category_name||c.category_name||'').trim().toLowerCase()===srcCatName);
+    const byUid =srcCatUid&&destCategories.find(c=>(c.product_category_uid||c.category_uid||'')===srcCatUid);
+    const match=byName||byUid;
+    if(match) catUid=match.product_category_uid||match.category_uid||'UNCATEGORIZED';
+    else console.log('[ZDM] No dest category match for:',srcCatName||srcCatUid,'— using UNCATEGORIZED');
   }
 
   // --- Price ---
@@ -2443,6 +2962,9 @@ function buildMigrationProductPayload(rec){
       markup_value: parseFloat(rec.markup.markup_value)||0
     };
   }
+  // Remap formula UIDs — the formula must already exist in destination via ensureFormulasExist
+  const srcFormulaUid=getProductFormulaUid(rec);
+  if(srcFormulaUid) product.formula_uid=_formulaUidMap[srcFormulaUid]||'';
 
   console.log('[ZDM] Product payload for',product.product_name,':',JSON.stringify({product,vendor:[]}).slice(0,500));
   return {product, vendor:[]};
@@ -2487,6 +3009,13 @@ function showMigratePanel(){
     unsupEl.style.display='none';
     destSec.style.display='block';
     $('mig-workflow-url-row').style.display=(modKey()==='workflow')?'block':'none';
+    // If destination already connected and module needs mapping, auto-show it
+    if(_destBaseUrl&&modKey()==='job_status'&&Object.keys(_statusCatMapping).length===0){
+      $('mig-mapping-section').style.display='block';
+      renderJobStatusMappingUI();
+    } else if(_destBaseUrl&&modKey()==='job_status'){
+      $('mig-mapping-section').style.display='block';
+    }
   }
 
   if(!selected&&mig&&mig.supported){
@@ -2508,7 +3037,7 @@ function showMigratePanel(){
 function hideMigratePanel(){
   const el=$('mig-card');
   if(el) el.style.display='none';
-  _destBaseUrl='';_destWorkflowBaseUrl='';
+  _destBaseUrl='';_destWorkflowBaseUrl='';_destJobCategories=[];_statusCatMapping={};
   migFailedItems=[];migLogRows=[];
   notifCatMapping={};notifStatusMapping={};notifPerRecMapping={};
   // Reset run section
@@ -2526,26 +3055,15 @@ function toggleMigPw(){const i=$('mig-apikey');i.type=i.type==='password'?'text'
 function updateMigPill(){const d=$('mig-dryrun').checked,p=$('mig-mode-pill');p.className=d?'mode-safe':'mode-live';p.textContent=d?'● Safe':'● Live';}
 
 async function connectDestination(){
-  const company=($('mig-company').value||'').trim();
   const key=destApiKey();
-  if(!company){showMsg('mig-conn-msg','✗ Enter destination company login name.','err');return;}
-  if(!key){showMsg('mig-conn-msg','✗ Enter destination API key.','err');return;}
+  if(!key){showMsg('mig-conn-msg','✗ Enter destination account API key.','err');return;}
   const btn=$('mig-connect-btn');btn.textContent='⏳ Connecting…';btn.disabled=true;
-  showMsg('mig-conn-msg','🔍 Looking up region for "'+company+'"…','info');
+  showMsg('mig-conn-msg','🔍 Looking up destination account…','info');
   try{
-    // Step 1 — resolve company → base URL
-    const cfgRes=await fetch('https://accounts.zuperpro.com/api/config',{
-      method:'POST',headers:{'Content-Type':'application/json;charset=UTF-8'},
-      body:JSON.stringify({company_name:company})
-    });
-    if(!cfgRes.ok){showMsg('mig-conn-msg','✗ Could not find company "'+company+'". Check the login name.','err');return;}
-    const cfgData=await cfgRes.json();
-    const dcUrl=cfgData?.config?.dc_api_url;
-    const dcName=cfgData?.config?.dc_name||'unknown';
-    if(!dcUrl){showMsg('mig-conn-msg','✗ Config response missing dc_api_url.','err');return;}
+    const {dcUrl,accountName:name}=await resolveByApiKey(key);
     _destBaseUrl=dcUrl.replace(/\/$/,'')+'/api/';
-
-        // Auto-derive workflow service URL for destination
+    const dcName=dcUrl.replace('https://','').replace('.zuperpro.com','');
+    // Auto-derive workflow service URL
     try{
       const wfInput=$('mig-workflow-url');
       if(wfInput){
@@ -2554,42 +3072,23 @@ async function connectDestination(){
         _destWorkflowBaseUrl=wfInput.value.trim().replace(/\/?$/,'/');
       }
     }catch{}
-
-    // Step 2 — verify API key
-    showMsg('mig-conn-msg','🔌 Verifying API key on '+dcName+'…','info');
-    const verifyEndpoints=['user/company','company','users/me','user/me'];
-    let authRes=null,authOk=false;
-    for(const ep of verifyEndpoints){
-      try{
-        authRes=await fetch(_destBaseUrl+ep,{method:'GET',headers:destGetHdrs()});
-        if(authRes.ok||(authRes.status!==401&&authRes.status!==403)){authOk=authRes.ok;break;}
-      }catch{}
+    showMsg('mig-conn-msg','✓ Connected to destination "'+name+'" ('+dcName+')','ok');
+    // Show mapping section for modules that need it
+    if(modKey()==='customer_notification'){
+      $('mig-mapping-title').textContent='Step 2 — Map Job Categories & Statuses';
+      $('mig-mapping-desc').textContent='Source category and status UIDs differ from destination. Map each notification below.';
+      $('mig-mapping-section').style.display='block';
+      fetchMappingData();
+    } else if(modKey()==='job_status'){
+      $('mig-mapping-section').style.display='block';
+      renderJobStatusMappingUI();
+    } else {
+      $('mig-mapping-section').style.display='none';
     }
-    if(authOk){
-      const data=await authRes.json().catch(()=>({}));
-      const name=data?.company_name||data?.name||data?.data?.company_name||data?.data?.name||company;
-      showMsg('mig-conn-msg','✓ Connected to destination "'+name+'" on '+dcName,'ok');
-      // Pre-fetch destination categories for product category matching
-      fetchDestCategories().then(()=>{
-        if(destCategories.length) showMsg('mig-conn-msg','✓ Connected to destination "'+name+'" on '+dcName+' | '+destCategories.length+' product categories loaded','ok');
-      });
-      // For notification module: show mapping step and fetch data
-      if(modKey()==='customer_notification'){
-        $('mig-mapping-section').style.display='block';
-        fetchMappingData();
-      } else {
-        $('mig-mapping-section').style.display='none';
-      }
-      $('mig-run-section').style.display='block';
-      // Update run button with count
-      const n=selUids.size;
-      $('mig-run-btn').textContent='🚀 Start Migration ('+(n||allRecs.length)+' records)';
-    }else{
-      const status=authRes?authRes.status:'—';
-      _destBaseUrl='';
-      const hint=status===401?' — Check destination API key.':status===403?' — Permission denied on destination.':'';
-      showMsg('mig-conn-msg','✗ '+status+' Could not authenticate with destination account.'+hint,'err');
-    }
+    $('mig-run-section').style.display='block';
+    // Update run button with count
+    const n=selUids.size;
+    $('mig-run-btn').textContent='🚀 Start Migration ('+(n||allRecs.length)+' records)';
   }catch(e){_destBaseUrl='';showMsg('mig-conn-msg','✗ '+e.message,'err');}
   finally{btn.textContent='🔌 Connect Destination';btn.disabled=false;}
 }
@@ -2631,6 +3130,18 @@ function addMigLog(level,uid,name,status,detail,payload){
 async function migrateOneRecord(rec,migCfg,dry){
   const uid=String(rec[uidField]||'');
   // Build payload: module-specific builder takes priority, otherwise clean + transform
+  // If module needs full record detail (list response lacks body/content fields)
+  if(!dry && typeof migCfg.fetchFullRecord==='function'){
+    try{
+      const ep=migCfg.fetchFullRecord(rec);
+      const fr=await fetch(_baseUrl+ep,{headers:getHdrs()});
+      if(fr.ok){
+        const fd=await fr.json();
+        rec=fd?.data||fd; // use full record for payload building
+      }
+    }catch(e){console.warn('[ZDM] fetchFullRecord failed:',e.message);}
+  }
+
   let payload;
   if(typeof migCfg.buildPayload==='function'){
     payload=migCfg.buildPayload(rec);
@@ -2650,21 +3161,258 @@ async function migrateOneRecord(rec,migCfg,dry){
       if(!p.product_category||p.product_category==='UNCATEGORIZED') missing.push('product_category→UNCATEGORIZED');
       if(p.price==null) missing.push('price');
     }
+    if(modKey()==='email_template'){
+      const t=payload?.template||{};
+      const preview='subject="'+(t.template_subject||'(empty)')+'" body='+(t.template_body?t.template_body.slice(0,40)+'…':'(empty)');
+      return{ok:true,status:'dry-run',uid,payload,warn:preview};
+    }
+    // FIX 5: dry run for job_status warns if destination category not mapped
+    if(modKey()==='job_status'){
+      const catUid=_statusCatMapping[rec._category_uid]||'';
+      if(!catUid) missing.push('destination category not mapped (connect destination and complete mapping)');
+      else missing.push=missing.push; // noop — all good
+      const warn=missing.length?'⚠ '+missing.join('; '):'category mapped ✓';
+      return{ok:!missing.length,status:'dry-run',uid,payload,warn};
+    }
     const warn=missing.length?'Issues: '+missing.join(', '):'';
     return{ok:!missing.length||(missing.length===1&&missing[0].includes('UNCATEGORIZED')),
       status:'dry-run',uid,payload,warn};
   }
+  const postUrl=_destBaseUrl+(typeof migCfg.createEndpoint==='function'?migCfg.createEndpoint(rec):migCfg.createEndpoint);
+  console.log('[ZDM] POST →', postUrl);
+  // Guard: abort if category UID is missing (empty mapping)
+  if(modKey()==='job_status'&&(postUrl.endsWith('status_new/')||!_statusCatMapping[rec._category_uid])){
+    return{ok:false,status:'err',error:'No destination category mapped for "'+rec._category+'" — connect destination and complete the category mapping step.',payload};
+  }
   try{
-    const res=await fetch(_destBaseUrl+migCfg.createEndpoint,{
+    const res=await fetch(postUrl,{
       method:'POST',headers:destHdrs(),body:JSON.stringify(payload)
     });
     let body={};let rawBody='';
     try{rawBody=await res.text();body=JSON.parse(rawBody);}catch{body={message:rawBody};}
-    if(res.ok) return{ok:true,status:res.status,uid};
-    const errDetail=body?.message||body?.error||body?.info||rawBody.slice(0,300);
+    if(res.ok){
+      // Step 2: PUT full content after initial create (e.g. email_template)
+      if(!dry && typeof migCfg.putAfterCreate==='function'){
+        try{
+          const newUid=body?.data?.template_uid||body?.template_uid||body?.data?._id||body?._id||'';
+          if(newUid){
+            const{endpoint:putEp,payload:putPayload}=migCfg.putAfterCreate(newUid,rec);
+            const pr=await fetch(_destBaseUrl+putEp,{method:'PUT',headers:destHdrs(),body:JSON.stringify(putPayload)});
+            if(!pr.ok) console.warn('[ZDM] putAfterCreate failed:',pr.status,await pr.text().catch(()=>''));
+            else console.log('[ZDM] PUT success for',newUid);
+          }else{console.warn('[ZDM] putAfterCreate: no UID in POST response',rawBody.slice(0,200));}
+        }catch(e){console.warn('[ZDM] putAfterCreate error:',e.message);}
+      }
+      // Step 3: optional PUT after create (e.g. package deactivation)
+      if(!dry && typeof migCfg.postCreate==='function'){
+        try{
+          const newUid=body?.data?.package_uid||body?.data?.uid||body?.data?._id||'';
+          const info=newUid?migCfg.postCreate(newUid,rec):null;
+          if(info){await fetch(_destBaseUrl+info.endpoint,{method:'PUT',headers:destHdrs(),body:JSON.stringify(info.payload)});}
+        }catch(e){console.warn('[ZDM] postCreate error:',e.message);}
+      }
+      return{ok:true,status:res.status,uid};
+    }
+    const errDetail=body?.message||body?.error||body?.info||rawBody.slice(0,300)||'(empty response)';
     const missingFields=body?.validation_errors||body?.errors||null;
-    return{ok:false,status:res.status,error:errDetail+(missingFields?'\nValidation: '+JSON.stringify(missingFields):''),payload};
-  }catch(e){return{ok:false,status:'err',error:'Network: '+e.message,payload};}
+    return{ok:false,status:res.status,error:'HTTP '+res.status+': '+errDetail+(missingFields?'\nValidation: '+JSON.stringify(missingFields):''),payload};
+  }catch(e){return{ok:false,status:'err',error:'Network: '+e.message+'\nURL tried: '+postUrl,payload};}
+}
+
+// ── JOB CATEGORY FULL MIGRATION (category + statuses + parent deps + checklists) ─
+async function migrateJobCategoryFull(cat,dry){
+  const catUid=cat.category_uid||'';
+  const statuses=cat.job_statuses||[];
+  const statusCount=statuses.length;
+  const withDeps=statuses.filter(s=>s.parent_status?.length>0).length;
+
+  // ── DRY RUN ──────────────────────────────────────────────────────────────────
+  if(dry){
+    // Fetch source checklists per status (summarise for dry run preview)
+    let checklistSummary='';
+    try{
+      const checklistMap={};
+      for(const s of statuses){
+        if(!s.status_uid) continue;
+        const r=await fetch(_baseUrl+'settings/checklist?category_uid='+catUid+'&job_status_uid='+s.status_uid,{headers:getHdrs()});
+        if(r.ok){
+          const d=await r.json().catch(()=>({}));
+          const cls=Array.isArray(d?.data)?d.data:[];
+          if(cls.length) checklistMap[s.status_name]=cls.map(c=>c.checklist_name||c.original_template?.checklist_name||c.name||'?').join(', ');
+        }
+      }
+      const entries=Object.entries(checklistMap);
+      if(entries.length) checklistSummary=' | Checklists: '+entries.map(([k,v])=>k+' → ['+v+']').join('; ');
+    }catch{}
+    const warn=statusCount+' status(es)'+(withDeps?' ('+withDeps+' with parent deps)':'')+checklistSummary;
+    return{ok:true,status:'dry-run',uid:catUid,warn};
+  }
+
+  // ── STEP 1: Create category ───────────────────────────────────────────────────
+  const catPayload={category:{
+    category_name:       cat.category_name||'',
+    category_color:      cat.category_color||'#6366F1',
+    bu_uids:             null,
+    category_description:cat.category_description||'',
+    estimated_duration:  cat.estimated_duration||{hours:0,minutes:0,days:1},
+    job_timelog:         cat.job_timelog||{job_timer:true,travel_timer:true,meal_break_timer:true},
+    auto_create_status:  false,
+  }};
+  const catRes=await fetch(_destBaseUrl+'jobs/category',{method:'POST',headers:destHdrs(),body:JSON.stringify(catPayload)});
+  const catRawBody=await catRes.text().catch(()=>'');
+  console.log('[ZDM] Create category "'+cat.category_name+'" → HTTP',catRes.status,'body:',catRawBody.slice(0,400));
+  if(!catRes.ok) return{ok:false,status:catRes.status,error:'Category creation failed HTTP '+catRes.status+': '+catRawBody.slice(0,200),uid:catUid};
+
+  let catData={};try{catData=JSON.parse(catRawBody);}catch{}
+  // Try every possible path Zuper might use for the returned category UID
+  const d=catData?.data||catData;
+  let newCatUid=d?.category_uid||d?.uid||d?._id
+    ||catData?.category_uid||catData?.uid
+    ||catData?.data?.category?.category_uid||catData?.category?.category_uid||'';
+  console.log('[ZDM] Extracted newCatUid:',newCatUid,'from keys:',Object.keys(d||{}));
+
+  if(!newCatUid){
+    // Fallback: find by name in destination category list
+    await new Promise(r=>setTimeout(r,600));
+    const listRes=await fetch(_destBaseUrl+'jobs/category',{headers:destGetHdrs()});
+    if(listRes.ok){
+      const ld=await listRes.json().catch(()=>({}));
+      const cats=Array.isArray(ld?.data)?ld.data:[];
+      const found=cats.find(c=>(c.category_name||'').trim()===(cat.category_name||'').trim());
+      if(found){newCatUid=found.category_uid||'';console.log('[ZDM] Found by name lookup:',newCatUid);}
+    }
+  }
+  if(!newCatUid) return{ok:false,status:'err',error:'Category "'+cat.category_name+'" created (HTTP '+catRes.status+') but UID not found. Raw response: '+catRawBody.slice(0,200),uid:catUid};
+  await new Promise(r=>setTimeout(r,400));
+
+  // ── STEP 2: Create statuses (root statuses first, then children) ─────────────
+  console.log('[ZDM] Creating',statuses.length,'statuses in category',newCatUid);
+  const oldToNew={}; // old_status_uid → new_status_uid
+  let statOk=0,statFail=0;
+  const sorted=[...statuses].sort((a,b)=>((a.parent_status?.length||0)>0?1:0)-((b.parent_status?.length||0)>0?1:0));
+  for(const s of sorted){
+    await new Promise(r=>setTimeout(r,200));
+    const statusUrl=_destBaseUrl+'jobs/status_new/'+newCatUid;
+    console.log('[ZDM] POST status "'+s.status_name+'" →',statusUrl);
+    const sRes=await fetch(statusUrl,{method:'POST',headers:destHdrs(),body:JSON.stringify(buildJobStatusPayload(s,newCatUid))});
+    const sRaw=await sRes.text().catch(()=>'');
+    if(sRes.ok){
+      let sd={};try{sd=JSON.parse(sRaw);}catch{}
+      const newSUid=sd?.data?.status_uid||sd?.status_uid||sd?.data?._id||sd?._id||'';
+      if(newSUid){oldToNew[s.status_uid]=newSUid;statOk++;}
+      else{console.warn('[ZDM] Status "'+s.status_name+'" no UID in response:',sRaw.slice(0,200));statFail++;}
+    }else{
+      console.warn('[ZDM] Status "'+s.status_name+'" HTTP',sRes.status,sRaw.slice(0,200));
+      statFail++;
+    }
+  }
+
+  // ── STEP 3: Remap parent_status dependencies ─────────────────────────────────
+  let depsOk=0,depsFail=0;
+  const withParents=statuses.filter(s=>s.parent_status?.length>0&&s.status_uid&&oldToNew[s.status_uid]);
+  for(const s of withParents){
+    const newSUid=oldToNew[s.status_uid];
+    const remappedParents=s.parent_status.map(pUid=>oldToNew[pUid]||'').filter(Boolean);
+    if(!remappedParents.length) continue;
+    await new Promise(r=>setTimeout(r,150));
+    // Try PUT /api/job_status/{uid} to update parent relationships
+    const pRes=await fetch(_destBaseUrl+'job_status/'+newSUid,{method:'PUT',headers:destHdrs(),body:JSON.stringify({parent_status:remappedParents,has_parent:true})});
+    if(pRes.ok) depsOk++;
+    else{
+      // Try PATCH as fallback
+      const pRes2=await fetch(_destBaseUrl+'job_status/'+newSUid,{method:'PATCH',headers:destHdrs(),body:JSON.stringify({parent_status:remappedParents,has_parent:true})});
+      if(pRes2.ok) depsOk++;
+      else depsFail++;
+    }
+  }
+
+  // ── STEP 4: Checklists — fetch, transform, stage for POST (endpoint pending) ──
+  let clFound=0, clStaged=0, clOk=0, clSkip=0;
+  // Fetch destination custom fields for remapping copy_to_field.field_uid by name
+  const destCfMap={}; // custom_field_uid → dest_uid (from name match) — populated below
+  try{
+    for(const mod of ['JOB','CUSTOMER']){
+      const cfRes=await fetch(_destBaseUrl+'settings/custom_fields?module_name='+mod,{headers:destGetHdrs()});
+      if(!cfRes.ok) continue;
+      const cfd=await cfRes.json().catch(()=>({}));
+      const srcRes=await fetch(_baseUrl+'settings/custom_fields?module_name='+mod,{headers:getHdrs()});
+      if(!srcRes.ok) continue;
+      const sfd=await srcRes.json().catch(()=>({}));
+      const destByName={};
+      for(const f of (Array.isArray(cfd?.data)?cfd.data:[])) destByName[(f.field_name||'').toLowerCase().trim()]={uid:f.custom_field_uid||f.uid,module:mod};
+      for(const f of (Array.isArray(sfd?.data)?sfd.data:[])){
+        const match=destByName[(f.field_name||'').toLowerCase().trim()];
+        if(match) destCfMap[f.custom_field_uid||f.uid]=match.uid;
+      }
+    }
+  }catch(e){console.warn('[ZDM] custom field prefetch failed:',e.message);}
+
+  const pendingChecklists=[]; // will POST when endpoint is confirmed
+  for(const s of statuses){
+    if(!s.status_uid||!oldToNew[s.status_uid]) continue;
+    const clRes=await fetch(_baseUrl+'settings/checklist?category_uid='+catUid+'&job_status_uid='+s.status_uid,{headers:getHdrs()});
+    if(!clRes.ok) continue;
+    const clData=await clRes.json().catch(()=>({}));
+    const cls=Array.isArray(clData?.data)?clData.data:[];
+    clFound+=cls.length;
+    for(const cl of cls){
+      // Apply transformation from Zuper's own migration logic
+      const checklistData=JSON.parse(JSON.stringify(cl.original_template||cl));
+      // Keep field_meta if present on parent
+      if(cl.field_meta) checklistData.field_meta=cl.field_meta;
+      // Remove account-specific fields
+      delete checklistData.tag_uids;
+      delete checklistData.checklist_uid;
+      delete checklistData.copy_to_custom_field;
+      delete checklistData.created_by;
+      delete checklistData.created_at;
+      delete checklistData.updated_at;
+      delete checklistData._id;
+      delete checklistData.__v;
+      // Remap copy_to_field custom field UID by name-match
+      if(checklistData.copy_to_field?.type==='CUSTOM_FIELD'&&checklistData.copy_to_field?.field_uid){
+        const mapped=destCfMap[checklistData.copy_to_field.field_uid];
+        if(mapped) checklistData.copy_to_field.field_uid=mapped;
+        else delete checklistData.copy_to_field; // no match — remove
+      }
+      // Remap copy_to_custom_field
+      const copyToVal=cl.copy_to_custom_field;
+      if(copyToVal?.custom_field_uid){
+        const mapped=destCfMap[copyToVal.custom_field_uid];
+        if(mapped) checklistData.copy_to_custom_field=mapped;
+        else{console.warn('[ZDM] No mapping for checklist copy_to_custom_field UID:',copyToVal.custom_field_uid); delete checklistData.copy_to_custom_field;}
+      }
+      // Attach destination category/status context for POST when endpoint confirmed
+      pendingChecklists.push({
+        payload:checklistData,
+        dest_category_uid:newCatUid,
+        dest_status_uid:oldToNew[s.status_uid],
+        src_status_name:s.status_name,
+      });
+      clStaged++;
+    }
+  }
+  // POST checklists when endpoint is confirmed
+  // TODO: replace endpoint below once confirmed
+  const CL_POST_ENDPOINT=''; // e.g. 'settings/checklist' — set when known
+  if(CL_POST_ENDPOINT){
+    for(const cl of pendingChecklists){
+      const r=await fetch(_destBaseUrl+CL_POST_ENDPOINT,{method:'POST',headers:destHdrs(),
+        body:JSON.stringify({...cl.payload,category_uid:cl.dest_category_uid,job_status_uid:cl.dest_status_uid})});
+      if(r.ok) clOk++;
+      else clSkip++;
+    }
+  } else {
+    // Endpoint not yet confirmed — log staged checklists for visibility
+    if(pendingChecklists.length) console.log('[ZDM] Checklists staged (pending POST endpoint):',JSON.stringify(pendingChecklists.map(c=>({name:c.payload?.checklist_name||c.payload?.name,status:c.src_status_name}))));
+  }
+
+  // ── Summary ───────────────────────────────────────────────────────────────────
+  const parts=[statOk+'/'+statusCount+' statuses'];
+  if(withParents.length) parts.push(depsOk+'/'+withParents.length+' parent deps'+(depsFail?' ('+depsFail+' failed)':''));
+  if(clFound>0) parts.push(CL_POST_ENDPOINT?(clOk+'/'+clStaged+' checklists'):(clStaged+' checklist(s) found — POST endpoint pending'));
+  const allOk=statFail===0;
+  return{ok:allOk,status:allOk?201:'partial',uid:catUid,warn:parts.join(' | '),error:allOk?'':statFail+' status(es) failed'};
 }
 
 async function migrateWorkflowNative(rec,dry){
@@ -2721,7 +3469,7 @@ async function runMigEngine(records,dry){
       const name=fmt(getF(rec,modCfg().cols[0].f))||uid;
       let result;
       try{
-        result=migCfg.native?await migrateWorkflowNative(rec,dry):await migrateOneRecord(rec,migCfg,dry);
+        result=typeof migCfg.migrateNative==='function'?await migCfg.migrateNative(rec,dry):migCfg.native?await migrateWorkflowNative(rec,dry):await migrateOneRecord(rec,migCfg,dry);
       }catch(e){result={ok:false,error:e.message};}
       if(result.ok){
         ok++;
@@ -2747,8 +3495,8 @@ async function runMigEngine(records,dry){
     ?'⚠ Cancelled — '+ok+' OK, '+fail+' failed out of '+done
     :'✓ Complete — '+ok+' '+(dry?'would migrate':'migrated')+', '+fail+' failed out of '+records.length;
   // 5. Persist migration summary
-  _lastMigrationSummary={module:modCfg()?.label||modKey(),account:$('mig-company').value||'—',date:new Date().toLocaleString(),total:records.length,ok,failed:fail,dry};
-  if(!dry) addImportHistoryEntry({module:modCfg()?.label||modKey(),account:$('mig-company').value||'—',total:records.length,ok,failed:fail});
+  _lastMigrationSummary={module:modCfg()?.label||modKey(),account:_destBaseUrl?(_destBaseUrl.replace('https://','').replace('/api/','').split('.')[0]):'—',date:new Date().toLocaleString(),total:records.length,ok,failed:fail,dry};
+  if(!dry) addImportHistoryEntry({module:modCfg()?.label||modKey(),account:_destBaseUrl?(_destBaseUrl.replace('https://','').replace('/api/','').split('.')[0]):'—',total:records.length,ok,failed:fail});
   if(dry&&ok>0&&!migCancelled){
     migDryCtx={records};
     $('mig-proceed-btn').textContent='→ Proceed: Create '+ok+' record(s) in destination — REAL';
@@ -2776,7 +3524,104 @@ async function startMigration(){
     }
   }
   const dry=$('mig-dryrun').checked;
-  const action=dry?'DRY RUN — check '+toMigrate.length+' record(s)':'CREATE '+toMigrate.length+' record(s) in destination account "'+($('mig-company').value||'destination')+'"';
+  // For product + package: ensure all referenced formulas exist in destination first
+  if(!dry&&_destBaseUrl&&(modKey()==='product'||modKey()==='package')){
+    const toMig=allRecs.filter(r=>selUids.has(String(r[uidField]||'')));
+    // Collect all formula UIDs referenced in selected records
+    const fUids=new Set();
+    for(const r of toMig){
+      const fUid=getProductFormulaUid(r);
+      if(fUid) fUids.add(fUid);
+      // Package line items
+      for(const item of (r.line_items||[])){
+        if(item.formula_uid)     fUids.add(item.formula_uid);
+        if(item.cpq_formula_uid) fUids.add(item.cpq_formula_uid);
+      }
+    }
+    if(fUids.size){
+      showMsg('mig-conn-msg','🔢 Checking '+fUids.size+' formula(s) in destination…','info');
+      // Fetch source formulas we don't yet have mapped
+      const unmapped=[...fUids].filter(u=>!_formulaUidMap[u]);
+      if(unmapped.length){
+        // Fetch source formula list (may contain them)
+        const srcFRes=await fetch(_baseUrl+'invoice_estimate/cpq/formulas?count=500&page=1',{headers:getHdrs()});
+        if(srcFRes.ok){
+          const srcFData=await srcFRes.json().catch(()=>({}));
+          const allSrcFormulas=extractRecords(srcFData,'formula')||[];
+          const needed=allSrcFormulas.filter(f=>unmapped.includes(f.formula_uid||''));
+          if(needed.length) await ensureFormulasExist(needed);
+        }
+      }
+      showMsg('mig-conn-msg','✓ Formulas ready ('+Object.keys(_formulaUidMap).length+' mapped).','ok');
+    }
+  }
+  // For product: ensure all source categories exist in destination before migrating
+  if(modKey()==='product'&&!dry&&_destBaseUrl){
+    const toMig=allRecs.filter(r=>selUids.has(String(r[uidField]||'')));
+    const srcCatNames=new Set();
+    for(const r of toMig){
+      const raw=r.product_category||r.category||'';
+      const name=typeof raw==='object'
+        ?(raw.product_category_name||raw.category_name||'')
+        :(typeof raw==='string'?raw:'');
+      if(name.trim()) srcCatNames.add(name.trim());
+    }
+    if(srcCatNames.size){
+      await fetchDestCategories(); // uses confirmed URL with filter.keyword=
+      const destNames=new Set(destCategories.map(c=>(c.product_category_name||c.category_name||'').toLowerCase().trim()));
+      const toCreate=[...srcCatNames].filter(n=>!destNames.has(n.toLowerCase().trim()));
+      if(toCreate.length){
+        showMsg('mig-conn-msg','⏳ Creating '+toCreate.length+' missing product categor'+(toCreate.length===1?'y':'ies')+'…','info');
+        for(const catName of toCreate){
+          try{
+            const r=await fetch(_destBaseUrl+'products/category',{method:'POST',headers:destHdrs(),
+              body:JSON.stringify({product_category_name:catName})});
+            if(r.ok){
+              const d=await r.json().catch(()=>({}));
+              // Try all known response paths for the new UID
+              const newUid=d?.data?.product_category_uid||d?.data?.category_uid
+                ||d?.product_category_uid||d?.category_uid||catObjUid(d?.data)||'';
+              const newCat={product_category_name:catName,product_category_uid:newUid};
+              destCategories.push(newCat);
+              console.log('[ZDM] Created category "'+catName+'" uid:',newUid);
+            }else{
+              const e=await r.text().catch(()=>'');
+              console.warn('[ZDM] Category create failed:',catName,'HTTP',r.status,e.slice(0,100));
+            }
+          }catch(e){console.warn('[ZDM] Category create error:',catName,e.message);}
+        }
+        showMsg('mig-conn-msg','✓ Product categories ready.','ok');
+      }
+    }
+  }
+  // For job_status: ensure all destination categories exist first (skip on dry run)
+  if(modKey()==='job_status'&&!dry){
+    const toMigrate2=allRecs.filter(r=>selUids.has(String(r[uidField]||'')));
+    const srcCats=getSourceCategoriesFromRecs(toMigrate2);
+    const missing=srcCats.filter(sc=>!_statusCatMapping[sc.uid]);
+    if(missing.length){
+      const names=missing.map(sc=>sc.name).join(', ');
+      if(!confirm(`${missing.length} job categor${missing.length===1?'y':'ies'} will be created in the destination first:\n${names}\n\nProceed?`)) return;
+    }
+    if(srcCats.some(sc=>!_statusCatMapping[sc.uid])){
+      showMsg('mig-conn-msg','⏳ Creating missing job categories in destination…','info');
+      const {ok,created,failed}=await ensureDestJobCategoriesExist(toMigrate2);
+      if(failed.length){
+        alert('❌ Failed to create '+failed.length+' job categor'+(failed.length===1?'y':'ies')+':\n'+failed.join('\n')+'\n\nMigration aborted. Check destination connection and try again.');
+        showMsg('mig-conn-msg','✗ Category creation failed — migration aborted.','err');
+        return;
+      }
+      if(created) showMsg('mig-conn-msg',`✓ Created ${created} new job categor${created===1?'y':'ies'} in destination.`,'ok');
+    }
+    // Final guard: abort if any selected status still has no destination category
+    const stillUnmapped=toMigrate2.filter(r=>!_statusCatMapping[r._category_uid]);
+    console.log('[ZDM] _statusCatMapping before migration:',JSON.stringify(_statusCatMapping));
+    if(stillUnmapped.length){
+      alert(`❌ ${stillUnmapped.length} status(es) have no destination category mapped. Connect destination and complete the category mapping first.`);
+      return;
+    }
+  }
+  const action=dry?'DRY RUN — check '+toMigrate.length+' record(s)':'CREATE '+toMigrate.length+' record(s) in destination account "'+(_destBaseUrl||'destination')+'"';
   const note=dry?'\n\nDry run — nothing will be created.':'\n\n⚠ This will create new records in the destination account.';
   if(!confirm(action+'?\n'+note))return;
   await runMigEngine(toMigrate,dry);
@@ -2784,7 +3629,7 @@ async function startMigration(){
 async function proceedMigReal(){
   if(!migDryCtx)return;
   const{records}=migDryCtx;migDryCtx=null;
-  if(!confirm('CREATE '+records.length+' record(s) in destination "'+($('mig-company').value||'destination')+'"?\n\n⚠ This will create new records. It cannot be undone.'))return;
+  if(!confirm('CREATE '+records.length+' record(s) in destination "'+(_destBaseUrl||'destination')+'"?\n\n⚠ This will create new records. It cannot be undone.'))return;
   $('mig-dryrun').checked=false;updateMigPill();
   await runMigEngine(records,false);
 }
@@ -2997,14 +3842,13 @@ function renderSavedConns(){
 }
 function loadSavedConn(i){
   const c=_savedConns[i];if(!c) return;
-  $('company').value=c.company;
   $('apikey').value=atob(c.key||'');
   if(c.workflowUrl) $('workflow-url').value=c.workflowUrl;
 }
 function saveCurrentConnection(){
-  const company=($('company').value||'').trim();
   const key=apiKey();
-  if(!company||!key){alert('Connect first before saving.');return;}
+  if(!key||!_baseUrl){alert('Connect to an account first before saving.');return;}
+  const company=$('s-account').textContent||'—';
   const label=prompt('Give this connection a label (e.g. "Prod" or "Client A"):',company);
   if(label===null) return; // cancelled
   // Don't duplicate
@@ -3160,21 +4004,15 @@ function showCompareCard(){
 function toggleCmpPw(){const i=$('cmp-apikey');i.type=i.type==='password'?'text':'password';}
 async function runCompare(){
   if(!allRecs.length){alert('Fetch records from source account first.');return;}
-  const company=($('cmp-company').value||'').trim();
   const key=($('cmp-apikey').value||'').trim();
-  if(!company||!key){showMsg('cmp-msg','✗ Enter second account credentials.','err');return;}
+  if(!key){showMsg('cmp-msg','✗ Enter the second account API key.','err');return;}
   showMsg('cmp-msg','🔍 Connecting to second account…','info');
   $('cmp-results').style.display='none';
   $('cmp-export-btn').style.display='none';
   try{
-    // Resolve second account URL
-    const cfgRes=await fetch('https://accounts.zuperpro.com/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company_name:company})});
-    if(!cfgRes.ok) throw new Error('Company "'+company+'" not found.');
-    const cfgData=await cfgRes.json();
-    const dcUrl=cfgData?.config?.dc_api_url;
-    if(!dcUrl) throw new Error('Could not resolve DC URL for "'+company+'".');
-    const destBase=dcUrl.replace(/\/$/,'')+'/api/';
-    const destHdrsObj={'x-api-key':key};
+    showMsg('cmp-msg','🔍 Looking up second account…','info');
+    const {baseUrl:destBase,accountName}=await resolveByApiKey(key);
+    const destHdrsObj={...ZUPER_CLIENT_HDRS,'x-api-key':key};
     // Fetch same module from destination
     const cfg=modCfg();
     const endpoint=cfg.endpoint||modKey();
@@ -3244,7 +4082,7 @@ function exportCompareCsv(){
 // ════════════════════════════════════════════════════════════════════════
 // FEATURE 9: GLOBAL SEARCH
 // ════════════════════════════════════════════════════════════════════════
-const SEARCHABLE_MODULES=['customers','assets','product','jobs','invoice','estimate','user','team','customer_notification','job_status','job_category','asset_form','service_task'];
+const SEARCHABLE_MODULES=['customers','assets','product','jobs','invoice','estimate','user','team','customer_notification','job_status','job_category','asset_form','service_task','package','product_category','formula'];
 let _gsRunning=false;
 
 function openGlobalSearch(){
@@ -3359,6 +4197,8 @@ function onModuleChange(){
   $('s-module').textContent=cfg?cfg.label:modKey();
   allRecs=[];filtRecs=[];selUids=new Set();uidField=null;currentPage=1;
   sortCol=null;sortDir=1;_selectAllMode=false;hideSellAllBanner();
+  _statusCatMapping={}; // reset job status category mapping on module switch
+  _formulaUidMap={};    // reset formula mapping on module switch
   // Clear search
   const searchEl=$('search');if(searchEl) searchEl.value='';
   $('thead').innerHTML='';
