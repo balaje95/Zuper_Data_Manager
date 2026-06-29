@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zuper Data Manager</title>
-<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
 <style>
 /* =========================================================
    Pastel design tokens — light + dark
@@ -391,7 +391,7 @@ input[type=checkbox]{accent-color:var(--primary)}
         <option value="estimate">Quotes / Estimates</option>
         <option value="user">Users</option>
         <option value="team">Teams</option>
-        <option value="workflow">Workflows</option>
+        <option value="workflow_group">Workflows</option>
         <option value="customer_notification">Customer Notifications</option>
         <option value="job_status">Job Statuses</option>
         <option value="job_category">Job Categories</option>
@@ -399,12 +399,10 @@ input[type=checkbox]{accent-color:var(--primary)}
         <option value="service_task">Service Tasks</option>
         <option value="checklist">Checklists</option>
         <option value="custom_fields">Custom Fields</option>
-        <option value="formula">Formulas (CPQ)</option>
         <option value="product_category">Product Categories</option>
         <option value="email_template">Email / SMS Templates</option>
-        <option value="package">Service Packages</option>
         <option value="measurement_category">Measurement Categories</option>
-        <option value="proposal_template">Proposal Templates</option>
+        <option value="cpq_group">⚡ CPQ / Zuper IQ — Intelligent Quoting</option>
       </select>
     </div>
   </div>
@@ -456,6 +454,23 @@ input[type=checkbox]{accent-color:var(--primary)}
     </div>
     <div id="meas-cat-msg"></div>
   </div>
+  <!-- CPQ / Zuper IQ sub-module selector -->
+  <div id="cpq-submodule-row" style="display:none;margin-bottom:14px">
+    <div class="field-lbl" style="margin-bottom:6px">Sub-module</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="cpq-sub-btn-proposal_template" class="btn btn-p" onclick="switchCpqSub('proposal_template')" style="font-size:.82rem;padding:6px 16px">📋 Proposal Templates</button>
+      <button id="cpq-sub-btn-formula" class="btn btn-g" onclick="switchCpqSub('formula')" style="font-size:.82rem;padding:6px 16px">ƒ Formula Library</button>
+      <button id="cpq-sub-btn-package" class="btn btn-g" onclick="switchCpqSub('package')" style="font-size:.82rem;padding:6px 16px">📦 Service Packages</button>
+    </div>
+  </div>
+  <!-- Workflow sub-module selector -->
+  <div id="workflow-submodule-row" style="display:none;margin-bottom:14px">
+    <div class="field-lbl" style="margin-bottom:6px">Sub-module</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="wf-sub-btn-workflow" class="btn btn-p" onclick="switchWfSub('workflow')" style="font-size:.82rem;padding:6px 16px">🔄 Workflows</button>
+      <button id="wf-sub-btn-workflow_variables" class="btn btn-g" onclick="switchWfSub('workflow_variables')" style="font-size:.82rem;padding:6px 16px">⚙ Variables</button>
+    </div>
+  </div>
   <div class="btn-row">
     <button class="btn btn-o" id="connect-btn" onclick="doConnect()">🔌 Connect</button>
     <button class="btn btn-o" id="save-conn-btn" onclick="saveCurrentConnection()" style="display:none" title="Save this connection">🔖 Save</button>
@@ -463,6 +478,7 @@ input[type=checkbox]{accent-color:var(--primary)}
     <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" style="display:none">📄 Fetch Records</button>
     <button class="btn btn-p" id="import-btn" onclick="showImportCard()" style="display:none">📥 Import Products</button>
     <button class="btn btn-p" id="pkg-import-btn" onclick="showPkgImportCard()" style="display:none">📦 Import Packages</button>
+    <button class="btn btn-p" id="tpl-import-btn" onclick="showTplImportCard()" style="display:none">📥 Import Template</button>
     <label id="dryrun-label" style="display:none;align-items:center;gap:6px;font-size:.82rem;font-weight:600;cursor:pointer;margin-left:4px">
       <input type="checkbox" id="dryrun" checked onchange="updatePill()">
       Dry Run <span id="mode-pill" class="mode-safe">● Safe</span>
@@ -915,8 +931,8 @@ input[type=checkbox]{accent-color:var(--primary)}
       <input type="file" id="pi-file" accept=".xlsx,.xls" style="display:none" onchange="onPkgImportFile(this)">
     </div>
     <div class="msg msg-info" style="margin-bottom:12px;font-size:.8rem">
-      Expected columns: <strong>Brand · Line Item · Type · Tier · QXO # · UOM · Quantity Formula · Price</strong><br>
-      Each Brand + Tier combination becomes one package. Rows with <strong>Tier = All</strong> are included in every tier for that brand.
+      <strong>Format A — Column-based (multi-package per sheet):</strong> columns <em>Brand · Line Item · Type · Tier · QXO # · UOM · Formula · Price</em>. Each Brand + Tier combination becomes one package. Rows with <strong>Tier = All</strong> are shared across all tiers.<br>
+      <strong>Format B — Tab-per-package:</strong> one sheet per package (sheet name = package name), columns <em>Line Item · Type · QXO # · UOM · Formula · Price</em> (no Brand/Tier needed).
     </div>
     <div class="btn-row">
       <button class="btn btn-g" onclick="hidePkgImportCard()">← Back</button>
@@ -954,6 +970,62 @@ input[type=checkbox]{accent-color:var(--primary)}
     </div>
     <div class="btn-row" style="margin-top:12px">
       <button class="btn btn-g" onclick="hidePkgImportCard()">← Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROPOSAL TEMPLATE IMPORT -->
+<div class="card" id="tpl-import-card" style="display:none">
+  <div class="sec-title">📥 Import Proposal Template</div>
+  <div style="display:flex;margin-bottom:20px;border-bottom:1.5px solid var(--sec-border)">
+    <div class="istep active" id="tistep1-tab">① Upload</div>
+    <div class="istep" id="tistep2-tab">② Preview</div>
+    <div class="istep" id="tistep3-tab">③ Import</div>
+  </div>
+  <!-- Step 1: Upload -->
+  <div id="tistep1">
+    <div id="ti-dropzone" onclick="$('ti-file').click()" ondragover="event.preventDefault()" ondrop="event.preventDefault();onTplImportFile({files:event.dataTransfer.files})" style="border:2px dashed var(--border-inp);border-radius:14px;padding:32px;background:var(--inp-bg);transition:border-color .15s,background .15s;text-align:center;cursor:pointer;margin-bottom:14px">
+      <div style="font-size:2rem;margin-bottom:8px">📂</div>
+      <p style="font-size:.85rem;color:var(--text-sub)"><strong style="color:var(--text)">Click to upload</strong> or drag &amp; drop</p>
+      <p style="font-size:.76rem;color:var(--text-sub);margin-top:4px">JSON (exported via JSON ↓) or Excel (atlas format — one sheet per option)</p>
+      <input type="file" id="ti-file" accept=".json,.xlsx,.xls" style="display:none" onchange="onTplImportFile(this)">
+    </div>
+    <div class="msg msg-info" style="margin-bottom:12px;font-size:.8rem">
+      <strong>.json</strong> — exported via <em>JSON ↓</em> button. Round-trip clone; preserves all product UIDs and formula references.<br>
+      <strong>.xlsx</strong> — atlas format (one sheet per proposal option). Products matched by Product No; formulas matched by name.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-g" onclick="hideTplImportCard()">← Back</button>
+    </div>
+    <div id="ti-msg1" class="msg" style="display:none;margin-top:10px"></div>
+  </div>
+  <!-- Step 2: Preview + dry run + run -->
+  <div id="tistep2" style="display:none">
+    <div id="ti-preview" style="margin-bottom:14px;padding:14px;background:var(--th-bg);border-radius:10px;border:1px solid var(--border);font-size:.82rem"></div>
+    <div id="ti-name-row" style="display:none;margin-bottom:14px">
+      <div class="field-lbl">Template Name <span style="font-weight:400;color:var(--text-sub)">(required for Excel import)</span></div>
+      <input class="inp" id="ti-tpl-name" placeholder="e.g. GAF Roofing Proposal" style="max-width:420px;font-size:.85rem">
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:var(--th-bg);border-radius:8px;border:1px solid var(--border);margin-bottom:14px">
+      <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;cursor:pointer">
+        <input type="checkbox" id="ti-dryrun" checked onchange="updateTiPill()">
+        Dry Run <span id="ti-mode-pill" class="mode-safe">● Safe</span>
+      </label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-p" id="ti-run-btn" onclick="startTplImport()">Start Import →</button>
+      <button class="btn btn-o" onclick="tiGoTo(1);$('ti-file').value=''">← Back</button>
+    </div>
+    <div id="ti-msg2" class="msg" style="display:none;margin-top:10px"></div>
+  </div>
+  <!-- Step 3: Log -->
+  <div id="tistep3" style="display:none">
+    <div class="prog-bar-wrap" style="margin-bottom:6px"><div class="prog-bar" id="ti-prog-bar"></div></div>
+    <div class="prog-lbl" id="ti-prog-lbl" style="margin-bottom:12px">Ready</div>
+    <div class="log" id="ti-log" style="display:none"></div>
+    <div id="ti-msg3" class="msg" style="display:none;margin-top:10px"></div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-g" onclick="hideTplImportCard()">← Close</button>
     </div>
   </div>
 </div>
@@ -1000,9 +1072,10 @@ const MODULES={
   jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'job',cols:[{h:'Job #',f:'job_number'},{h:'Title',f:'job_title'},{h:'Status',f:'job_status'},{h:'Customer',f:'customer_name'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}]},
   invoice:{label:'Invoices',uid:['invoice_uid','uid','_id'],del:'invoice',cols:[{h:'Invoice #',f:'invoice_number'},{h:'Title',f:'invoice_title'},{h:'Status',f:'invoice_status'},{h:'Total',f:'invoice_total'},{h:'Due',f:'due_date'},{h:'Created',f:'created_at'}]},
   estimate:{label:'Quotes / Estimates',uid:['estimate_uid','quote_uid','uid'],del:'estimate',cols:[{h:'Quote #',f:'estimate_number'},{h:'Title',f:'estimate_title'},{h:'Status',f:'estimate_status'},{h:'Total',f:'estimate_total'},{h:'Created',f:'created_at'}]},
-  user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',cols:[{h:'Name',f:['user_first_name','user_last_name']},{h:'Email',f:'user_email'},{h:'Role',f:'user_role'},{h:'Status',f:'user_status'},{h:'Created',f:'created_at'}]},
+  user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',endpoint:'user/all',paginationParam:'limit',fetchParams:'sort=DESC&sort_by=created_at&filter.keyword=&filter.show_all_bu=true',cols:[{h:'Name',f:'_name'},{h:'Email',f:'email'},{h:'Role',f:'_role_name'},{h:'Status',f:'_status'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_name:[r.first_name,r.last_name].filter(Boolean).join(' ')||'—',_role_name:(r.role&&r.role.role_name)||'—',_status:r.is_active?'Active':'Inactive'}))},
   team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',cols:[{h:'Name',f:'team_name'},{h:'Members',f:'members_count'},{h:'Created',f:'created_at'}]},
-  workflow:{label:'Workflows',uid:['workflow_uid','uid','_id'],del:null,noDelete:true,endpoint:'workflows',customBaseUrl:'_workflowBaseUrl',paginationParam:'limit',fetchParams:'sort=ASC&sort_by=created_at',cols:[{h:'Name',f:'workflow_name'},{h:'Trigger Module',f:'trigger_module'},{h:'Trigger Event',f:'trigger_event_name'},{h:'Access',f:'workflow_access'},{h:'Active',f:'allow_workflow_to_trigger'},{h:'Created',f:'created_at'}]},
+  workflow:{label:'Workflows',uid:['workflow_uid','uid','_id'],del:'workflows',dryRunSkipGet:true,endpoint:'workflows',customBaseUrl:'_workflowBaseUrl',paginationParam:'limit',fetchParams:'sort=ASC&sort_by=created_at',cols:[{h:'Name',f:'workflow_name'},{h:'Trigger Module',f:'trigger_module'},{h:'Trigger Event',f:'trigger_event_name'},{h:'Access',f:'workflow_access'},{h:'Active',f:'allow_workflow_to_trigger'},{h:'Created',f:'created_at'}]},
+  workflow_variables:{label:'Workflow Variables',uid:['_id','uid','variable_uid'],del:'variables',dryRunSkipGet:true,endpoint:'variables',customBaseUrl:'_workflowBaseUrl',paginationParam:'count',fetchParams:'sort=ASC',cols:[{h:'Name',f:'name'},{h:'Value',f:'value'},{h:'Type',f:'type'},{h:'Description',f:'description'},{h:'Created',f:'created_at'}]},
   customer_notification:{label:'Customer Notifications',uid:['customer_notification_uid','notification_uid','uid','_id'],del:'customer_notification',dryRunSkipGet:true,cols:[{h:'Name',f:'notification_name'},{h:'Type',f:'notification_type'},{h:'Job Category',f:'job_category'},{h:'Job Status',f:'job_status_uid'},{h:'SMS/Email Body',f:'sms_body'}]},
   // Job Statuses: fetched from /jobs/category endpoint, statuses nested inside — transform flattens them
   job_status:{label:'Job Statuses',uid:['status_uid','_id'],del:'job_status',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,transform:(recs)=>recs.flatMap(cat=>(cat.job_statuses||[]).map(s=>({...s,_category:cat.category_name,_category_uid:cat.category_uid,_category_color:cat.category_color||'#6366F1'}))),cols:[{h:'Name',f:'status_name'},{h:'Type',f:'status_type'},{h:'Color',f:'status_color'},{h:'Category',f:'_category'},{h:'Track Time',f:'track_time_in_status'}]},
@@ -1027,6 +1100,8 @@ const MODULES={
   // Proposal Templates (Intelligent Quote Builder)
   proposal_template:{label:'Proposal Templates',uid:['proposal_template_uid','template_uid','uid','_id'],del:'invoice_estimate/proposal_template',dryRunSkipGet:true,endpoint:'invoice_estimate/proposal_template',fetchParams:'filter.keyword=',cols:[{h:'Name',f:'_tpl_name'},{h:'Active',f:'_active_lbl'},{h:'Job Category',f:'_cat_name'},{h:'Job Status',f:'_status_name'},{h:'Options',f:'_option_count'},{h:'Items',f:'_item_count'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>{const opts=r.proposal_options||r.options||r.template_options||[];const allItems=opts.flatMap(o=>o.line_items||o.items||o.proposal_line_items||[]);return{...r,_tpl_name:r.template_name||r.proposal_template_name||r.name||'—',_active_lbl:r.is_active===true?'Active':r.is_active===false?'Inactive':'—',_cat_name:r.job_category_name||r.job_category?.category_name||r.job_category?.name||r.trigger?.job_category_name||'—',_status_name:r.job_status_name||r.job_status?.status_name||r.job_status?.name||r.trigger?.job_status_name||'—',_option_count:opts.length,_item_count:allItems.length,_opts:opts};})}
 };
+let _cpqSubModule='proposal_template'; // active sub-module when cpq_group is selected
+let _wfSubModule='workflow'; // active sub-module when workflow_group is selected
 let allRecs=[],filtRecs=[],selUids=new Set(),uidField=null,running=false,paused=false,cancelled=false,dryCtx=null,failUids=[],logRows=[];
 let currentPage=1;
 let sortCol=null,sortDir=1; // column sorting state
@@ -1054,7 +1129,7 @@ let notifPerRecMapping={}; // notification_uid → {destCatUid, destStatUid}
 let _notifHelpers={}; // shared helpers between renderMappingUI and runAutoMatch/buildManualTable
 const $=id=>document.getElementById(id);
 const apiKey=()=>$('apikey').value.trim();
-const modKey=()=>$('module').value;
+const modKey=()=>{const v=$('module').value;return v==='cpq_group'?_cpqSubModule:v==='workflow_group'?_wfSubModule:v;};
 const modCfg=()=>MODULES[modKey()];
 const baseUrl=()=>_baseUrl;
 const ZUPER_CLIENT_HDRS={'x-zuper-client':'WEB_APP','x-zuper-client-version':'3.0'};
@@ -1108,6 +1183,9 @@ function showConnected(accountName, region){
   $('fetch-btn').style.display='inline-flex';
   $('import-btn').style.display = modKey()==='product' ? 'inline-flex' : 'none';
   const _pkgIBtn=$('pkg-import-btn');if(_pkgIBtn) _pkgIBtn.style.display=modKey()==='package'?'inline-flex':'none';
+  const _tplIBtn=$('tpl-import-btn');if(_tplIBtn) _tplIBtn.style.display=modKey()==='proposal_template'?'inline-flex':'none';
+  const _cpqRow=$('cpq-submodule-row');if(_cpqRow) _cpqRow.style.display=($('module').value==='cpq_group')?'block':'none';
+  const _wfSubRow=$('workflow-submodule-row');if(_wfSubRow) _wfSubRow.style.display=($('module').value==='workflow_group')?'block':'none';
   // Hide delete button and dry-run toggle for no-delete modules
   const cfg=modCfg();
   const noDelete=cfg&&cfg.noDelete;
@@ -1146,6 +1224,9 @@ function doDisconnect(){
   $('fetch-btn').style.display='none';
   $('import-btn').style.display='none';
   const _pkgIBtnD=$('pkg-import-btn');if(_pkgIBtnD) _pkgIBtnD.style.display='none';
+  const _tplIBtnD=$('tpl-import-btn');if(_tplIBtnD) _tplIBtnD.style.display='none';
+  const _cpqRowD=$('cpq-submodule-row');if(_cpqRowD) _cpqRowD.style.display='none';
+  const _wfRowD=$('workflow-submodule-row');if(_wfRowD) _wfRowD.style.display='none';
   $('dryrun-label').style.display='none';
   $('del-sel-btn').style.display='inline-flex'; // reset to default visible state
   $('dedup-btn').style.display='none';
@@ -1390,6 +1471,8 @@ function extractRecords(data, moduleKey){
     for(const k of topKeys){
       if(Array.isArray(data.data[k])) return data.data[k];
     }
+    // If data.data looks like a single record (has uid-style keys) wrap it — don't drill into nested arrays like work_schedule
+    if(Object.keys(data.data).some(k=>/_uid$|^uid$|^_id$/.test(k))) return [data.data];
     // Last resort: return first non-empty array value inside data.data
     for(const k of Object.keys(data.data)){
       if(Array.isArray(data.data[k])&&data.data[k].length) return data.data[k];
@@ -1436,6 +1519,7 @@ function renderTable(){
   const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='inline-flex';
   const cmpBtn=$('compare-btn');if(cmpBtn) cmpBtn.style.display='inline-flex';
   const updSelBtn=$('update-sel-btn');if(updSelBtn) updSelBtn.style.display='inline-flex';
+  const tplImpBtn=$('tpl-import-btn');if(tplImpBtn) tplImpBtn.style.display=(modKey()==='proposal_template')?'inline-flex':'none';
   const dfRow=$('date-filter-row');if(dfRow) dfRow.style.display='flex';
   buildDedupFieldOptions(cfg);
   renderRows();
@@ -1551,7 +1635,8 @@ function logLine(uid,level,msg){const el=$('log');const d=document.createElement
 
 async function hitOne(uid,dry){
   const cfg=modCfg(),delEndpoint=cfg.del||modKey();
-  const url=baseUrl()+delEndpoint+'/'+encodeURIComponent(uid);
+  const useBase=cfg.customBaseUrl?(_workflowBaseUrl||baseUrl()):baseUrl();
+  const url=useBase+delEndpoint+'/'+encodeURIComponent(uid);
   // Some modules don't support GET-by-ID — skip the API call on dry run
   if(dry&&cfg.dryRunSkipGet){
     return{ok:true,msg:'200 would delete (simulated)'};
@@ -4815,7 +4900,7 @@ function parsePkgExcel(wb){
     const cItem=col(['line item','item name','product name','item']);
     const cType=col(['type']);
     const cTier=col(['tier']);
-    const cQxo=col(['qxo','sku','product id','product_id','part']);
+    const cQxo=col(['qxo','sku','product id','product_id','part','product no','product_no']);
     const cUom=col(['uom','unit of measure','unit']);
     const cFormula=col(['quantity formula','qty formula','formula']);
     const cPrice=col(['price']);
@@ -4824,10 +4909,13 @@ function parsePkgExcel(wb){
       const brand=String(row[cBrand]||'').trim();
       const tier=String(row[cTier]||'').trim();
       const item=String(row[cItem]||'').trim();
-      // Skip empty / notes rows
-      if(!item||!tier) continue;
-      if(brand.startsWith('⚠')||item.startsWith('⚠')||tier.startsWith('⚠')) continue;
+      if(!item) continue;
+      if(cTier&&!tier) continue; // only require tier when the column actually exists
+      if(item.startsWith('⚠')||(tier&&tier.startsWith('⚠'))||(brand&&brand.startsWith('⚠'))) continue;
       if(/notes|reminder|^⚠/i.test(item)||/notes|reminder/i.test(brand)) continue;
+      // Skip section header rows (e.g. "MATERIALS", "LABOR") — no product data
+      const _hasProductData=String(row[cQxo]||'').trim()||String(row[cUom]||'').trim()||(parseFloat(String(row[cPrice]||'0').replace(/[$,\s]/g,''))||0);
+      if(!_hasProductData) continue;
       const lineItem={
         lineItem: item,
         type:     String(row[cType]||'').trim(),
@@ -4836,7 +4924,8 @@ function parsePkgExcel(wb){
         expr:     String(row[cFormula]||'').trim(),
         price:    parseFloat(String(row[cPrice]||'0').replace(/[$,\s]/g,''))||0
       };
-      const tierKey=tier.toLowerCase()==='all'?'__all__':tier;
+      // When no Tier column all items → '__all__' → single package per sheet
+      const tierKey=!cTier?'__all__':(tier.toLowerCase()==='all'?'__all__':tier);
       if(!tierMap[tierKey]) tierMap[tierKey]=[];
       tierMap[tierKey].push(lineItem);
     }
@@ -4844,7 +4933,7 @@ function parsePkgExcel(wb){
     const tiers=Object.keys(tierMap).filter(t=>t!=='__all__');
     if(!tiers.length&&!allItems.length) continue;
     if(!tiers.length){
-      // All rows are Tier=All → single package named after the sheet
+      // No Tier column or all rows are Tier=All → single package per sheet tab
       packages.push({name:sheetName,brand:sheetName,tier:'',items:allItems});
     } else {
       for(const tier of tiers){
@@ -4973,8 +5062,14 @@ async function startPkgImport(){
       const recs=extractRecords(d,'product')||[];
       if(!recs.length) break;
       for(const p of recs){
+        const pEntry={product_uid:p.product_uid||p.uid||'',product_name:p.product_name||'',unit_price:parseFloat(p.price||p.unit_price||0)||0};
         const pid=(p.product_id||p.product_code||p.sku||'').trim();
-        if(pid) productMap[pid]={product_uid:p.product_uid||p.uid||'',product_name:p.product_name||'',unit_price:parseFloat(p.price||p.unit_price||0)||0};
+        if(pid) productMap[pid]=pEntry;
+        const pno=String(p.product_no||'').trim();
+        if(pno&&pno!==pid) productMap[pno]=pEntry;
+        // Also index by name as last-resort fallback
+        const pname=(p.product_name||'').trim().toLowerCase();
+        if(pname&&!productMap[pname]) productMap[pname]=pEntry;
       }
       if(recs.length<150) break;
       pg++;
@@ -4996,7 +5091,7 @@ async function startPkgImport(){
     $('pi-prog-lbl').textContent=(i+1)+' / '+_pkgImportData.length+' — '+pkg.name;
 
     const lineItems=pkg.items.map(it=>{
-      const prod=productMap[it.qxoNum]||null;
+      const prod=productMap[it.qxoNum]||productMap[(it.lineItem||'').toLowerCase()]||null;
       const fUid=it.expr?formulaMap[it.expr.toLowerCase()]||'':'';
       return{
         product_uid:     prod?prod.product_uid:'',
@@ -5313,6 +5408,26 @@ document.addEventListener('keydown',e=>{
   }
 });
 
+// ── CPQ / ZUPER IQ: sub-module switching ─────────────────────────────────────
+function switchCpqSub(key){
+  _cpqSubModule=key;
+  ['proposal_template','formula','package'].forEach(k=>{
+    const btn=$('cpq-sub-btn-'+k);
+    if(btn) btn.className='btn '+(k===key?'btn-p':'btn-g');
+  });
+  onModuleChange();
+}
+
+// ── WORKFLOWS: sub-module switching ──────────────────────────────────────────
+function switchWfSub(key){
+  _wfSubModule=key;
+  ['workflow','workflow_variables'].forEach(k=>{
+    const btn=$('wf-sub-btn-'+k);
+    if(btn) btn.className='btn '+(k===key?'btn-p':'btn-g');
+  });
+  onModuleChange();
+}
+
 function onModuleChange(){
   const cfg=modCfg();
   $('s-module').textContent=cfg?cfg.label:modKey();
@@ -5328,8 +5443,12 @@ function onModuleChange(){
   $('s-total').textContent='—';$('s-sel').textContent='0';
   $('rec-count').textContent='No records loaded';
   hideMsg('fetch-msg');
+  // Show/hide CPQ sub-module selector
+  const cpqRow=$('cpq-submodule-row');if(cpqRow) cpqRow.style.display=($('module').value==='cpq_group')?'block':'none';
+  // Show/hide Workflow sub-module selector
+  const wfSubRow=$('workflow-submodule-row');if(wfSubRow) wfSubRow.style.display=($('module').value==='workflow_group')?'block':'none';
   // Show/hide module-specific param rows
-  const wfRow=$('workflow-url-row');if(wfRow) wfRow.style.display=(modKey()==='workflow')?'block':'none';
+  const wfRow=$('workflow-url-row');if(wfRow) wfRow.style.display=($('module').value==='workflow_group')?'block':'none';
   const clRow=$('checklist-params-row');
   if(clRow){clRow.style.display=(modKey()==='checklist')?'block':'none';if(modKey()==='checklist'&&_baseUrl) loadChecklistCategories();}
   const cfRow=$('custom-fields-params-row');if(cfRow) cfRow.style.display=(modKey()==='custom_fields')?'block':'none';
@@ -5345,6 +5464,7 @@ function onModuleChange(){
   const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='none';
   const cmpBtn=$('compare-btn');if(cmpBtn) cmpBtn.style.display='none';
   const updSelBtn=$('update-sel-btn');if(updSelBtn) updSelBtn.style.display='none';
+  const tplImpBtn2=$('tpl-import-btn');if(tplImpBtn2) tplImpBtn2.style.display=(modKey()==='proposal_template'&&!!_baseUrl)?'inline-flex':'none';
   const dfRow=$('date-filter-row');if(dfRow) dfRow.style.display='none';
   if($('update-card')) $('update-card').style.display='none';
   clearUndoBuffer();
@@ -5354,6 +5474,7 @@ function onModuleChange(){
   const pkgIbtn=$('pkg-import-btn');if(pkgIbtn) pkgIbtn.style.display=(modKey()==='package'&&isConn)?'inline-flex':'none';
   if(!isProduct&&typeof hideImportCard==='function') hideImportCard();
   if(modKey()!=='package'&&typeof hidePkgImportCard==='function') hidePkgImportCard();
+  if(modKey()!=='proposal_template'&&typeof hideTplImportCard==='function') hideTplImportCard();
 }
 
 onModuleChange();
@@ -5485,7 +5606,7 @@ function renderProposalTemplateRows(){
         <tbody>${optRowsHtml}${emptyRow}</tbody>
       </table>
     </td></tr>`;
-    const actBtns=`<button id="tpl-opts-btn-${uEsc}" class="btn btn-o" style="padding:4px 10px;font-size:.75rem" onclick="toggleProposalOpts('${uEsc}')">${opts.length>0?'Options ('+opts.length+')':'No Options'}</button> <button class="btn btn-o" style="padding:4px 10px;font-size:.75rem" onclick="openDrawer(allRecs.find(r=>String(r[uidField]||'')===\'${uEsc}\'))">JSON</button>`;
+    const actBtns=`<button id="tpl-opts-btn-${uEsc}" class="btn btn-o" style="padding:4px 10px;font-size:.75rem" onclick="toggleProposalOpts('${uEsc}')">${opts.length>0?'Options ('+opts.length+')':'No Options'}</button> <button class="btn btn-o" style="padding:4px 10px;font-size:.75rem" onclick="openDrawer(allRecs.find(r=>String(r[uidField]||'')===\'${uEsc}\'))">JSON view</button> <button class="btn btn-g" style="padding:4px 10px;font-size:.75rem" title="Export as Excel (one sheet per option)" onclick="exportSingleTplExcel(allRecs.find(r=>String(r[uidField]||'')===\'${uEsc}\'))">Excel ↓</button> <button class="btn btn-g" style="padding:4px 10px;font-size:.75rem" title="Export as JSON (for re-import)" onclick="exportSingleTplJson(allRecs.find(r=>String(r[uidField]||'')===\'${uEsc}\'))">JSON ↓</button>`;
     return`<tr class="${selUids.has(tplUid)?'row-sel':''}" data-uid="${uEsc}" ondblclick="openDrawer(allRecs.find(r=>String(r[uidField]||'')===this.dataset.uid))" style="cursor:pointer">
       <td><input type="checkbox" ${selUids.has(tplUid)?'checked':''} onchange="toggleRow('${uEsc}',this.checked,this.closest('tr'))"></td>
       <td class="uid-cell" title="${uEsc}">${uEsc}</td>
@@ -5517,6 +5638,369 @@ async function doToggleTokenVisibility(catUid,tokenUid,makeVisible){
     doFetch();
   }catch(e){
     showMsg('fetch-msg','✗ Toggle failed: '+e.message,'err');
+  }
+}
+
+// ============================================================
+// CPQ — Proposal Template Export (Excel + JSON)
+// ============================================================
+
+function _cpqHumanizeFormula(formulaObj){
+  if(!formulaObj) return '';
+  const inner=formulaObj.formula||{};
+  const expression=inner.expression||'';
+  const replacements={};
+  (inner.expression_map||[]).forEach(e=>{
+    replacements[e.key]=e.type==='MEASUREMENT'
+      ?(e.field_name||e.key)
+      :String(e.value!==undefined?e.value:e.key);
+  });
+  let result=expression;
+  Object.keys(replacements).sort((a,b)=>b.length-a.length).forEach(k=>{
+    result=result.split(k).join(replacements[k]);
+  });
+  return result.replace(/\*/g,'×');
+}
+
+function _cpqGetRounding(formulaObj){
+  if(!formulaObj) return '';
+  const raw=(formulaObj.formula||{}).rounding_mechanism||'';
+  return{NEXT_WHOLE_NUMBER:'Round Up',NEAREST_WHOLE_NUMBER:'Round Nearest',FLOOR:'Round Down'}[raw]||raw;
+}
+
+function _cpqSummarizeRule(cpqRule){
+  if(!cpqRule||!cpqRule.is_enabled) return '';
+  const rules=cpqRule.rules||{};
+  const sep=rules.condition_type==='AND'?' & ':' | ';
+  const conds=(rules.conditions||[]).map(c=>{
+    const field=c.field_name||c.field_type||'?';
+    const op=c.operator||'';
+    const val=Array.isArray(c.value)&&c.value.length?c.value.join(', '):(c.value!=null?String(c.value):'');
+    return val?field+' '+op+' '+val:field+' '+op;
+  });
+  const success=(rules.success_actions||[]).map(a=>(a.type||'').replace(/_/g,' ')).join(', ');
+  const failure=(rules.failure_actions||[]).map(a=>(a.type||'').replace(/_/g,' ')).join(', ');
+  let s='IF ('+conds.join(sep)+') → '+success;
+  if(failure) s+=' / else → '+failure;
+  return s;
+}
+
+function exportSingleTplExcel(rec){
+  if(!rec){alert('Record not found.');return;}
+  const opts=rec._opts||rec.proposal_options||[];
+  if(!opts.length){alert('No proposal options found in this template.');return;}
+  const wb=XLSX.utils.book_new();
+  const COLS=['Product Name','Section','Product No','Product Type','UOM','Unit Price ($)','Quantity Type','Formula Name','Formula (Human-Readable)','Rounding','Rule Summary'];
+  opts.forEach(opt=>{
+    let sheetName=(opt.option_name||'Option').replace(/[\\/?*[\]":]/g,'').replace(/:/g,' -').trim().slice(0,31)||'Option';
+    const rows=[COLS.slice()];
+    let currentSection='';
+    const items=opt.line_items||opt.items||opt.proposal_line_items||[];
+    items.forEach(item=>{
+      if(item.line_item_type==='HEADER'){
+        currentSection=item.product_name||'';
+        rows.push([currentSection.toUpperCase(),'','','','','','','','','','']);
+      } else {
+        const product=item.product||{};
+        const formulaObj=item.formula||null;
+        const price=product.price!==undefined?product.price:'';
+        rows.push([
+          item.product_name||'',
+          currentSection,
+          product.product_no||'',
+          item.product_type||product.product_type||'',
+          product.uom||'',
+          price,
+          item.quantity_type||'',
+          formulaObj?(formulaObj.formula_name||''):'',
+          _cpqHumanizeFormula(formulaObj),
+          _cpqGetRounding(formulaObj),
+          _cpqSummarizeRule(item.cpq_rule||null),
+        ]);
+      }
+    });
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    // Column widths
+    const widths=COLS.map(h=>h.length);
+    rows.slice(1).forEach(row=>row.forEach((v,i)=>{if(v)widths[i]=Math.max(widths[i],Math.min(String(v).length,55));}));
+    ws['!cols']=widths.map(w=>({wch:w+3}));
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  });
+  const tplName=(rec._tpl_name||rec.template_name||'template').replace(/[^\w\s\-]/g,'').trim()||'template';
+  XLSX.writeFile(wb,'cpq-'+tplName+'.xlsx');
+}
+
+function exportSingleTplJson(rec){
+  if(!rec){alert('Record not found.');return;}
+  const tplName=(rec._tpl_name||rec.template_name||'template').replace(/[^\w\s\-]/g,'').trim()||'template';
+  dlFile(JSON.stringify({type:'success',data:rec},null,2),'cpq-'+tplName+'.json','application/json');
+}
+
+// ============================================================
+// CPQ — Proposal Template Import (JSON round-trip)
+// ============================================================
+
+let _tplImportData=null;
+
+function showTplImportCard(){
+  $('tpl-import-card').style.display='block';
+  $('tpl-import-card').scrollIntoView({behavior:'smooth',block:'start'});
+  tiGoTo(1);
+  const fi=$('ti-file');if(fi) fi.value='';
+  const m=$('ti-msg1');if(m) m.style.display='none';
+}
+function hideTplImportCard(){$('tpl-import-card').style.display='none';}
+
+function updateTiPill(){
+  const d=$('ti-dryrun').checked,p=$('ti-mode-pill');
+  p.className='mode-'+(d?'safe':'live');p.textContent=d?'● Safe':'● LIVE';
+}
+
+function tiGoTo(step){
+  [1,2,3].forEach(n=>{
+    const s=$('tistep'+n);if(s) s.style.display=n===step?'block':'none';
+    const t=$('tistep'+n+'-tab');if(t){t.classList.toggle('active',n===step);t.classList.toggle('done',n<step);}
+  });
+}
+
+function parseTplExcel(wb){
+  const opts=[];
+  const SKIP=['SUMMARY','INDEX','README','COVER'];
+  for(const sheetName of wb.SheetNames){
+    if(SKIP.some(s=>sheetName.toUpperCase().includes(s))) continue;
+    const ws=wb.Sheets[sheetName];if(!ws) continue;
+    const rawRows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!rawRows.length) continue;
+    // Detect header row (look for Product Name / UOM / Price keywords)
+    const HDR=['product','uom','price','section','formula','quantity'];
+    let hdrIdx=0;
+    for(let i=0;i<Math.min(5,rawRows.length);i++){
+      const rowStr=rawRows[i].map(c=>String(c||'').toLowerCase()).join(' ');
+      if(HDR.filter(k=>rowStr.includes(k)).length>=2){hdrIdx=i;break;}
+    }
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:'',range:hdrIdx});
+    if(!rows.length) continue;
+    const keys=Object.keys(rows[0]);
+    const col=(terms)=>keys.find(k=>terms.some(t=>k.toLowerCase().includes(t)))||'';
+    const cName =col(['product name','item name','name']);
+    const cProdNo=col(['product no','product_no','qxo','sku','part no','part_no']);
+    const cType  =col(['product type','type']);
+    const cUom   =col(['uom','unit of measure','unit']);
+    const cPrice =col(['unit price','price']);
+    const cQtyT  =col(['quantity type','qty type']);
+    const cFName =col(['formula name']);
+    const items=[];
+    for(const row of rows){
+      const nameVal=String(row[cName]||'').trim();
+      if(!nameVal) continue;
+      // Section header rows — either '▶ ' prefix (our export) or atlas-format (section name only, no product data)
+      const _prodNo=String(row[cProdNo]||'').trim();
+      const _uom=String(row[cUom]||'').trim();
+      const _price=parseFloat(String(row[cPrice]||'0').replace(/[$,\s]/g,''))||0;
+      const isAtlasHeader=(cProdNo||cUom||cPrice)&&(!_prodNo&&!_uom&&!_price);
+      if(nameVal.startsWith('▶ ')||nameVal.startsWith('> ')||isAtlasHeader){
+        const sectionName=nameVal.replace(/^[▶>§]\s*/,'');
+        items.push({_type:'HEADER',section_name:sectionName});
+      } else {
+        items.push({
+          _type:'ITEM',
+          product_name:nameVal,
+          product_no:_prodNo,
+          product_type:String(row[cType]||'').trim(),
+          uom:_uom,
+          price:_price,
+          quantity_type:String(row[cQtyT]||'MANUAL').trim()||'MANUAL',
+          formula_name:String(row[cFName]||'').trim(),
+        });
+      }
+    }
+    if(items.length) opts.push({option_name:sheetName,option_description:'',_raw_items:items});
+  }
+  return opts;
+}
+
+function renderTplImportPreview(){
+  const rec=_tplImportData;if(!rec) return;
+  const isExcel=rec._format==='excel';
+  const opts=rec.proposal_options||rec._opts||[];
+  const allRawItems=opts.flatMap(o=>o._raw_items||o.line_items||o.items||o.proposal_line_items||[]);
+  const itemCount=allRawItems.filter(i=>(i._type||i.line_item_type)!=='HEADER').length;
+  const nameRow=$('ti-name-row');if(nameRow) nameRow.style.display=isExcel?'block':'none';
+  const prev=$('ti-preview');if(!prev) return;
+  prev.innerHTML=
+    '<div style="margin-bottom:8px;font-weight:600;font-size:.88rem">'+esc(rec.template_name||rec._tpl_name||'Unnamed Template')+'</div>'
+    +'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--text-sub)">'
+    +'<span><strong style="color:var(--text)">'+opts.length+'</strong> option'+(opts.length!==1?'s':'')+'</span>'
+    +'<span><strong style="color:var(--text)">'+itemCount+'</strong> line items</span>'
+    +(!isExcel?'<span>Job Category: <strong style="color:var(--text)">'+esc(rec.job_category_name||rec._cat_name||'—')+'</strong></span>':'')
+    +'<span style="background:var(--primary-tint);color:var(--primary);font-size:.7rem;font-weight:600;padding:2px 10px;border-radius:20px;border:1px solid var(--sec-border)">'+(isExcel?'Excel import':'JSON import')+'</span>'
+    +'</div>'
+    +'<div style="margin-top:10px;font-size:.78rem;color:var(--text-sub)">'+opts.map(o=>'<span style="display:inline-block;background:var(--primary-tint);border:1px solid var(--sec-border);border-radius:6px;padding:2px 10px;margin:2px">'+esc(o.option_name||'Option')+'</span>').join(' ')+'</div>';
+}
+
+function onTplImportFile(input){
+  const f=input.files[0];if(!f) return;
+  const msg=$('ti-msg1');msg.style.display='none';
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(ext==='json'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const data=JSON.parse(e.target.result);
+        const rec=data.data||data;
+        if(!rec.proposal_options&&!rec._opts){msg.className='msg msg-err';msg.textContent='✗ No proposal_options found in this JSON.';msg.style.display='block';return;}
+        _tplImportData={...rec,_format:'json'};
+        renderTplImportPreview();
+        tiGoTo(2);
+      }catch(ex){msg.className='msg msg-err';msg.textContent='✗ Invalid JSON: '+ex.message;msg.style.display='block';}
+    };
+    reader.readAsText(f);
+  } else if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        if(typeof XLSX==='undefined') throw new Error('XLSX library not loaded.');
+        const wb=XLSX.read(e.target.result,{type:'binary'});
+        const opts=parseTplExcel(wb);
+        if(!opts.length){msg.className='msg msg-err';msg.textContent='✗ No options found. Ensure sheets have Product Name / UOM / Price columns.';msg.style.display='block';return;}
+        const baseName=f.name.replace(/\.[^.]+$/,'');
+        _tplImportData={_format:'excel',template_name:baseName,template_description:'',cpq_config:{trigger:[]},proposal_options:opts};
+        const nameInp=$('ti-tpl-name');if(nameInp) nameInp.value=baseName;
+        renderTplImportPreview();
+        tiGoTo(2);
+      }catch(ex){msg.className='msg msg-err';msg.textContent='✗ '+ex.message;msg.style.display='block';}
+    };
+    reader.readAsBinaryString(f);
+  } else {
+    msg.className='msg msg-err';msg.textContent='✗ Unsupported format. Upload a .json or .xlsx file.';msg.style.display='block';
+  }
+}
+
+async function startTplImport(){
+  if(!_tplImportData){alert('No template data — upload a file first.');return;}
+  if(!apiKey()){alert('Connect to a Zuper account first.');return;}
+  const dry=$('ti-dryrun').checked;
+  const isExcel=_tplImportData._format==='excel';
+  const tplName=isExcel?(($('ti-tpl-name').value||'').trim()||_tplImportData.template_name||'Template'):(_tplImportData.template_name||_tplImportData._tpl_name||'Template');
+  const finalName=isExcel?tplName:tplName+' (Copy)';
+  const opts0=_tplImportData.proposal_options||_tplImportData._opts||[];
+  if(isExcel&&!tplName){const n=$('ti-msg2');n.className='msg msg-err';n.textContent='✗ Enter a template name before importing.';n.style.display='block';return;}
+  tiGoTo(3);
+  const logEl=$('ti-log');logEl.innerHTML='';logEl.style.display='block';
+  const progBar=$('ti-prog-bar'),progLbl=$('ti-prog-lbl');
+  progBar.style.width='0%';progLbl.textContent='Starting…';
+  $('ti-run-btn').disabled=true;
+  const msg=$('ti-msg3');msg.style.display='none';
+  function tiLog(level,text){
+    const d=document.createElement('div');d.className='log-'+level;
+    d.textContent=(level==='ok'?'✓':level==='err'?'✗':'⚠')+' '+text;
+    logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;
+  }
+  try{
+    if(dry){
+      tiLog('info','[Dry Run] Would create: "'+finalName+'"'+(isExcel?' (from Excel)':' (from JSON)'));
+      tiLog('info','POST '+baseUrl()+'invoice_estimate/proposal_template');
+      opts0.forEach((o,i)=>{const items=o._raw_items||o.line_items||o.items||o.proposal_line_items||[];tiLog('info','  Option '+(i+1)+': "'+(o.option_name||'Option')+'" — '+items.length+' item(s)');});
+      if(isExcel){tiLog('warn','[Excel] Product catalog and formula catalog will be fetched on live run to resolve UIDs.');}
+      progBar.style.width='100%';progLbl.textContent='✓ Dry run complete — no changes made';
+      msg.className='msg msg-ok';msg.textContent='✓ Dry run passed. Uncheck "Dry Run" and run again to create the template.';msg.style.display='block';
+    } else {
+      // ── Step 1: Create template ─────────────────────────────────────────────
+      const rec=_tplImportData;
+      const opts=rec.proposal_options||rec._opts||[];
+      const newName=finalName;
+      const cpqConfig=rec.cpq_config||{};
+      const trigger=Array.isArray(cpqConfig.trigger)?cpqConfig.trigger:(Array.isArray(cpqConfig.triggers)?cpqConfig.triggers:[]);
+      const tplPayload={template_name:newName,template_description:rec.template_description||'',template_type:'CPQ',cpq_config:{trigger},layout_template_uid:null,is_draft:false};
+      tiLog('info','Creating template "'+newName+'"…');
+      const tplRes=await fetch(baseUrl()+'invoice_estimate/proposal_template',{method:'POST',headers:hdrs(),body:JSON.stringify(tplPayload)});
+      let tplData;try{tplData=await tplRes.json();}catch{tplData={};}
+      if(!tplRes.ok) throw new Error('Create template: '+tplRes.status+' — '+(tplData.message||tplData.error||JSON.stringify(tplData).slice(0,150)));
+      const newTplUid=tplData.data?.proposal_template_uid||tplData.data?.template_uid||tplData.proposal_template_uid||tplData.template_uid||'';
+      if(!newTplUid) throw new Error('No template UID in response: '+JSON.stringify(tplData).slice(0,200));
+      tiLog('ok','Template created: '+newTplUid);
+      progBar.style.width='10%';progLbl.textContent='Template created…';
+      // ── Excel only: resolve product + formula catalogs ────────────────────
+      const prodMap={},fmlMap={};
+      if(isExcel){
+        tiLog('info','Fetching product catalog (matching by Product No)…');
+        try{
+          let pg=1;
+          while(pg<=50){
+            const pr=await fetch(baseUrl()+'product?page='+pg+'&count=150',{headers:getHdrs()});
+            if(!pr.ok) break;
+            const pd=await pr.json().catch(()=>({}));
+            const precs=extractRecords(pd,'product')||[];
+            if(!precs.length) break;
+            precs.forEach(p=>{
+              const pUid=p.product_uid||p.uid||'';
+              const ids=[p.product_id,p.product_code,p.sku,p.product_no].map(v=>String(v||'').trim()).filter(Boolean);
+              ids.forEach(id=>{if(!prodMap[id]) prodMap[id]=pUid;});
+              const pname=(p.product_name||'').trim().toLowerCase();
+              if(pname&&!prodMap[pname]) prodMap[pname]=pUid;
+            });
+            if(precs.length<150) break; pg++;
+          }
+          tiLog('ok','Catalog: '+Object.keys(prodMap).length+' product(s) indexed');
+        }catch(e){tiLog('warn','Product fetch error: '+e.message);}
+        tiLog('info','Fetching formula catalog (matching by name)…');
+        try{
+          const fr=await fetch(baseUrl()+'invoice_estimate/cpq/formulas?count=500&page=1',{headers:getHdrs()});
+          if(fr.ok){const fd=await fr.json().catch(()=>({}));(extractRecords(fd,'formula')||[]).forEach(f=>{const n=(f.formula_name||'').trim().toLowerCase();if(n) fmlMap[n]=f.formula_uid||f.uid||'';});}
+          tiLog('ok','Formulas: '+Object.keys(fmlMap).length+' indexed');
+        }catch(e){tiLog('warn','Formula fetch error: '+e.message);}
+        progBar.style.width='20%';
+      }
+      // ── Steps 2+: Create each option then add its line items ─────────────
+      const optStep=(isExcel?80:80)/(opts.length||1);
+      const startPct=isExcel?20:10;
+      for(let i=0;i<opts.length;i++){
+        const opt=opts[i];
+        const optName=opt.option_name||('Option '+(i+1));
+        tiLog('info','Creating option '+(i+1)+'/'+opts.length+': "'+optName+'"…');
+        const optPayload={option_name:optName,option_description:opt.option_description||'',option_image:opt.option_image||''};
+        const optRes=await fetch(baseUrl()+'invoice_estimate/proposal_template/'+encodeURIComponent(newTplUid)+'/options',{method:'POST',headers:hdrs(),body:JSON.stringify(optPayload)});
+        let optData;try{optData=await optRes.json();}catch{optData={};}
+        if(!optRes.ok){tiLog('err','Option "'+optName+'": '+optRes.status+' — '+(optData.message||optData.error||JSON.stringify(optData).slice(0,80)));progBar.style.width=(startPct+optStep*(i+1)).toFixed(1)+'%';continue;}
+        const newOptUid=optData.data?.option_uid||optData.data?.proposal_option_uid||optData.option_uid||optData.proposal_option_uid||'';
+        if(!newOptUid){tiLog('err','No option UID returned for "'+optName+'": '+JSON.stringify(optData).slice(0,100));progBar.style.width=(startPct+optStep*(i+1)).toFixed(1)+'%';continue;}
+        tiLog('ok','Option "'+optName+'" created: '+newOptUid);
+        // Build line items — Excel: convert _raw_items; JSON: strip server fields
+        const rawItems=isExcel?(opt._raw_items||[]):(opt.line_items||opt.items||opt.proposal_line_items||[]);
+        if(rawItems.length){
+          let cleanItems;
+          if(isExcel){
+            cleanItems=rawItems.map(item=>{
+              if(item._type==='HEADER') return{line_item_type:'HEADER',product_name:item.section_name||''};
+              const pUid=prodMap[item.product_no]||prodMap[(item.product_name||'').toLowerCase()]||'';
+              if(!pUid) tiLog('warn','Product "'+item.product_no+'" ('+item.product_name+') not matched in catalog — will import without product UID');
+              const fUid=item.formula_name?fmlMap[item.formula_name.toLowerCase()]||'':'';
+              if(item.formula_name&&!fUid) tiLog('warn','Formula "'+item.formula_name+'" not found — quantity_type will default to MANUAL');
+              return{line_item_type:'ITEM',product_uid:pUid,product_name:item.product_name||'',product_type:item.product_type||'',unit_price:item.price||0,quantity:1,quantity_type:fUid?item.quantity_type||'FORMULA':'MANUAL',formula_uid:fUid,uom:item.uom||''};
+            });
+          } else {
+            cleanItems=rawItems.map(item=>{const c={...item};delete c.line_item_uid;delete c.created_at;delete c.updated_at;delete c.proposal_template_uid;delete c.option_uid;delete c.section_uid;return c;});
+          }
+          tiLog('info','Adding '+cleanItems.length+' line items to "'+optName+'"…');
+          const liRes=await fetch(baseUrl()+'invoice_estimate/proposal_template/'+encodeURIComponent(newTplUid)+'/options/'+encodeURIComponent(newOptUid)+'/line_items?items_type=LINE_ITEMS',{method:'POST',headers:hdrs(),body:JSON.stringify({line_items:cleanItems})});
+          let liData;try{liData=await liRes.json();}catch{liData={};}
+          if(!liRes.ok) tiLog('err','Line items for "'+optName+'": '+liRes.status+' — '+(liData.message||liData.error||JSON.stringify(liData).slice(0,100)));
+          else tiLog('ok',cleanItems.length+' line items added to "'+optName+'"');
+        }
+        progBar.style.width=(startPct+optStep*(i+1)).toFixed(1)+'%';
+        progLbl.textContent='Option '+(i+1)+'/'+opts.length+' done…';
+      }
+      progBar.style.width='100%';progLbl.textContent='✓ Import complete';
+      msg.className='msg msg-ok';
+      msg.innerHTML='✓ Template "<strong>'+esc(newName)+'</strong>" created. <a href="javascript:void(0)" onclick="doFetch();hideTplImportCard()">Refresh list →</a>';
+      msg.style.display='block';
+    }
+  }catch(e){
+    tiLog('err',e.message);
+    progLbl.textContent='✗ Import failed';
+    msg.className='msg msg-err';msg.textContent='✗ '+e.message;msg.style.display='block';
+  }finally{
+    $('ti-run-btn').disabled=false;
   }
 }
 </script>
