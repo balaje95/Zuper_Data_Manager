@@ -400,6 +400,7 @@ input[type=checkbox]{accent-color:var(--primary)}
         <option value="checklist">Checklists</option>
         <option value="custom_fields">Custom Fields</option>
         <option value="product_category">Product Categories</option>
+        <option value="trade_type">Trade Types</option>
         <option value="email_template">Email / SMS Templates</option>
         <option value="measurement_category">Measurement Categories</option>
         <option value="cpq_group">⚡ CPQ / Zuper IQ — Intelligent Quoting</option>
@@ -477,6 +478,7 @@ input[type=checkbox]{accent-color:var(--primary)}
     <button class="btn btn-g" id="disconnect-btn" onclick="doDisconnect()" style="display:none">⏏ Disconnect</button>
     <button class="btn btn-p" id="fetch-btn" onclick="doFetch()" style="display:none">📄 Fetch Records</button>
     <button class="btn btn-p" id="import-btn" onclick="showImportCard()" style="display:none">📥 Import Products</button>
+    <button class="btn btn-p" id="tt-import-btn" onclick="showTtImportCard()" style="display:none">🏷 Import Trade Type Mapping</button>
     <button class="btn btn-p" id="pkg-import-btn" onclick="showPkgImportCard()" style="display:none">📦 Import Packages</button>
     <button class="btn btn-p" id="tpl-import-btn" onclick="showTplImportCard()" style="display:none">📥 Import Template</button>
     <label id="dryrun-label" style="display:none;align-items:center;gap:6px;font-size:.82rem;font-weight:600;cursor:pointer;margin-left:4px">
@@ -515,6 +517,7 @@ input[type=checkbox]{accent-color:var(--primary)}
       <button class="btn btn-o" id="dedup-btn" onclick="showDedupPanel()" style="display:none">🔍 Find Duplicates</button>
       <button class="btn btn-p" id="mig-btn" onclick="showMigratePanel()" style="display:none">🚀 Migrate Selected</button>
       <button class="btn btn-w" id="update-sel-btn" onclick="showUpdate()" style="display:none">✏ Update Selected</button>
+      <button class="btn btn-w" id="tt-map-btn" onclick="showTradeTypeMap()" style="display:none">🏷 Map Trade Types</button>
       <button class="btn btn-d" id="del-sel-btn" onclick="showDelete()">🗑 Delete Selected</button>
     </div>
   </div>
@@ -793,6 +796,131 @@ input[type=checkbox]{accent-color:var(--primary)}
   </div>
 </div>
 
+<!-- TRADE TYPE MAPPING (Parts & Services only) -->
+<div class="card" id="tt-card" style="display:none">
+  <div class="sec-title">🏷 Map Trade Types — Parts &amp; Services</div>
+  <div id="tt-warn" class="msg msg-warn" style="margin-bottom:14px">⚠ Select records above first.</div>
+  <div class="msg msg-info" style="margin-bottom:14px;font-size:.8rem">Assign selected Parts &amp; Services to one or more Trade Types (Zuper's <code>business_units</code> API). Sends a <code>PATCH</code> with <code>bu_uids</code> to the product endpoint. Use dry-run first to verify.</div>
+  <div style="margin-bottom:14px">
+    <div class="field-lbl">Trade Types</div>
+    <div id="tt-checkboxes" style="max-height:220px;overflow-y:auto;padding:10px 14px;background:var(--th-bg);border-radius:8px;border:1px solid var(--border);font-size:.82rem">Loading…</div>
+  </div>
+  <div style="margin-bottom:14px;max-width:340px">
+    <div class="field-lbl">Mode</div>
+    <select id="tt-mode" class="inp">
+      <option value="replace">Replace existing Trade Type(s)</option>
+      <option value="add">Add to existing Trade Type(s)</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:var(--th-bg);border-radius:8px;border:1px solid var(--border);margin-bottom:14px">
+    <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;cursor:pointer">
+      <input type="checkbox" id="tt-dryrun" checked onchange="updateTtPill()">
+      Dry Run <span id="tt-mode-pill" class="mode-safe">● Safe</span>
+    </label>
+  </div>
+  <div class="btn-row" style="margin-bottom:14px">
+    <button class="btn btn-w" id="tt-run-btn" onclick="startTradeTypeMap()">🏷 Apply Mapping</button>
+    <button class="btn btn-g" id="tt-cancel-btn" onclick="cancelTradeTypeMap()" style="display:none">✕ Cancel</button>
+    <button class="btn btn-w" id="tt-proceed-btn" onclick="proceedTradeTypeMapReal()" style="display:none">→ Proceed with Real UPDATE</button>
+    <button class="btn btn-o" id="tt-retry-btn" onclick="retryTradeTypeMap()" style="display:none">↩ Retry Failed</button>
+    <button class="btn btn-o" onclick="hideTradeTypeMap()">← Back</button>
+  </div>
+  <div id="tt-prog-wrap" style="display:none;margin-bottom:12px">
+    <div class="prog-bar-wrap"><div class="prog-bar" id="tt-prog-bar"></div></div>
+    <div class="prog-lbl" id="tt-prog-lbl">Ready</div>
+  </div>
+  <div class="run-stats" id="tt-stats" style="display:none;margin-bottom:12px">
+    <div class="rs rs-g"><div class="rs-val" id="tt-rs-total">0</div><div class="rs-lbl">Total</div></div>
+    <div class="rs rs-g"><div class="rs-val" id="tt-rs-ok" style="color:var(--green-d)">0</div><div class="rs-lbl" id="tt-rs-ok-lbl">Updated</div></div>
+    <div class="rs rs-r"><div class="rs-val" id="tt-rs-fail" style="color:var(--red-d)">0</div><div class="rs-lbl">Failed</div></div>
+  </div>
+  <div class="log" id="tt-log" style="display:none"></div>
+  <div id="tt-log-actions" style="display:none;margin-top:8px">
+    <button class="btn btn-o" onclick="downloadTradeTypeLog()">⬇ Download Log CSV</button>
+  </div>
+</div>
+
+<!-- IMPORT TRADE TYPE MAPPING (Parts & Services only) -->
+<div class="card" id="tt-import-card" style="display:none">
+  <div class="sec-title">🏷 Import Trade Type Mapping</div>
+  <div class="msg msg-info" style="margin-bottom:14px;font-size:.8rem">Upload a CSV/Excel file mapping Parts &amp; Services to Trade Type(s) — e.g. columns <code>Parts UID</code>, <code>Category</code>, <code>Trade Type</code>. Multiple rows for the same Parts UID are combined. A Parts UID column is preferred; matching by product name requires Parts &amp; Services to already be fetched.</div>
+  <div id="tti-msg1" class="msg" style="display:none;margin-bottom:10px"></div>
+  <div id="tti-step1">
+    <div id="tti-dropzone" onclick="document.getElementById('tti-file').click()"
+      style="border:2px dashed var(--border-inp);border-radius:14px;padding:32px;background:var(--inp-bg);text-align:center;cursor:pointer;margin-bottom:14px">
+      <div style="font-size:2rem;margin-bottom:8px">📂</div>
+      <p style="font-size:.85rem;color:var(--text-sub)"><strong style="color:var(--text)">Click to upload</strong> or drag &amp; drop</p>
+      <p style="font-size:.76rem;color:var(--text-sub);margin-top:4px">CSV or Excel (.xlsx)</p>
+      <input type="file" id="tti-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="onTtImportFile(this)">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-g" onclick="hideTtImportCard()">← Back</button>
+    </div>
+  </div>
+  <div id="tti-step2" style="display:none">
+    <div class="grid2" style="max-width:640px;margin-bottom:14px">
+      <div>
+        <div class="field-lbl">Product Match Column</div>
+        <select id="tti-col-uid" class="inp"></select>
+        <div style="font-size:.7rem;color:var(--text-sub);margin-top:4px">Preferably the Parts UID / product_uid column.</div>
+      </div>
+      <div>
+        <div class="field-lbl">Trade Type Column</div>
+        <select id="tti-col-tt" class="inp"></select>
+        <div style="font-size:.7rem;color:var(--text-sub);margin-top:4px">Comma-separated values allowed for multiple trade types.</div>
+      </div>
+    </div>
+    <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;cursor:pointer;margin-bottom:14px">
+      <input type="checkbox" id="tti-create-missing" checked> Create missing Trade Types automatically
+    </label>
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn btn-p" onclick="buildTtImportPreview()">→ Preview</button>
+      <button class="btn btn-g" onclick="hideTtImportCard()">← Back</button>
+    </div>
+  </div>
+  <div id="tti-step3" style="display:none">
+    <div id="tti-summary" class="msg msg-info" style="margin-bottom:12px;font-size:.8rem"></div>
+    <div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:14px">
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem" id="tti-preview-table">
+        <thead><tr><th style="padding:6px 8px;text-align:left;background:var(--th-bg)">Product</th><th style="padding:6px 8px;text-align:left;background:var(--th-bg)">Trade Type(s)</th><th style="padding:6px 8px;text-align:left;background:var(--th-bg)">Status</th></tr></thead>
+        <tbody id="tti-preview-body"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:var(--th-bg);border-radius:8px;border:1px solid var(--border);margin-bottom:14px">
+      <div>
+        <div class="field-lbl">Mode</div>
+        <select id="tti-mode" class="inp">
+          <option value="add">Add to existing Trade Type(s)</option>
+          <option value="replace">Replace existing Trade Type(s)</option>
+        </select>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;cursor:pointer">
+        <input type="checkbox" id="tti-dryrun" checked onchange="updateTtiPill()">
+        Dry Run <span id="tti-mode-pill" class="mode-safe">● Safe</span>
+      </label>
+    </div>
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn btn-w" id="tti-run-btn" onclick="startTtImport()">📥 Run Import</button>
+      <button class="btn btn-w" id="tti-proceed-btn" onclick="proceedTtImportReal()" style="display:none">→ Proceed with Real UPDATE</button>
+      <button class="btn btn-o" id="tti-retry-btn" onclick="retryTtImport()" style="display:none">↩ Retry Failed</button>
+      <button class="btn btn-g" onclick="hideTtImportCard()">← Back</button>
+    </div>
+    <div id="tti-prog-wrap" style="display:none;margin-bottom:12px">
+      <div class="prog-bar-wrap"><div class="prog-bar" id="tti-prog-bar"></div></div>
+      <div class="prog-lbl" id="tti-prog-lbl">Ready</div>
+    </div>
+    <div class="run-stats" id="tti-stats" style="display:none;margin-bottom:12px">
+      <div class="rs rs-g"><div class="rs-val" id="tti-rs-total">0</div><div class="rs-lbl">Total</div></div>
+      <div class="rs rs-g"><div class="rs-val" id="tti-rs-ok" style="color:var(--green-d)">0</div><div class="rs-lbl" id="tti-rs-ok-lbl">Updated</div></div>
+      <div class="rs rs-r"><div class="rs-val" id="tti-rs-fail" style="color:var(--red-d)">0</div><div class="rs-lbl">Failed</div></div>
+    </div>
+    <div class="log" id="tti-log" style="display:none"></div>
+    <div id="tti-log-actions" style="display:none;margin-top:8px">
+      <button class="btn btn-o" onclick="downloadTtImportLog()">⬇ Download Log CSV</button>
+    </div>
+  </div>
+</div>
+
 <!-- IMPORT -->
 <div class="card" id="import-card" style="display:none">
   <div class="sec-title">📥 Import Products (Parts &amp; Services)</div>
@@ -1063,28 +1191,28 @@ input[type=checkbox]{accent-color:var(--primary)}
 <script>
 'use strict';
 const MODULES={
-  purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'purchase_order_number'},{h:'Title',f:'purchase_order_title'},{h:'Status',f:'purchase_order_status'},{h:'Vendor',f:'vendor_name'},{h:'Total',f:'purchase_order_total'},{h:'Created',f:'created_at'}]},
+  purchase_orders:{label:'Purchase Orders',uid:['purchase_order_uid','uid','_id'],del:'purchase_orders',cols:[{h:'Order #',f:'_po_no'},{h:'Type',f:'purchase_order_type'},{h:'Status',f:'purchase_order_status'},{h:'Items',f:'number_of_line_items'},{h:'Total',f:'_total'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_po_no:r.reference_number||r.purchase_order_number||'—',_total:r.total_price||r.purchase_order_total||'—'}))},
   material_requests:{label:'Material Orders',uid:['material_request_uid','uid','_id'],del:'material_requests',cols:[{h:'MO #',f:'material_request_number'},{h:'Title',f:'material_request_title'},{h:'Status',f:'material_request_status'},{h:'Created',f:'created_at'}]},
   customers:{label:'Customers',uid:['customer_uid','uid','_id'],del:'customers',cols:[{h:'Name',f:['customer_first_name','customer_last_name']},{h:'Email',f:'customer_email'},{h:'Phone',f:'customer_phone'},{h:'Type',f:'customer_type'},{h:'Created',f:'created_at'}]},
   property:{label:'Properties',uid:['property_uid','uid','_id'],del:'property',cols:[{h:'Name',f:'property_name'},{h:'Address',f:'property_address'},{h:'City',f:'city'},{h:'Status',f:'property_status'},{h:'Created',f:'created_at'}]},
   assets:{label:'Assets',uid:['asset_uid','uid','_id'],del:'assets',cols:[{h:'Name',f:'asset_name'},{h:'Serial #',f:'serial_number'},{h:'Type',f:'asset_type'},{h:'Status',f:'asset_status'},{h:'Created',f:'created_at'}]},
-  product:{label:'Parts & Services',uid:['product_uid','uid','_id'],del:'product',fetchMethod:'POST',endpoint:'product/filter',fetchBody:(page,count)=>({page,count}),cols:[{h:'Name',f:'product_name'},{h:'Type',f:'product_type'},{h:'Category',f:'_cat_name'},{h:'Price',f:'price'},{h:'Formula',f:'_formula_name'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_cat_name:(r.product_category?.category_name||r.product_category||'—'),_formula_name:(r.formula?.formula_name||'—')}))},
-  jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'job',cols:[{h:'Job #',f:'job_number'},{h:'Title',f:'job_title'},{h:'Status',f:'job_status'},{h:'Customer',f:'customer_name'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}]},
-  invoice:{label:'Invoices',uid:['invoice_uid','uid','_id'],del:'invoice',cols:[{h:'Invoice #',f:'invoice_number'},{h:'Title',f:'invoice_title'},{h:'Status',f:'invoice_status'},{h:'Total',f:'invoice_total'},{h:'Due',f:'due_date'},{h:'Created',f:'created_at'}]},
-  estimate:{label:'Quotes / Estimates',uid:['estimate_uid','quote_uid','uid'],del:'estimate',cols:[{h:'Quote #',f:'estimate_number'},{h:'Title',f:'estimate_title'},{h:'Status',f:'estimate_status'},{h:'Total',f:'estimate_total'},{h:'Created',f:'created_at'}]},
-  user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',endpoint:'user/all',paginationParam:'limit',fetchParams:'sort=DESC&sort_by=created_at&filter.keyword=&filter.show_all_bu=true',cols:[{h:'Name',f:'_name'},{h:'Email',f:'email'},{h:'Role',f:'_role_name'},{h:'Status',f:'_status'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_name:[r.first_name,r.last_name].filter(Boolean).join(' ')||'—',_role_name:(r.role&&r.role.role_name)||'—',_status:r.is_active?'Active':'Inactive'}))},
-  team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',cols:[{h:'Name',f:'team_name'},{h:'Members',f:'members_count'},{h:'Created',f:'created_at'}]},
+  product:{label:'Parts & Services',uid:['product_uid','uid','_id'],del:'product',dryRunSkipGet:true,fetchMethod:'POST',endpoint:'product/filter',fetchBody:(page,count)=>({page,count}),cols:[{h:'Name',f:'product_name'},{h:'Type',f:'product_type'},{h:'Category',f:'_cat_name'},{h:'Price',f:'price'},{h:'Formula',f:'_formula_name'},{h:'Trade Types',f:'_bu_names'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_cat_name:(r.product_category?.category_name||r.product_category||'—'),_formula_name:(r.formula?.formula_name||'—'),_bu_names:(r.business_unit||[]).map(b=>b.bu_name||b.name||'').filter(Boolean).join(', ')||'—'}))},
+  jobs:{label:'Jobs',uid:['job_uid','uid','_id'],del:'job',cols:[{h:'Job #',f:'_job_no'},{h:'Title',f:'job_title'},{h:'Status',f:'_status'},{h:'Customer',f:'_customer'},{h:'Scheduled',f:'scheduled_start_time'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_job_no:r.work_order_number||r.job_number||'—',_status:(r.current_job_status&&r.current_job_status.status_name)||'—',_customer:r.customer_name||(r.customer?[r.customer.customer_first_name,r.customer.customer_last_name].filter(Boolean).join(' '):'—')}))},
+  invoice:{label:'Invoices',uid:['invoice_uid','uid','_id'],del:'invoice',cols:[{h:'Invoice #',f:'_inv_no'},{h:'Title',f:'invoice_title'},{h:'Status',f:'invoice_status'},{h:'Total',f:'_total'},{h:'Due',f:'due_date'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_inv_no:r.invoice_no||r.invoice_number||'—',_total:r.total||r.invoice_total||'—'}))},
+  estimate:{label:'Quotes / Estimates',uid:['estimate_uid','quote_uid','uid'],del:'estimate',cols:[{h:'Quote #',f:'_est_no'},{h:'Title',f:'_est_title'},{h:'Status',f:'estimate_status'},{h:'Total',f:'_total'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_est_no:r.estimate_no||r.estimate_number||'—',_est_title:r.proposal_title||r.estimate_title||'—',_total:r.total||r.estimate_total||'—'}))},
+  user:{label:'Users',uid:['user_uid','uid','_id'],del:'user',dryRunSkipGet:true,fetchFromNestedTeams:true,cols:[{h:'Name',f:'_name'},{h:'Email',f:'email'},{h:'Role',f:'_role_name'},{h:'Status',f:'_status'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_name:[r.first_name,r.last_name].filter(Boolean).join(' ')||'—',_role_name:(r.role&&r.role.role_name)||'—',_status:r.is_active===false?'Inactive':'Active'}))},
+  team:{label:'Teams',uid:['team_uid','uid','_id'],del:'team',dryRunSkipGet:true,cols:[{h:'Name',f:'team_name'},{h:'Members',f:'_member_count'},{h:'Active',f:'_active'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_member_count:(r.users||[]).length,_active:r.is_active===false?'No':'Yes'}))},
   workflow:{label:'Workflows',uid:['workflow_uid','uid','_id'],del:'workflows',dryRunSkipGet:true,endpoint:'workflows',customBaseUrl:'_workflowBaseUrl',paginationParam:'limit',fetchParams:'sort=ASC&sort_by=created_at',cols:[{h:'Name',f:'workflow_name'},{h:'Trigger Module',f:'trigger_module'},{h:'Trigger Event',f:'trigger_event_name'},{h:'Access',f:'workflow_access'},{h:'Active',f:'allow_workflow_to_trigger'},{h:'Created',f:'created_at'}]},
   workflow_variables:{label:'Workflow Variables',uid:['_id','uid','variable_uid'],del:'variables',dryRunSkipGet:true,endpoint:'variables',customBaseUrl:'_workflowBaseUrl',paginationParam:'count',fetchParams:'sort=ASC',cols:[{h:'Name',f:'name'},{h:'Value',f:'value'},{h:'Type',f:'type'},{h:'Description',f:'description'},{h:'Created',f:'created_at'}]},
   customer_notification:{label:'Customer Notifications',uid:['customer_notification_uid','notification_uid','uid','_id'],del:'customer_notification',dryRunSkipGet:true,cols:[{h:'Name',f:'notification_name'},{h:'Type',f:'notification_type'},{h:'Job Category',f:'job_category'},{h:'Job Status',f:'job_status_uid'},{h:'SMS/Email Body',f:'sms_body'}]},
   // Job Statuses: fetched from /jobs/category endpoint, statuses nested inside — transform flattens them
-  job_status:{label:'Job Statuses',uid:['status_uid','_id'],del:'job_status',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,transform:(recs)=>recs.flatMap(cat=>(cat.job_statuses||[]).map(s=>({...s,_category:cat.category_name,_category_uid:cat.category_uid,_category_color:cat.category_color||'#6366F1'}))),cols:[{h:'Name',f:'status_name'},{h:'Type',f:'status_type'},{h:'Color',f:'status_color'},{h:'Category',f:'_category'},{h:'Track Time',f:'track_time_in_status'}]},
+  job_status:{label:'Job Statuses',uid:['status_uid','_id'],del:'jobs/status',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,transform:(recs)=>recs.flatMap(cat=>(cat.job_statuses||[]).map(s=>({...s,_category:cat.category_name,_category_uid:cat.category_uid,_category_color:cat.category_color||'#6366F1'}))),cols:[{h:'Name',f:'status_name'},{h:'Type',f:'status_type'},{h:'Color',f:'status_color'},{h:'Category',f:'_category'},{h:'Track Time',f:'track_time_in_status'}]},
   // Job Categories: same endpoint, categories are the top-level records
   job_category:{label:'Job Categories',uid:['category_uid','uid','_id'],del:'job_category',endpoint:'jobs/category',fetchParams:'populate_statuses=true',noPageLimit:true,cols:[{h:'Name',f:'category_name'},{h:'Color',f:'category_color'},{h:'Statuses',f:'_status_count'},{h:'Display Order',f:'display_order'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(c=>({...c,_status_count:(c.job_statuses||[]).length}))},
   // Asset Inspection Forms
   asset_form:{label:'Asset Inspection Forms',uid:['asset_form_uid','uid','_id'],del:'assets/inspection_form/master',endpoint:'assets/inspection_form/master',fetchParams:'sort=DESC&sort_by=created_at&filter.keyword=',cols:[{h:'Name',f:'asset_form_name'},{h:'Description',f:'asset_form_description'},{h:'Fields',f:'_field_count'},{h:'Active',f:'is_active'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_field_count:(r.asset_form_fields||[]).length}))},
   // Service Tasks (placeholder — UID field TBC once user shares response)
-  service_task:{label:'Service Tasks',uid:['service_task_uid','uid','_id'],del:'service_tasks/master',endpoint:'service_tasks/master',fetchParams:'filter.keyword=',cols:[{h:'Name',f:'service_task_name'},{h:'Type',f:'service_task_type'},{h:'Status',f:'status'},{h:'Created',f:'created_at'}]},
+  service_task:{label:'Service Tasks',uid:['service_task_master_uid','service_task_uid','uid','_id'],del:'service_tasks/master',endpoint:'service_tasks/master',cols:[{h:'Name',f:'service_task_title'},{h:'Type',f:'task_type'},{h:'Active',f:'is_active'},{h:'Created',f:'created_at'}]},
   // Checklist: special module — needs category_uid + job_status_uid params
   checklist:{label:'Checklists',uid:['checklist_uid','_id'],del:null,noDelete:true,endpoint:'settings/checklist',customParams:true,cols:[{h:'Field Name',f:'field_name'},{h:'Type',f:'field_type'},{h:'Required',f:'is_required'},{h:'Display Order',f:'display_order'},{h:'Internal Key',f:'internal_key'}]},
   // Custom Fields: special module — needs module_name param
@@ -1092,9 +1220,11 @@ const MODULES={
   // Email / SMS Templates
   email_template:{label:'Email / SMS Templates',uid:['template_uid','uid','_id'],del:'misc/email_template',endpoint:'misc/email_template',fetchParams:'sort=DESC&sort_by=created_at&filter.keyword=',cols:[{h:'Name',f:'template_name'},{h:'Type',f:'type'},{h:'Module',f:'template_module'},{h:'Subject',f:'_subject'},{h:'Description',f:'template_description'}],transform:(recs)=>recs.map(r=>({...r,_subject:r.template_subject||r.template?.template_subject||'—'}))},
   // Formulas (CPQ)
-  formula:{label:'Formulas (CPQ)',uid:['formula_uid','uid','_id'],del:'invoice_estimate/cpq/formulas',dryRunSkipGet:true,endpoint:'invoice_estimate/cpq/formulas',canDelete:(rec)=>rec.is_custom?null:'System formula — cannot be deleted',cols:[{h:'Name',f:'formula_name'},{h:'Key',f:'formula_key'},{h:'Category',f:'_category_name'},{h:'Expression',f:'_expression'},{h:'Active',f:'is_active'},{h:'Custom',f:'is_custom'}],transform:(recs)=>recs.map(r=>({...r,_category_name:(r.formula_category?.category_name||'—'),_expression:(r.formula?.formatted_expression||'')}))},
+  formula:{label:'Formulas (CPQ)',uid:['formula_uid','uid','_id'],del:'formula',dryRunSkipGet:true,endpoint:'invoice_estimate/cpq/formulas',canDelete:(rec)=>rec.is_custom?null:'System formula — cannot be deleted',cols:[{h:'Name',f:'formula_name'},{h:'Key',f:'formula_key'},{h:'Category',f:'_category_name'},{h:'Expression',f:'_expression'},{h:'Active',f:'is_active'},{h:'Custom',f:'is_custom'}],transform:(recs)=>recs.map(r=>({...r,_category_name:(r.formula_category?.category_name||'—'),_expression:(r.formula?.formatted_expression||'')}))},
   product_category:{label:'Product Categories',uid:['category_uid','product_category_uid','uid'],del:'products/category',endpoint:'products/category',noPageLimit:true,fetchParams:'count=200&page=1&filter.keyword=',cols:[{h:'Name',f:'category_name'},{h:'Description',f:'category_description'},{h:'Business Units',f:'_bu_names'},{h:'Order',f:'display_order'}],transform:(recs)=>recs.map(r=>({...r,_bu_names:(r.business_unit||[]).map(b=>b.bu_name).join(', ')||'—'}))},
-  package:{label:'Service Packages',uid:['package_uid','uid','_id'],del:'invoice_estimate/package',endpoint:'invoice_estimate/package',noPageLimit:true,fetchParams:'count=1000',cols:[{h:'Name',f:'package_name'},{h:'Price',f:'package_price'},{h:'Active',f:'is_active'},{h:'Items',f:'_item_count'},{h:'Description',f:'package_description'}],transform:(recs)=>recs.map(r=>({...r,_item_count:(r.line_items||[]).length}))},
+  // Trade Types — Zuper UI calls these "Trade Types" (Settings → Miscellaneous → Trade Type) but the backend is the business_units API
+  trade_type:{label:'Trade Types',uid:['bu_uid','business_unit_uid','uid'],del:'business_units',endpoint:'business_units',noPageLimit:true,fetchParams:'filter.keyword=&page=1&count=200&filter.show_all_bu=true',cols:[{h:'Name',f:'bu_name'},{h:'Status',f:'_status'},{h:'Order',f:'display_order'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_status:r.is_active===false?'Inactive':'Active'}))},
+  package:{label:'Service Packages',uid:['package_uid','uid','_id'],del:'invoice_estimate/service_packages',endpoint:'invoice_estimate/service_packages',noPageLimit:true,fetchParams:'count=1000',cols:[{h:'Name',f:'package_name'},{h:'Price',f:'package_price'},{h:'Active',f:'is_active'},{h:'Items',f:'_item_count'},{h:'Description',f:'package_description'}],transform:(recs)=>recs.map(r=>({...r,_item_count:(r.line_items||[]).length}))},
   // Measurement Categories: categories with nested tokens
   measurement_category:{label:'Measurement Categories',uid:['measurement_category_uid','category_uid','uid','_id'],del:'measurements/categories',dryRunSkipGet:true,deleteWarning:(recs)=>{const total=recs.reduce((s,r)=>s+(r.measurement_tokens||[]).length,0);return total>0?'The '+recs.length+' selected categor'+(recs.length===1?'y':'ies')+' contain '+total+' token(s). All tokens will be permanently deleted — formulas referencing them will break.':null;},endpoint:'measurements/categories',noPageLimit:true,fetchParams:'sort=ASC&sort_by=created_at',cols:[{h:'Name',f:'measurement_category_name'},{h:'Tokens',f:'_token_count'},{h:'Created',f:'created_at'}],transform:(recs)=>recs.map(r=>({...r,_token_count:(r.measurement_tokens||[]).length}))},
   // Proposal Templates (Intelligent Quote Builder)
@@ -1148,6 +1278,7 @@ const MIGRATE_MODULES={
   email_template:{supported:true, ownUidField:'template_uid', fetchFullRecord:(rec)=>`misc/email_template/${rec.template_uid}`, buildPayload:(rec)=>buildTemplatePayload(rec), putAfterCreate:(newUid,rec)=>({endpoint:'misc/email_template/'+newUid,payload:buildTemplateFullPayload(rec,newUid)})},
   formula:    {supported:true, ownUidField:'formula_uid', migrateNative:(rec,dry)=>migrateFormulaRecord(rec,dry)},
   product_category:{supported:true, createEndpoint:'products/category', ownUidField:'category_uid', buildPayload:(rec)=>({product_category_name:rec.category_name||rec.product_category_name||''})},
+  trade_type: {supported:true, createEndpoint:'business_units', ownUidField:'bu_uid', buildPayload:(rec)=>({bu_name:rec.bu_name||rec.business_unit_name||''})},
   package:    {supported:true, ownUidField:'package_uid', migrateNative:(rec,dry)=>migratePackageFull(rec,dry)},
   product:    {
     supported:true, ownUidField:'product_uid',
@@ -1182,6 +1313,7 @@ function showConnected(accountName, region){
   $('disconnect-btn').style.display='inline-flex';
   $('fetch-btn').style.display='inline-flex';
   $('import-btn').style.display = modKey()==='product' ? 'inline-flex' : 'none';
+  const _ttIBtn=$('tt-import-btn');if(_ttIBtn) _ttIBtn.style.display=modKey()==='product'?'inline-flex':'none';
   const _pkgIBtn=$('pkg-import-btn');if(_pkgIBtn) _pkgIBtn.style.display=modKey()==='package'?'inline-flex':'none';
   const _tplIBtn=$('tpl-import-btn');if(_tplIBtn) _tplIBtn.style.display=modKey()==='proposal_template'?'inline-flex':'none';
   const _cpqRow=$('cpq-submodule-row');if(_cpqRow) _cpqRow.style.display=($('module').value==='cpq_group')?'block':'none';
@@ -1214,6 +1346,7 @@ function doDisconnect(){
   hideMigratePanel();
   hideDedupPanel();
   $('del-card').style.display='none';
+  const ttCardD=$('tt-card');if(ttCardD) ttCardD.style.display='none';
   // Reset source account state
   _baseUrl=''; _workflowBaseUrl='';
   allRecs=[];filtRecs=[];selUids=new Set();uidField=null;dryCtx=null;failUids=[];logRows=[];
@@ -1223,6 +1356,8 @@ function doDisconnect(){
   $('disconnect-btn').style.display='none';
   $('fetch-btn').style.display='none';
   $('import-btn').style.display='none';
+  const _ttIBtnD=$('tt-import-btn');if(_ttIBtnD) _ttIBtnD.style.display='none';
+  const ttImpCardD=$('tt-import-card');if(ttImpCardD) ttImpCardD.style.display='none';
   const _pkgIBtnD=$('pkg-import-btn');if(_pkgIBtnD) _pkgIBtnD.style.display='none';
   const _tplIBtnD=$('tpl-import-btn');if(_tplIBtnD) _tplIBtnD.style.display='none';
   const _cpqRowD=$('cpq-submodule-row');if(_cpqRowD) _cpqRowD.style.display='none';
@@ -1345,6 +1480,29 @@ async function doFetch(){
       console.log('[ZDM] no-page result: '+recs.length+' records. Top-level keys: '+Object.keys(data).join(', '));
       if(!recs.length) console.log('[ZDM] Raw response sample:', JSON.stringify(data).slice(0,400));
       allRecs.push(...recs);
+    }
+    // Users fetched by extracting from all teams (no direct user-list endpoint)
+    else if(cfg.fetchFromNestedTeams){
+      let tPage=1;
+      const seenUids=new Set();
+      while(tPage<=100){
+        showMsg('fetch-msg','📥 Fetching teams page '+tPage+'… ('+allRecs.length+' users so far)','info');
+        const url=fetchBase+'team?page='+tPage+'&count=150';
+        console.log('[ZDM] Fetching users via teams:', url);
+        const res=await fetch(url,{method:'GET',headers:getHdrs()});
+        if(!res.ok){const b=await res.text().catch(()=>'');throw new Error(res.status+' — '+b.slice(0,300));}
+        const data=await res.json();
+        const teams=extractRecords(data,'team');
+        if(!teams.length) break;
+        for(const team of teams){
+          for(const u of (team.users||[])){
+            const uid=u.user_uid||u.uid||u._id;
+            if(uid&&!seenUids.has(uid)){seenUids.add(uid);allRecs.push(u);}
+          }
+        }
+        if(teams.length<150) break;
+        tPage++;
+      }
     }
     // Standard paginated fetch (GET or POST)
     else{
@@ -1519,6 +1677,7 @@ function renderTable(){
   const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='inline-flex';
   const cmpBtn=$('compare-btn');if(cmpBtn) cmpBtn.style.display='inline-flex';
   const updSelBtn=$('update-sel-btn');if(updSelBtn) updSelBtn.style.display='inline-flex';
+  const ttMapBtn=$('tt-map-btn');if(ttMapBtn) ttMapBtn.style.display=(modKey()==='product')?'inline-flex':'none';
   const tplImpBtn=$('tpl-import-btn');if(tplImpBtn) tplImpBtn.style.display=(modKey()==='proposal_template')?'inline-flex':'none';
   const dfRow=$('date-filter-row');if(dfRow) dfRow.style.display='flex';
   buildDedupFieldOptions(cfg);
@@ -1614,6 +1773,8 @@ function updSel(){
   if(exportXlsx) exportXlsx.textContent=n>0?`📗 Export XLSX (${n})`:'📗 Export XLSX';
   const updBtn=$('update-sel-btn');
   if(updBtn&&updBtn.style.display!=='none') updBtn.textContent='✏ Update Selected'+(n>0?' ('+n+')':'');
+  const ttMapBtn=$('tt-map-btn');
+  if(ttMapBtn&&ttMapBtn.style.display!=='none') ttMapBtn.textContent='🏷 Map Trade Types'+(n>0?' ('+n+')':'');
   const migBtn=$('mig-btn');
   if(migBtn&&migBtn.style.display!=='none') migBtn.textContent='🚀 Migrate Selected'+(n>0?' ('+n+')':'');
   const cfg=modCfg();
@@ -5280,6 +5441,7 @@ async function hitUpdate(uid,field,value,dry){
   const endpoint=cfg.del||modKey();
   const url=baseUrl()+endpoint+'/'+encodeURIComponent(uid);
   if(dry){
+    if(cfg.dryRunSkipGet) return{ok:true,msg:'200 would update (simulated — module has no GET-by-ID)'};
     try{const res=await fetch(url,{method:'GET',headers:getHdrs()});if(res.ok)return{ok:true,msg:'200 found (dry run — PATCH not sent)'};return{ok:false,msg:res.status+' not found'};}
     catch(e){return{ok:false,msg:'Network: '+e.message};}
   }
@@ -5378,6 +5540,448 @@ function downloadUpdateLog(){
   dlFile(csv,'zdm-update-log-'+modKey()+'.csv','text/csv');
 }
 
+// ── TRADE TYPE MAPPING ENGINE (Parts & Services ↔ business_units) ───────────
+let _ttList=[],_ttRunning=false,_ttCancelled=false,_ttDryCtx=null,_ttFailUids=[],_ttLogRows=[];
+function updateTtPill(){const d=$('tt-dryrun').checked,p=$('tt-mode-pill');p.className=d?'mode-safe':'mode-live';p.textContent=d?'● Safe':'● LIVE';}
+async function fetchTradeTypesForMapping(){
+  try{
+    const res=await fetch(baseUrl()+'business_units?filter.keyword=&page=1&count=200&filter.show_all_bu=true',{headers:getHdrs()});
+    if(!res.ok){_ttList=[];return;}
+    const d=await res.json().catch(()=>({}));
+    const raw=Array.isArray(d?.data)?d.data:Array.isArray(d)?d:[];
+    _ttList=raw.map(r=>({uid:r.bu_uid||r.business_unit_uid||r.uid||'',name:r.bu_name||r.business_unit_name||r.name||'(unnamed)'})).filter(t=>t.uid);
+  }catch(e){console.warn('[ZDM] fetchTradeTypesForMapping:',e.message);_ttList=[];}
+}
+function renderTradeTypeCheckboxes(){
+  const body=$('tt-checkboxes');if(!body) return;
+  if(!_ttList.length){body.innerHTML='No Trade Types found in this account — create one in Zuper under Settings → Miscellaneous → Trade Type first.';return;}
+  body.innerHTML=_ttList.map(t=>'<label style="display:flex;align-items:center;gap:7px;padding:4px 0;cursor:pointer"><input type="checkbox" class="tt-chk" value="'+esc(t.uid)+'"> '+esc(t.name)+'</label>').join('');
+}
+function selectedTradeTypeUids(){return Array.from(document.querySelectorAll('.tt-chk:checked')).map(c=>c.value);}
+async function showTradeTypeMap(){
+  if(!selUids.size){alert('Select at least one record first.');return;}
+  if(!apiKey()){alert('API key missing.');return;}
+  const warn=$('tt-warn');if(warn) warn.textContent='⚠ '+selUids.size+' Parts & Services record(s) selected.';
+  updateTtPill();
+  $('tt-checkboxes').innerHTML='Loading…';
+  $('tt-card').style.display='block';
+  $('tt-card').scrollIntoView({behavior:'smooth',block:'start'});
+  await fetchTradeTypesForMapping();
+  renderTradeTypeCheckboxes();
+}
+function hideTradeTypeMap(){
+  if(_ttRunning&&!confirm('A mapping run is in progress. Cancel and close?')) return;
+  _ttCancelled=true;
+  $('tt-card').style.display='none';
+}
+function _ttLogLine(uid,level,msg){
+  const el=$('tt-log');const d=document.createElement('div');
+  d.className='log-'+level;
+  d.textContent=(level==='ok'?'✓':'✗')+' '+uid+' — '+msg;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+  _ttLogRows.push({uid,status:level==='ok'?'success':'failed',message:msg});
+}
+// Set bu_uids on a product. The real endpoint/verb for this is unconfirmed, so this
+// tries several plausible combinations and stops at the first non-404 response (a
+// "Failed to fetch" on one attempt — e.g. a CORS preflight dying on a route that
+// doesn't exist — must NOT abort the whole call; it has to fall through to the next
+// candidate). If every candidate fails, the thrown error lists all of them so the
+// log records exactly what was tried instead of a single opaque "Failed to fetch".
+async function _patchProductBuUids(uid,buUids){
+  // Product payloads on this account are wrapped in a "product" key (confirmed by the
+  // "Product Data is Mandatory" 400 a flat {bu_uids:[...]} body triggered) — matches
+  // how buildMigrationProductPayload/migrateProductRecord already nest fields elsewhere.
+  const body={product:{bu_uids:buUids}};
+  const attempts=[
+    {method:'PATCH',path:'product/'},
+    {method:'PUT',path:'product/'},
+    {method:'PATCH',path:'products/'},
+    {method:'PUT',path:'products/'},
+  ];
+  const tried=[];
+  for(const a of attempts){
+    const url=baseUrl()+a.path+encodeURIComponent(uid);
+    try{
+      const res=await fetch(url,{method:a.method,headers:hdrs(),body:JSON.stringify(body)});
+      if(res.status!==404) return res; // first non-404 response wins — success or a real, actionable error
+      tried.push(a.method+' '+a.path+'{uid} → 404');
+    }catch(e){
+      tried.push(a.method+' '+a.path+'{uid} → '+e.message);
+    }
+  }
+  throw new Error('all endpoint variants failed: '+tried.join(' | '));
+}
+async function hitTradeTypeMap(rec,newUids,mode,dry){
+  const cfg=modCfg();
+  const uid=String(rec[uidField]||'');
+  let finalUids=newUids;
+  if(mode==='add'){
+    const existing=(rec.business_unit||[]).map(b=>b.bu_uid||b.business_unit_uid||b.uid).filter(Boolean);
+    finalUids=[...new Set([...existing,...newUids])];
+  }
+  if(dry){
+    if(cfg.dryRunSkipGet) return{ok:true,msg:'200 would set '+finalUids.length+' trade type(s) (simulated — module has no GET-by-ID)'};
+    const url=baseUrl()+(cfg.del||modKey())+'/'+encodeURIComponent(uid);
+    try{const res=await fetch(url,{method:'GET',headers:getHdrs()});if(res.ok)return{ok:true,msg:'200 found — would set '+finalUids.length+' trade type(s) (dry run)'};return{ok:false,msg:res.status+' not found'};}
+    catch(e){return{ok:false,msg:'Network: '+e.message};}
+  }
+  try{
+    const res=await _patchProductBuUids(uid,finalUids);
+    if(res.ok) return{ok:true,msg:res.status+' updated — '+finalUids.length+' trade type(s)',finalUids};
+    let d='';try{const b=await res.json();d=b.message||b.error||JSON.stringify(b).slice(0,80);}catch{d=await res.text().then(t=>t.slice(0,80)).catch(()=>'');}
+    return{ok:false,msg:res.status+' '+d};
+  }catch(e){return{ok:false,msg:'Network: '+e.message};}
+}
+async function runTradeTypeMapEngine(uids,newUids,mode,dry){
+  _ttLogRows=[];
+  const logEl=$('tt-log');logEl.innerHTML='';logEl.style.display='block';
+  $('tt-log-actions').style.display='none';
+  $('tt-prog-wrap').style.display='block';$('tt-prog-bar').style.width='0%';$('tt-prog-lbl').textContent='Starting…';
+  $('tt-stats').style.display='flex';$('tt-rs-total').textContent=uids.length;$('tt-rs-ok').textContent='0';$('tt-rs-fail').textContent='0';
+  $('tt-rs-ok-lbl').textContent=dry?'Found':'Updated';
+  $('tt-run-btn').disabled=true;$('tt-proceed-btn').style.display='none';$('tt-retry-btn').style.display='none';
+  $('tt-cancel-btn').style.display='inline-flex';
+  _ttRunning=true;_ttCancelled=false;
+  const conc=3;
+  let ok=0,fail=0,done=0,idx=0;const okUids=[],failUids_=[];
+  async function worker(){
+    while(true){
+      if(_ttCancelled) return;
+      const i=idx++;if(i>=uids.length) return;
+      const uid=uids[i];
+      const rec=allRecs.find(r=>String(r[uidField]||'')===uid)||{};
+      const r=await hitTradeTypeMap(rec,newUids,mode,dry);
+      if(r.ok){ok++;okUids.push(uid);$('tt-rs-ok').textContent=ok;_ttLogLine(uid,'ok',r.msg);}
+      else{fail++;failUids_.push(uid);$('tt-rs-fail').textContent=fail;_ttLogLine(uid,'err',r.msg);}
+      done++;$('tt-prog-bar').style.width=(done/uids.length*100).toFixed(1)+'%';
+      $('tt-prog-lbl').textContent=done+' / '+uids.length+' processed';
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(conc,uids.length)},worker));
+  _ttRunning=false;
+  $('tt-run-btn').disabled=false;$('tt-cancel-btn').style.display='none';
+  $('tt-log-actions').style.display='block';
+  $('tt-prog-lbl').textContent=_ttCancelled?'⚠ Cancelled at '+done+'/'+uids.length+' — '+ok+' OK, '+fail+' failed':'✓ Complete — '+ok+' OK, '+fail+' failed';
+  if(dry&&okUids.length&&!_ttCancelled){
+    _ttDryCtx={uids:okUids,newUids,mode};
+    $('tt-proceed-btn').textContent='→ Apply to '+okUids.length+' record(s) — REAL UPDATE';
+    $('tt-proceed-btn').style.display='inline-flex';
+  }
+  if(failUids_.length&&!_ttCancelled){
+    _ttFailUids=[...failUids_];
+    $('tt-retry-btn').textContent='↩ Retry '+_ttFailUids.length+' failed';
+    $('tt-retry-btn').style.display='inline-flex';
+  }
+  // Reflect the new mapping locally so the table/column updates without a re-fetch
+  if(!dry&&okUids.length){
+    okUids.forEach(uid=>{
+      const rec=allRecs.find(r=>String(r[uidField]||'')===uid);
+      if(!rec) return;
+      const existing=mode==='add'?(rec.business_unit||[]).map(b=>b.bu_uid||b.business_unit_uid||b.uid).filter(Boolean):[];
+      const finalUids=[...new Set([...existing,...newUids])];
+      rec.business_unit=finalUids.map(u=>{const t=_ttList.find(x=>x.uid===u);return{bu_uid:u,bu_name:t?t.name:u};});
+      rec._bu_names=rec.business_unit.map(b=>b.bu_name).join(', ')||'—';
+    });
+    renderRows();
+  }
+}
+async function startTradeTypeMap(){
+  if(!apiKey()){alert('API key missing.');return;}
+  if(!selUids.size){alert('No records selected.');return;}
+  const newUids=selectedTradeTypeUids();
+  const mode=($('tt-mode')||{}).value||'replace';
+  if(!newUids.length){alert('Select at least one Trade Type.');return;}
+  const dry=$('tt-dryrun').checked;
+  const uids=Array.from(selUids);
+  const names=_ttList.filter(t=>newUids.includes(t.uid)).map(t=>t.name).join(', ');
+  const action=dry?('DRY RUN — check '+uids.length+' record(s) then show the change preview'):('⚠ '+(mode==='add'?'ADD':'SET')+' Trade Type(s) ['+names+'] on '+uids.length+' record(s)');
+  if(!confirm(action+'\n\nAccount: '+$('s-account').textContent))return;
+  await runTradeTypeMapEngine(uids,newUids,mode,dry);
+}
+async function proceedTradeTypeMapReal(){
+  if(!_ttDryCtx) return;
+  const{uids,newUids,mode}=_ttDryCtx;_ttDryCtx=null;
+  if(!confirm('⚠ Apply Trade Type mapping to '+uids.length+' record(s)?\n\nAccount: '+$('s-account').textContent))return;
+  await runTradeTypeMapEngine(uids,newUids,mode,false);
+}
+async function retryTradeTypeMap(){
+  if(!_ttFailUids.length) return;
+  if(!confirm('Retry '+_ttFailUids.length+' failed record(s)?')) return;
+  const uids=[..._ttFailUids];_ttFailUids=[];
+  const newUids=selectedTradeTypeUids();
+  const mode=($('tt-mode')||{}).value||'replace';
+  await runTradeTypeMapEngine(uids,newUids,mode,$('tt-dryrun').checked);
+}
+function cancelTradeTypeMap(){
+  if(!_ttRunning) return;
+  if(confirm('Cancel mapping run? Progress so far will be in the log.')){_ttCancelled=true;}
+}
+function downloadTradeTypeLog(){
+  if(!_ttLogRows.length){alert('No log yet.');return;}
+  const csv='uid,status,message\n'+_ttLogRows.map(r=>'"'+(r.uid||'').replace(/"/g,'""')+'","'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');
+  dlFile(csv,'zdm-trade-type-map-log.csv','text/csv');
+}
+
+// ── TRADE TYPE MAPPING IMPORT (CSV/Excel → bu_uids on Parts & Services) ──────
+let ttiHeaders=[],ttiRows=[],ttiPreview=[];
+let _ttiRunning=false,_ttiCancelled=false,_ttiDryCtx=null,_ttiFailItems=[],_ttiLogRows=[];
+function updateTtiPill(){const d=$('tti-dryrun').checked,p=$('tti-mode-pill');p.className=d?'mode-safe':'mode-live';p.textContent=d?'● Safe':'● LIVE';}
+function showTtImportCard(){
+  ttiHeaders=[];ttiRows=[];ttiPreview=[];
+  $('tti-file').value='';
+  hideMsg('tti-msg1');
+  $('tti-step1').style.display='block';$('tti-step2').style.display='none';$('tti-step3').style.display='none';
+  $('tt-import-card').style.display='block';
+  $('tt-import-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function hideTtImportCard(){
+  if(_ttiRunning&&!confirm('An import run is in progress. Cancel and close?')) return;
+  _ttiCancelled=true;
+  $('tt-import-card').style.display='none';
+}
+function onTtImportFile(input){
+  const file=input.files&&input.files[0];if(!file) return;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    let parsed;
+    try{
+      if(ext==='csv'){
+        const text=e.target.result;
+        const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
+        const splitLine=(line)=>{
+          const out=[];let cur='',inQ=false;
+          for(let i=0;i<line.length;i++){
+            const c=line[i];
+            if(inQ){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=c; }
+            else{ if(c==='"') inQ=true; else if(c===','){out.push(cur);cur='';} else cur+=c; }
+          }
+          out.push(cur);return out;
+        };
+        const headers=splitLine(lines[0]).map(h=>h.trim());
+        const rows=lines.slice(1).map(l=>{const cells=splitLine(l);const o={};headers.forEach((h,i)=>o[h]=(cells[i]||'').trim());return o;});
+        parsed={headers,rows};
+      }else{
+        if(typeof XLSX==='undefined'){showMsg('tti-msg1','✗ XLSX library not loaded — check your internet connection.','err');return;}
+        const wb=XLSX.read(e.target.result,{type:'binary'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const json=XLSX.utils.sheet_to_json(ws,{defval:''});
+        const headers=json.length?Object.keys(json[0]):[];
+        parsed={headers,rows:json.map(r=>{const o={};headers.forEach(h=>o[h]=String(r[h]||'').trim());return o;})};
+      }
+    }catch(ex){showMsg('tti-msg1','✗ Could not parse file: '+ex.message,'err');return;}
+    if(!parsed.rows.length){showMsg('tti-msg1','✗ File appears empty or has no data rows.','err');return;}
+    hideMsg('tti-msg1');
+    ttiHeaders=parsed.headers;ttiRows=parsed.rows;
+    buildTtiColumnMapper();
+    $('tti-step1').style.display='none';$('tti-step2').style.display='block';
+  };
+  if(ext==='csv') reader.readAsText(file);
+  else reader.readAsBinaryString(file);
+}
+function buildTtiColumnMapper(){
+  const mk=(auto)=>['(none)'].concat(ttiHeaders).map(h=>'<option value="'+esc(h==='(none)'?'':h)+'"'+(h===auto?' selected':'')+'>'+esc(h)+'</option>').join('');
+  const autoUid=ttiHeaders.find(h=>/parts?[\s_]*uid|product[_\s]?uid|^uid$/i.test(h))||ttiHeaders.find(h=>/product/i.test(h))||'(none)';
+  const autoTt=ttiHeaders.find(h=>/trade[_\s]?type/i.test(h))||'(none)';
+  $('tti-col-uid').innerHTML=mk(autoUid);
+  $('tti-col-tt').innerHTML=mk(autoTt);
+}
+async function buildTtImportPreview(){
+  const uidCol=$('tti-col-uid').value,ttCol=$('tti-col-tt').value;
+  if(!uidCol){alert('Select the Product Match column.');return;}
+  if(!ttCol){alert('Select the Trade Type column.');return;}
+  if(!apiKey()){alert('API key missing.');return;}
+  if(!_ttList.length) await fetchTradeTypesForMapping();
+  const groups={};
+  ttiRows.forEach(r=>{
+    const rawKey=(r[uidCol]||'').trim();
+    const ttRaw=(r[ttCol]||'').trim();
+    if(!rawKey||!ttRaw) return;
+    const names=ttRaw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+    if(!groups[rawKey]) groups[rawKey]={rawKey,names:new Set()};
+    names.forEach(n=>groups[rawKey].names.add(n));
+  });
+  const isUidLike=(s)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  const createMissing=$('tti-create-missing').checked;
+  ttiPreview=Object.values(groups).map(g=>{
+    const names=[...g.names];
+    let resolvedUid=isUidLike(g.rawKey)?g.rawKey:null;
+    let matchedName='';
+    if(!resolvedUid&&modKey()==='product'){
+      const rec=allRecs.find(r=>(r.product_name||'').trim().toLowerCase()===g.rawKey.toLowerCase());
+      if(rec){resolvedUid=String(rec.product_uid||rec[uidField]||'');matchedName=rec.product_name||'';}
+    }else if(resolvedUid&&modKey()==='product'){
+      const rec=allRecs.find(r=>String(r.product_uid||r[uidField]||'')===resolvedUid);
+      if(rec) matchedName=rec.product_name||'';
+    }
+    const ttMatches=names.map(n=>{
+      const found=_ttList.find(t=>t.name.trim().toLowerCase()===n.toLowerCase());
+      return{name:n,uid:found?found.uid:null};
+    });
+    const missingNames=ttMatches.filter(m=>!m.uid).map(m=>m.name);
+    let status='ok',note='';
+    if(!resolvedUid){status='err';note='Product not found — provide a Parts UID, or fetch Parts & Services first so names can be matched.';}
+    else if(missingNames.length&&!createMissing){status='err';note='Unknown Trade Type(s): '+missingNames.join(', ');}
+    else if(missingNames.length){status='warn';note='Will create Trade Type(s): '+missingNames.join(', ');}
+    return{rawKey:g.rawKey,uid:resolvedUid,matchedName,ttNames:names,ttMatches,status,note};
+  });
+  renderTtiPreview();
+  $('tti-step2').style.display='none';$('tti-step3').style.display='block';
+}
+function renderTtiPreview(){
+  const total=ttiPreview.length;
+  const errCount=ttiPreview.filter(p=>p.status==='err').length;
+  const warnCount=ttiPreview.filter(p=>p.status==='warn').length;
+  const okCount=total-errCount-warnCount;
+  $('tti-summary').textContent=total+' product(s) parsed — '+okCount+' ready, '+warnCount+' will create new Trade Type(s), '+errCount+' error(s).';
+  $('tti-preview-body').innerHTML=ttiPreview.map(p=>{
+    const badge=p.status==='ok'?'<span style="color:var(--green-d);font-weight:600">✓ Ready</span>'
+      :p.status==='warn'?'<span style="color:var(--amber-d);font-weight:600">⚠ '+esc(p.note)+'</span>'
+      :'<span style="color:var(--red-d);font-weight:600">✗ '+esc(p.note)+'</span>';
+    return '<tr><td style="padding:6px 8px;font-family:monospace;font-size:.72rem">'+esc(p.uid||p.rawKey)+(p.matchedName?' <span style="color:var(--text-sub);font-family:inherit">('+esc(p.matchedName)+')</span>':'')+'</td><td style="padding:6px 8px">'+esc(p.ttNames.join(', '))+'</td><td style="padding:6px 8px">'+badge+'</td></tr>';
+  }).join('')||'<tr><td colspan="3" style="padding:20px;text-align:center;color:#aaa">No valid rows found.</td></tr>';
+}
+function _ttiLogLine(key,level,msg){
+  const el=$('tti-log');const d=document.createElement('div');
+  d.className='log-'+level;
+  d.textContent=(level==='ok'?'✓':'✗')+' '+key+' — '+msg;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+  _ttiLogRows.push({key,status:level==='ok'?'success':'failed',message:msg});
+}
+async function startTtImport(){
+  if(!apiKey()){alert('API key missing.');return;}
+  const runnable=ttiPreview.filter(p=>p.status!=='err');
+  if(!runnable.length){alert('No valid rows to import.');return;}
+  const dry=$('tti-dryrun').checked;
+  const mode=$('tti-mode').value;
+  const createMissing=$('tti-create-missing').checked;
+  const toCreate=[...new Set(runnable.flatMap(p=>p.ttMatches.filter(m=>!m.uid).map(m=>m.name)))];
+  const action=dry
+    ?('DRY RUN — check '+runnable.length+' product(s)'+(toCreate.length?', would create '+toCreate.length+' Trade Type(s)':'')+' then preview the change')
+    :('⚠ '+(mode==='add'?'ADD':'SET')+' Trade Type mapping on '+runnable.length+' product(s)'+(toCreate.length&&createMissing?' (creating '+toCreate.length+' new Trade Type(s) first)':''));
+  if(!confirm(action+'\n\nAccount: '+$('s-account').textContent))return;
+  await runTtImportEngine(runnable,mode,createMissing,dry);
+}
+async function runTtImportEngine(items,mode,createMissing,dry){
+  _ttiLogRows=[];
+  const logEl=$('tti-log');logEl.innerHTML='';logEl.style.display='block';
+  $('tti-log-actions').style.display='none';
+  $('tti-prog-wrap').style.display='block';$('tti-prog-bar').style.width='0%';$('tti-prog-lbl').textContent='Starting…';
+  $('tti-stats').style.display='flex';$('tti-rs-total').textContent=items.length;$('tti-rs-ok').textContent='0';$('tti-rs-fail').textContent='0';
+  $('tti-rs-ok-lbl').textContent=dry?'Found':'Updated';
+  $('tti-run-btn').disabled=true;$('tti-proceed-btn').style.display='none';$('tti-retry-btn').style.display='none';
+  _ttiRunning=true;_ttiCancelled=false;
+
+  if(!dry&&createMissing){
+    const missingNames=[...new Set(items.flatMap(p=>p.ttMatches.filter(m=>!m.uid).map(m=>m.name)))];
+    for(const name of missingNames){
+      if(_ttiCancelled) break;
+      try{
+        const res=await fetch(baseUrl()+'business_units',{method:'POST',headers:hdrs(),body:JSON.stringify({bu_name:name})});
+        const body=await res.text().catch(()=>'');
+        if(res.ok){
+          let d={};try{d=JSON.parse(body);}catch{}
+          const dd=d?.data||d;
+          const newUid=dd?.bu_uid||dd?.business_unit_uid||dd?.uid||'';
+          if(newUid) _ttList.push({uid:newUid,name});
+          _ttiLogLine('(create)','ok','Created Trade Type "'+name+'"');
+        }else{
+          _ttiLogLine('(create)','err','Failed to create Trade Type "'+name+'": HTTP '+res.status+' '+body.slice(0,120));
+        }
+      }catch(e){_ttiLogLine('(create)','err','Network error creating "'+name+'": '+e.message);}
+    }
+    items.forEach(p=>{p.ttMatches=p.ttMatches.map(m=>m.uid?m:{name:m.name,uid:(_ttList.find(t=>t.name.toLowerCase()===m.name.toLowerCase())||{}).uid||null});});
+  }
+
+  const conc=3;
+  let ok=0,fail=0,done=0,idx=0;const okItems=[],failItems=[];
+  async function worker(){
+    while(true){
+      if(_ttiCancelled) return;
+      const i=idx++;if(i>=items.length) return;
+      const p=items[i];
+      const key=p.uid;
+      const resolvedTtUids=p.ttMatches.filter(m=>m.uid).map(m=>m.uid);
+      if(!resolvedTtUids.length){
+        fail++;failItems.push(p);$('tti-rs-fail').textContent=fail;_ttiLogLine(key,'err','No resolvable Trade Type UIDs (missing & not created)');
+        done++;$('tti-prog-bar').style.width=(done/items.length*100).toFixed(1)+'%';$('tti-prog-lbl').textContent=done+' / '+items.length+' processed';
+        continue;
+      }
+      const existingRec=allRecs.find(r=>String(r.product_uid||r[uidField]||'')===key);
+      let finalUids=resolvedTtUids;
+      if(mode==='add'){
+        const existing=((existingRec&&existingRec.business_unit)||[]).map(b=>b.bu_uid||b.business_unit_uid||b.uid).filter(Boolean);
+        finalUids=[...new Set([...existing,...resolvedTtUids])];
+      }
+      let r;
+      if(dry){
+        if(modCfg().dryRunSkipGet){r={ok:true,msg:'200 would set '+finalUids.length+' trade type(s) (simulated — module has no GET-by-ID)'};}
+        else{
+          const url=baseUrl()+'product/'+encodeURIComponent(key);
+          try{const res=await fetch(url,{method:'GET',headers:getHdrs()});r=res.ok?{ok:true,msg:'200 found — would set '+finalUids.length+' trade type(s) (dry run)'}:{ok:false,msg:res.status+' not found'};}
+          catch(e){r={ok:false,msg:'Network: '+e.message};}
+        }
+      }else{
+        try{
+          const res=await _patchProductBuUids(key,finalUids);
+          if(res.ok) r={ok:true,msg:res.status+' updated — '+finalUids.length+' trade type(s)'};
+          else{let d='';try{const b=await res.json();d=b.message||b.error||JSON.stringify(b).slice(0,80);}catch{d=await res.text().then(t=>t.slice(0,80)).catch(()=>'');}r={ok:false,msg:res.status+' '+d};}
+        }catch(e){r={ok:false,msg:'Network: '+e.message};}
+      }
+      if(r.ok){ok++;okItems.push(p);$('tti-rs-ok').textContent=ok;_ttiLogLine(key,'ok',r.msg);}
+      else{fail++;failItems.push(p);$('tti-rs-fail').textContent=fail;_ttiLogLine(key,'err',r.msg);}
+      done++;$('tti-prog-bar').style.width=(done/items.length*100).toFixed(1)+'%';
+      $('tti-prog-lbl').textContent=done+' / '+items.length+' processed';
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(conc,items.length)},worker));
+  _ttiRunning=false;
+  $('tti-run-btn').disabled=false;
+  $('tti-log-actions').style.display='block';
+  $('tti-prog-lbl').textContent=_ttiCancelled?'⚠ Cancelled at '+done+'/'+items.length+' — '+ok+' OK, '+fail+' failed':'✓ Complete — '+ok+' OK, '+fail+' failed';
+  if(dry&&okItems.length&&!_ttiCancelled){
+    _ttiDryCtx={items:okItems,mode,createMissing};
+    $('tti-proceed-btn').textContent='→ Apply to '+okItems.length+' record(s) — REAL UPDATE';
+    $('tti-proceed-btn').style.display='inline-flex';
+  }
+  if(failItems.length&&!_ttiCancelled){
+    _ttiFailItems=[...failItems];
+    $('tti-retry-btn').textContent='↩ Retry '+_ttiFailItems.length+' failed';
+    $('tti-retry-btn').style.display='inline-flex';
+  }
+  if(!dry&&okItems.length&&modKey()==='product'){
+    okItems.forEach(p=>{
+      const rec=allRecs.find(r=>String(r.product_uid||r[uidField]||'')===p.uid);
+      if(!rec) return;
+      const resolvedTtUids=p.ttMatches.filter(m=>m.uid).map(m=>m.uid);
+      const existing=mode==='add'?(rec.business_unit||[]).map(b=>b.bu_uid||b.business_unit_uid||b.uid).filter(Boolean):[];
+      const finalUids=[...new Set([...existing,...resolvedTtUids])];
+      rec.business_unit=finalUids.map(u=>{const t=_ttList.find(x=>x.uid===u);return{bu_uid:u,bu_name:t?t.name:u};});
+      rec._bu_names=rec.business_unit.map(b=>b.bu_name).join(', ')||'—';
+    });
+    renderRows();
+  }
+}
+async function proceedTtImportReal(){
+  if(!_ttiDryCtx) return;
+  const{items,mode,createMissing}=_ttiDryCtx;_ttiDryCtx=null;
+  if(!confirm('⚠ Apply Trade Type import to '+items.length+' record(s)?\n\nAccount: '+$('s-account').textContent))return;
+  await runTtImportEngine(items,mode,createMissing,false);
+}
+async function retryTtImport(){
+  if(!_ttiFailItems.length) return;
+  if(!confirm('Retry '+_ttiFailItems.length+' failed record(s)?')) return;
+  const items=[..._ttiFailItems];_ttiFailItems=[];
+  const mode=$('tti-mode').value;
+  const createMissing=$('tti-create-missing').checked;
+  await runTtImportEngine(items,mode,createMissing,$('tti-dryrun').checked);
+}
+function downloadTtImportLog(){
+  if(!_ttiLogRows.length){alert('No log yet.');return;}
+  const csv='key,status,message\n'+_ttiLogRows.map(r=>'"'+(r.key||'').replace(/"/g,'""')+'","'+r.status+'","'+(r.message||'').replace(/"/g,'""')+'"').join('\n');
+  dlFile(csv,'zdm-trade-type-import-log.csv','text/csv');
+}
+
 // ── FEAT-5: KEYBOARD SHORTCUTS ───────────────────────────────────────────────
 function showShortcuts(){
   const o=$('shortcuts-overlay');if(!o) return;
@@ -5464,6 +6068,8 @@ function onModuleChange(){
   const migBtn=$('mig-btn');if(migBtn) migBtn.style.display='none';
   const cmpBtn=$('compare-btn');if(cmpBtn) cmpBtn.style.display='none';
   const updSelBtn=$('update-sel-btn');if(updSelBtn) updSelBtn.style.display='none';
+  const ttMapBtnH=$('tt-map-btn');if(ttMapBtnH) ttMapBtnH.style.display='none';
+  const ttCardH=$('tt-card');if(ttCardH) ttCardH.style.display='none';
   const tplImpBtn2=$('tpl-import-btn');if(tplImpBtn2) tplImpBtn2.style.display=(modKey()==='proposal_template'&&!!_baseUrl)?'inline-flex':'none';
   const dfRow=$('date-filter-row');if(dfRow) dfRow.style.display='none';
   if($('update-card')) $('update-card').style.display='none';
@@ -5471,8 +6077,10 @@ function onModuleChange(){
   // Import button only for product module
   const isProduct=modKey()==='product';const isConn=!!_baseUrl;
   const ibtn=$('import-btn');if(ibtn) ibtn.style.display=(isProduct&&isConn)?'inline-flex':'none';
+  const ttIbtn=$('tt-import-btn');if(ttIbtn) ttIbtn.style.display=(isProduct&&isConn)?'inline-flex':'none';
   const pkgIbtn=$('pkg-import-btn');if(pkgIbtn) pkgIbtn.style.display=(modKey()==='package'&&isConn)?'inline-flex':'none';
   if(!isProduct&&typeof hideImportCard==='function') hideImportCard();
+  if(!isProduct){const ttImpCard=$('tt-import-card');if(ttImpCard) ttImpCard.style.display='none';}
   if(modKey()!=='package'&&typeof hidePkgImportCard==='function') hidePkgImportCard();
   if(modKey()!=='proposal_template'&&typeof hideTplImportCard==='function') hideTplImportCard();
 }
